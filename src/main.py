@@ -1,72 +1,108 @@
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+import pandas as pd
 import os
-from tkinter import Tk, filedialog
-from excel_utils import cargar_datos_excel
-from report_generator import generar_informe_html, generar_datos_llamadas_json
-from geo_utils import generar_mapa_interactivo, generar_mapa_calor
-from graphics_utils import generar_grafico_top_llamadas, generar_grafico_horario_llamadas
-from utils import configurar_logs
-import shutil
 
-# Configuración de directorios
-SRC_DIR = os.path.dirname(__file__)
-ROOT_DIR = os.path.dirname(SRC_DIR)
-STATIC_DIR = os.path.join(ROOT_DIR, "static")
+# Importamos tu clase del otro archivo
+from column_mapper import ColumnMapperDialog
 
-def obtener_ruta_output(base_dir, subdir, archivo):
-    ruta = os.path.join(base_dir, subdir)
-    os.makedirs(ruta, exist_ok=True)
-    return os.path.join(ruta, archivo)
+class MainApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Sistema de Análisis de CDR")
+        self.root.geometry("800x600")
+        
+        self.df = None # Aquí vivirá el DataFrame cargado
+        
+        self.create_ui()
+        
+    def create_ui(self):
+        # Frame superior para controles
+        control_frame = ttk.Frame(self.root, padding=10)
+        control_frame.pack(fill="x")
+        
+        btn_load = ttk.Button(control_frame, text="📂 Cargar Excel/CSV", command=self.cargar_archivo)
+        btn_load.pack(side="left", padx=5)
+        
+        self.lbl_status = ttk.Label(control_frame, text="Estado: Esperando archivo...", foreground="gray")
+        self.lbl_status.pack(side="left", padx=10)
+        
+        # Frame principal para mostrar datos (Vista previa)
+        self.tree_frame = ttk.Frame(self.root, padding=10)
+        self.tree_frame.pack(fill="both", expand=True)
+        
+        # Scrollbars y Treeview
+        self.tree_scroll = ttk.Scrollbar(self.tree_frame)
+        self.tree_scroll.pack(side="right", fill="y")
+        
+        self.tree = ttk.Treeview(self.tree_frame, yscrollcommand=self.tree_scroll.set, show="headings")
+        self.tree.pack(fill="both", expand=True)
+        self.tree_scroll.config(command=self.tree.yview)
 
-def seleccionar_archivo():
-    Tk().withdraw()
-    archivo = filedialog.askopenfilename(filetypes=[("Archivos Excel", "*.xlsx")])
-    if not archivo:
-        print("❌ No se seleccionó ningún archivo. Saliendo...")
-        exit()
-    return archivo
+    def cargar_archivo(self):
+        filepath = filedialog.askopenfilename(
+            filetypes=[("Archivos de Datos", "*.xlsx *.xls *.csv")]
+        )
+        
+        if not filepath:
+            return
 
-def main():
-    logger = configurar_logs()
-    logger.info("🚀 Iniciando análisis de llamadas")
+        try:
+            # 1. Lectura preliminar
+            self.lbl_status.config(text="Leyendo archivo...", foreground="blue")
+            self.root.update()
+            
+            if filepath.endswith('.csv'):
+                df_temp = pd.read_csv(filepath)
+            else:
+                df_temp = pd.read_excel(filepath)
+            
+            # 2. INVOCAR EL MAPEO (Aquí sucede la magia)
+            # Pasamos la lista de columnas tal como vienen en el Excel
+            dialogo = ColumnMapperDialog(self.root, df_temp.columns.tolist())
+            self.root.wait_window(dialogo) # Detiene el código hasta que se cierre el dialogo
+            
+            # 3. Verificar resultado
+            if dialogo.result is None:
+                self.lbl_status.config(text="Carga cancelada por el usuario.", foreground="red")
+                return
 
-    archivo_excel = seleccionar_archivo()
-    nombre_informe = input("📝 Nombre del informe (carpeta destino): ").strip().replace(" ", "_")
+            # 4. Aplicar el renombrado
+            # El dialogo devuelve: {'originador': 'Columna A'}
+            # Pandas necesita: {'Columna A': 'originador'}
+            mapeo_renombre = {v: k for k, v in dialogo.result.items()}
+            
+            df_temp.rename(columns=mapeo_renombre, inplace=True)
+            
+            # 5. Guardar DF procesado
+            self.df = df_temp
+            
+            # 6. Actualizar UI
+            self.mostrar_datos()
+            self.lbl_status.config(text=f"Archivo cargado: {os.path.basename(filepath)} ({len(self.df)} registros)", foreground="green")
+            messagebox.showinfo("Éxito", "Las columnas se han unificado correctamente.\nEl sistema ahora reconoce tus datos.")
 
-    df = cargar_datos_excel(archivo_excel)
-    if df is None or df.empty:
-        logger.error("❌ No se pudo cargar el archivo de datos.")
-        return
+        except Exception as e:
+            self.lbl_status.config(text="Error en la carga", foreground="red")
+            messagebox.showerror("Error Crítico", f"No se pudo procesar el archivo:\n{e}")
 
-    if "tipo_llamada" not in df.columns or df["tipo_llamada"].nunique() < 2:
-        logger.error("❌ Se requieren datos de llamadas 'entrantes' y 'salientes'.")
-        return
-
-    logger.info("📊 Generando informe HTML...")
-    base_dir = generar_informe_html(df, nombre_informe, incluir_membrete=True, logo_path=os.path.join(STATIC_DIR, "logo.png"))
-
-    logger.info("🗺️ Generando mapas...")
-    generar_mapa_interactivo(df, obtener_ruta_output(base_dir, "maps", "mapa_general.html"))
-    generar_mapa_calor(df, obtener_ruta_output(base_dir, "maps", "mapa_calor.html"))
-
-    logger.info("📈 Generando gráficos...")
-    generar_grafico_top_llamadas(df[df["tipo_llamada"] == "entrante"], "originador", "Top Llamadas Recibidas",
-                                  obtener_ruta_output(base_dir, "graphics", "top_llamadas_recibidas.png"))
-    generar_grafico_top_llamadas(df[df["tipo_llamada"] == "saliente"], "receptor", "Top Llamadas Realizadas",
-                                  obtener_ruta_output(base_dir, "graphics", "top_llamadas_realizadas.png"))
-    generar_grafico_horario_llamadas(df, obtener_ruta_output(base_dir, "graphics", "grafico_horario_llamadas.png"))
-
-    logger.info("📁 Guardando datos JS dinámicos...")
-    generar_datos_llamadas_json(df, output_path=obtener_ruta_output(base_dir, "data", "call_data.js"))
-
-    logger.info("📦 Copiando archivos estáticos...")
-    os.makedirs(os.path.join(base_dir, "static", "assets_js"), exist_ok=True)
-    shutil.copy(os.path.join(STATIC_DIR, "js", "interactive_maps.js"), os.path.join(base_dir, "static", "assets_js", "interactive_maps.js"))
-    shutil.copy(os.path.join(STATIC_DIR, "js", "interactive_charts.js"), os.path.join(base_dir, "static", "assets_js", "interactive_charts.js"))
-    shutil.copy(os.path.join(STATIC_DIR, "logo.png"), os.path.join(base_dir, "static", "assets_img", "logo.png"))
-    shutil.copy(os.path.join(STATIC_DIR, "info.png"), os.path.join(base_dir, "static", "assets_img", "info.png"))
-
-    logger.info("✅ Análisis completo. Informe generado en: %s", base_dir)
-    print("✅ Proceso finalizado. El informe, mapas y gráficos han sido guardados en:", base_dir)
+    def mostrar_datos(self):
+        """Muestra las primeras 50 filas en la tabla para verificar"""
+        self.tree.delete(*self.tree.get_children())
+        
+        # Definir columnas del Treeview basadas en el DF final
+        cols = list(self.df.columns)
+        self.tree["columns"] = cols
+        
+        for col in cols:
+            self.tree.heading(col, text=col)
+            self.tree.column(col, width=100, stretch=True)
+            
+        # Insertar datos (solo primeros 50 para velocidad)
+        for _, row in self.df.head(50).iterrows():
+            self.tree.insert("", "end", values=list(row))
 
 if __name__ == "__main__":
-    main()
+    root = tk.Tk()
+    app = MainApp(root)
+    root.mainloop()
