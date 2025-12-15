@@ -2,95 +2,106 @@ import pandas as pd
 import os
 import numpy as np
 
-def cargar_datos_excel(file_path):
+def cargar_excel_crudo(file_path):
     """
-    Carga datos desde un archivo Excel y busca específicamente las hojas 'salientes' y 'entrantes'.
-    Si las encuentra, las une en un solo DataFrame agregando una columna 'tipo_llamada'.
+    Lee el Excel y devuelve un DataFrame unido (entrantes + salientes) 
+    SIN validar nombres de columnas todavía.
     """
-
-    # Verificar si el archivo existe
     if not os.path.exists(file_path):
-        print(f"❌ Error: El archivo {file_path} no existe.")
-        return None
+        return None, "El archivo no existe."
 
     try:
-        # Leer todas las hojas del archivo
-        hojas = pd.ExcelFile(file_path).sheet_names
-        hojas_nombres = {nombre.lower().strip(): nombre for nombre in hojas}  # Normaliza nombres de hojas
+        xl = pd.ExcelFile(file_path)
+        hojas = {h.lower().strip(): h for h in xl.sheet_names}
+        
+        df_list = []
+        
+        # Buscar variantes de nombres de hojas
+        found_sheets = False
+        for key, real_name in hojas.items():
+            if "entrant" in key or "incoming" in key: # Coincide con entrante, entrantes, incoming...
+                try:
+                    temp = pd.read_excel(file_path, sheet_name=real_name, dtype=str)
+                    temp["tipo_llamada"] = "entrante"
+                    df_list.append(temp)
+                    found_sheets = True
+                except Exception as e:
+                    print(f"⚠️ Error leyendo hoja {real_name}: {e}")
 
-        # Buscar hojas 'entrantes' y 'salientes'
-        hoja_entrantes = hojas_nombres.get("entrantes")
-        hoja_salientes = hojas_nombres.get("salientes")
+            elif "salient" in key or "outgoing" in key: # Coincide con saliente, salientes, outgoing...
+                try:
+                    temp = pd.read_excel(file_path, sheet_name=real_name, dtype=str)
+                    temp["tipo_llamada"] = "saliente"
+                    df_list.append(temp)
+                    found_sheets = True
+                except Exception as e:
+                    print(f"⚠️ Error leyendo hoja {real_name}: {e}")
+        
+        if not found_sheets or not df_list:
+            # Si no hay hojas específicas, intentamos leer la primera hoja
+            print("⚠️ No se detectaron hojas 'entrantes/salientes'. Leyendo primera hoja como genérica.")
+            df = pd.read_excel(file_path, sheet_name=0, dtype=str)
+            if "tipo_llamada" not in df.columns:
+                df["tipo_llamada"] = "desconocido" # O intentar deducirlo
+            return df, None
 
-        if not hoja_entrantes and not hoja_salientes:
-            print("⚠️ Error: No se encontraron hojas llamadas 'entrantes' ni 'salientes'.")
-            return None
+        df = pd.concat(df_list, ignore_index=True)
+        return df, None
 
-        # Cargar los DataFrames correspondientes
-        df_entrantes = pd.DataFrame()
-        df_salientes = pd.DataFrame()
+    except Exception as e:
+        return None, str(e)
 
-        if hoja_entrantes:
-            df_entrantes = pd.read_excel(file_path, sheet_name=hoja_entrantes, dtype=str)
-            df_entrantes["tipo_llamada"] = "entrante"
+def procesar_dataframe_con_mapeo(df, mapping):
+    """
+    Recibe el DF crudo y un diccionario de mapeo {nombre_interno: nombre_excel}.
+    Renombra las columnas y procesa los datos.
+    """
+    try:
+        # 1. Renombrar columnas según lo que eligió el usuario
+        # Invertimos el diccionario para el rename de pandas: {col_excel: col_interna}
+        rename_dict = {v: k for k, v in mapping.items()}
+        df = df.rename(columns=rename_dict)
+        
+        # 2. Filtrar solo las columnas que nos interesan (las que existen en el mapeo)
+        cols_to_keep = list(mapping.keys()) + ["tipo_llamada"]
+        # Aseguramos que solo pedimos las que realmente están tras el renombre
+        cols_final = [c for c in cols_to_keep if c in df.columns]
+        df = df[cols_final]
 
-        if hoja_salientes:
-            df_salientes = pd.read_excel(file_path, sheet_name=hoja_salientes, dtype=str)
-            df_salientes["tipo_llamada"] = "saliente"
-
-        # Unir ambas tablas en un solo DataFrame
-        df = pd.concat([df_entrantes, df_salientes], ignore_index=True)
-
-        # Convertir nombres de columnas a minúsculas y eliminar espacios extra
-        df.columns = df.columns.str.lower().str.strip()
-
-        # Columnas requeridas
-        required_columns = ["originador", "receptor", "fecha_hora", "duracion", "latitud_n", "longitud_w"]
-
-        # Verificar si faltan columnas
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            print(f"⚠️ Error: Faltan columnas en el archivo Excel: {missing_columns}")
-            return None
-
-        # ✅ Corrección: Convertir 'fecha_hora' a formato de fecha con dayfirst=True
+        # 3. Procesamiento de Fecha (CRÍTICO)
+        # errors='coerce' transformará en NaT las fechas inválidas
         df["fecha_hora"] = pd.to_datetime(df["fecha_hora"], errors='coerce', dayfirst=True)
+        df.dropna(subset=["fecha_hora"], inplace=True)
+        
+        # 4. Procesamiento de Duración
+        if "duracion" in df.columns:
+            df["duracion"] = pd.to_numeric(df["duracion"], errors='coerce').fillna(0).astype(int)
+        else:
+            df["duracion"] = 0 # Valor por defecto
 
-        # Contar fechas inválidas
-        fechas_invalidas = df["fecha_hora"].isna().sum()
-        if fechas_invalidas > 0:
-            print(f"⚠️ Advertencia: {fechas_invalidas} registros tienen fechas inválidas y se marcarán como 'NaT'.")
-
-        # Asegurar que 'duracion' sea numérico
-        df["duracion"] = pd.to_numeric(df["duracion"], errors='coerce').fillna(0).astype(int)
-
-        # Manejo de coordenadas (reparación de errores en valores numéricos)
+        # 5. Procesamiento de Coordenadas (OPCIONAL)
         def corregir_coordenadas(valor):
-            if pd.isna(valor) or valor in ["", "?", "None"]:
+            if pd.isna(valor) or str(valor).strip() in ["", "?", "None", "nan"]:
                 return np.nan
             try:
                 valor = float(valor)
-                if abs(valor) > 180:  # Detectar errores de formato (ejemplo: 47286 en lugar de 4.7286)
-                    valor /= 10000
+                if abs(valor) > 180: valor /= 10000 # Corrección formato común
                 return valor
             except ValueError:
                 return np.nan
 
-        df["latitud_n"] = df["latitud_n"].apply(corregir_coordenadas)
-        df["longitud_w"] = df["longitud_w"].apply(corregir_coordenadas)
-
-        # Mostrar cuántos registros se cargaron
-        print(f"✅ Archivo Excel cargado correctamente. Total filas: {len(df)}")
+        if "latitud_n" in df.columns:
+            df["latitud_n"] = df["latitud_n"].apply(corregir_coordenadas)
+        else:
+            # Si no existe, no creamos la columna para que el resto del sistema sepa que no hay mapas
+            pass 
+            
+        if "longitud_w" in df.columns:
+            df["longitud_w"] = df["longitud_w"].apply(corregir_coordenadas)
+        
+        print(f"✅ Datos procesados. Filas resultantes: {len(df)}")
         return df
 
     except Exception as e:
-        print(f"❌ Error al cargar el archivo Excel: {e}")
+        print(f"❌ Error procesando el DataFrame: {e}")
         return None
-
-if __name__ == "__main__":
-    archivo_excel = "ruta_al_archivo.xlsx"  # Cambiar por la ruta real
-    df = cargar_datos_excel(archivo_excel)
-    
-    if df is not None:
-        print("🔍 Primeras filas del DataFrame:")
-        print(df.head())
