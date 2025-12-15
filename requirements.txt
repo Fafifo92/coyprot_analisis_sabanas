@@ -1,0 +1,9 @@
+pandas
+numpy
+jinja2
+folium
+matplotlib
+seaborn
+phonenumbers
+openpyxl
+ttkthemes

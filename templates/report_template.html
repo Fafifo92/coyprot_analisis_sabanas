@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Informe de Llamadas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+  <script type="text/javascript" charset="utf8"
+    src="https://cdn.datatables.net/rowgroup/1.1.3/js/dataTables.rowGroup.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../data/call_data.js"></script>
+  <script src="../static/assets_js/interactive_maps.js"></script>
+  <script src="../static/assets_js/interactive_charts.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: Arial, sans-serif;
+      padding-bottom: 20px;
+    }
+
+    .container {
+      margin-top: 30px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      margin-bottom: 20px;
+    }
+
+    .map-container {
+      height: 500px;
+      width: 100%;
+    }
+
+    /* Estilos para la fila de agrupación */
+    #tabla-llamadas tr.group,
+    #tabla-llamadas-salientes tr.group {
+      background-color: #f0f0f5;
+      /* Color de fondo gris claro */
+      font-weight: bold;
+      /* Texto en negrita */
+      border-bottom: 2px solid #ddd;
+      /* Borde inferior más grueso */
+    }
+
+    /* Estilo para el número dentro de la fila de agrupación */
+    #tabla-llamadas tr.group td:first-child,
+    #tabla-llamadas-salientes tr.group td:first-child {
+      padding-left: 20px;
+      /* Agregar espacio a la izquierda */
+    }
+
+    /* Estilos para la paginación */
+    #tabla-llamadas_paginate,
+    #tabla-llamadas-salientes_paginate {
+      margin-top: 10px;
+    }
+
+    #tabla-llamadas_paginate .paginate_button,
+    #tabla-llamadas-salientes_paginate .paginate_button {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      margin: 2px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    #tabla-llamadas_paginate .paginate_button:hover,
+    #tabla-llamadas-salientes_paginate .paginate_button:hover {
+      background-color: #eee;
+    }
+
+    #tabla-llamadas_paginate .paginate_button.current,
+    #tabla-llamadas-salientes_paginate .paginate_button.current {
+      background-color: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 450px;
+      padding-bottom: 50px;
+    }
+
+    .header-images {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      /* Asegura que ocupe todo o ancho */
+      margin-bottom: 20px;
+      /* Espacio debajo de las imágenes */
+    }
+
+    .logo {
+      /* Estilos opcionales para el logo */
+      height: 60px;
+      /* Ejemplo de alto */
+    }
+
+    .info-image {
+      /* Estilos opcionales para la imagen de información */
+      height: 60px;
+      /* Ejemplo de alto */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1 class="text-center">📊 Informe de Llamadas</h1>
+
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button"
+          role="tab" aria-controls="overview" aria-selected="true">Resumen</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="entrantes-tab" data-bs-toggle="tab" data-bs-target="#entrantes" type="button"
+          role="tab" aria-controls="entrantes" aria-selected="false">Llamadas Entrantes</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="salientes-tab" data-bs-toggle="tab" data-bs-target="#salientes" type="button"
+          role="tab" aria-controls="salientes" aria-selected="false">Llamadas Salientes</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tendencias-tab" data-bs-toggle="tab" data-bs-target="#tendencias" type="button"
+          role="tab" aria-controls="tendencias" aria-selected="false">Tendencias</button>
+      </li>
+      {% if pdf_financiero %}
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="financiero-tab" data-bs-toggle="tab" data-bs-target="#financiero" type="button"
+          role="tab" aria-controls="financiero" aria-selected="false">Informe Financiero</button>
+      </li>
+      {% endif %}
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="maps-tab" data-bs-toggle="tab" data-bs-target="#maps" type="button" role="tab"
+          aria-controls="maps" aria-selected="false">Mapas</button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="myTabContent">
+      <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+        <div class="card p-3 mt-3">
+          <h3>📄 Resumen General</h3>
+          {% if datos_generales %}
+            {% for campo, valor in datos_generales.items() %}
+              <p><strong>{{ campo }}:</strong> {{ valor }}</p>
+            {% endfor %}
+          {% endif %}
+          <p>Total de llamadas: <strong>{{ total_llamadas }}</strong></p>
+          <p>Números únicos: <strong>{{ total_numeros }}</strong></p>
+          <p>Llamadas promedio por número: <strong>{{ promedio_llamadas }}</strong></p>
+        </div>
+      </div>
+      
+
+      <div class="tab-pane fade" id="entrantes" role="tabpanel" aria-labelledby="entrantes-tab">
+        <h3 class="mt-4">📞 Detalle de Llamadas Entrantes</h3>
+        <table id="tabla-llamadas-entrantes" class="display">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Fecha y Hora</th>
+              <th>Duración (s)</th>
+              <th>Ubicación</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for numero, detalles in llamadas_entrantes.items() %}
+            {% for llamada in detalles.llamadas %}
+            <tr>
+              <td>{{ numero }}</td>
+              <td>{{ llamada.fecha_hora }}</td>
+              <td>{{ llamada.duracion }}</td>
+              <td>
+                {% if llamada.ubicacion != "N/A" %}
+                <a href="https://www.google.com/maps?q={{ llamada.ubicacion }}" target="_blank">
+                  📍 Ver en mapa
+                </a>
+                {% else %}
+                N/A
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <script>
+          $(document).ready(function () {
+            $('#tabla-llamadas-entrantes').DataTable({
+              rowGroup: {
+                dataSrc: 0 // Agrupar por la primera columna (Número)
+              },
+              paging: true,
+              searching: true,
+              ordering: true,
+              info: true
+            });
+          });
+        </script>
+      </div>
+
+      <div class="tab-pane fade" id="salientes" role="tabpanel" aria-labelledby="salientes-tab">
+        <h3 class="mt-4">📞 Detalle de Llamadas Salientes</h3>
+        <table id="tabla-llamadas-salientes" class="display">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Fecha y Hora</th>
+              <th>Duración (s)</th>
+              <th>Ubicación</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for numero, detalles in llamadas_salientes.items() %}
+            {% for llamada in detalles.llamadas %}
+            <tr>
+              <td>{{ numero }}</td>
+              <td>{{ llamada.fecha_hora }}</td>
+              <td>{{ llamada.duracion }}</td>
+              <td>
+                {% if llamada.ubicacion != "N/A" %}
+                <a href="https://www.google.com/maps?q={{ llamada.ubicacion }}" target="_blank">
+                  📍 Ver en mapa
+                </a>
+                {% else %}
+                N/A
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <script>
+          $(document).ready(function () {
+            $('#tabla-llamadas-salientes').DataTable({
+              rowGroup: {
+                dataSrc: 0 // Agrupar por la primera columna (Número)
+              },
+              paging: true,
+              searching: true,
+              ordering: true,
+              info: true
+            });
+          });
+        </script>
+      </div>
+
+      <div class="tab-pane fade" id="tendencias" role="tabpanel" aria-labelledby="tendencias-tab">
+        <h3 class="mt-5">📈 Gráfico de Llamadas por Hora</h3>
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label for="chart-number-filter" class="form-label">Filtrar por número:</label>
+            <select id="chart-number-filter" placeholder="Buscar número..." autocomplete="off">
+              <option value="">-- Todos los números --</option>
+              {% for numero in numeros_unicos %}
+              <option value="{{ numero }}">{{ numero }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="call-chart"></canvas>
+        </div>
+
+        <h4>Top Llamadas Realizadas</h4>
+        <img src="../graphics/top_llamadas_realizadas.png" alt="Top Llamadas Realizadas" width="100%">
+
+        <h4>Top Llamadas Recibidas</h4>
+        <img src="../graphics/top_llamadas_recibidas.png" alt="Top Llamadas Recibidas" width="100%">
+
+        <h4>Frecuencia de llamadas por hora</h4>
+        <img src="../graphics/grafico_horario_llamadas.png" alt="Frecuencia de Llamadas" width="100%">
+      </div>
+
+      {% if pdf_financiero %}
+      <div class="tab-pane fade" id="financiero" role="tabpanel" aria-labelledby="financiero-tab">
+        <h3 class="mt-4">📑 Informe Financiero</h3>
+        <iframe src="../data/reporte_financiero.pdf" width="100%" height="800px"
+          style="border:1px solid #ccc;"></iframe>
+      </div>
+      {% endif %}
+
+      <div class="tab-pane fade" id="maps" role="tabpanel" aria-labelledby="maps-tab">
+        <h3 class="mt-4">🗺️ Mapa de Llamadas</h3>
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label for="number-filter" class="form-label">Filtrar por número:</label>
+            <input type="text" id="number-filter" class="form-control" placeholder="Ingrese un número">
+          </div>
+          <div class="col-md-4">
+            <label for="call-type-filter" class="form-label">Filtrar por tipo de llamada:</label>
+            <select id="call-type-filter" class="form-control">
+              <option value="all">Todas</option>
+              <option value="entrante">Entrantes</option>
+              <option value="saliente">Salientes</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="map-container" class="map-container">
+          <iframe id="map-frame" src="../maps/mapa_general.html" width="100%" height="500px"></iframe>
+        </div>
+
+        <h4 class="mt-4">Mapa de Calor</h4>
+        <iframe src="../maps/mapa_calor.html" width="100%" height="500px"></iframe>
+      </div>
+    </div>
+    {% if incluir_membrete and logo_path %}
+    <div class="header-images">
+      <img src="../static/assets_img/logo.png" alt="Logo" class="logo">
+      <img src="../static/assets_img/info.png" alt="Información de Contacto" class="info-image">
+    </div>
+    {% endif %}
+  </div>
+</body>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let mapaCalorIframe = document.querySelector('iframe[src*="mapa_calor.html"]');
+
+    // Cuando la pestaña de mapas se activa, recarga el iframe para asegurar que se renderiza con dimensiones correctas
+    document.querySelector('#maps-tab').addEventListener('shown.bs.tab', function () {
+      if (mapaCalorIframe) {
+        const src = mapaCalorIframe.src;
+        mapaCalorIframe.src = '';  // Forzar recarga
+        mapaCalorIframe.src = src;
+      }
+    });
+  });
+</script>
+
+</html>
