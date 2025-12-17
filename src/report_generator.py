@@ -3,9 +3,8 @@ import pandas as pd
 import json
 import shutil
 from jinja2 import Environment, FileSystemLoader
-# Importamos geo_utils de manera condicional o protegida dentro de la función, 
-# pero es mejor importarlas y solo llamarlas si es necesario.
-from geo_utils import generar_mapa_interactivo, generar_mapa_calor
+# Importamos las 3 funciones de mapas mejoradas
+from geo_utils import generar_mapa_agrupado, generar_mapa_rutas, generar_mapa_calor
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 TEMPLATE_DIR = os.path.join(ROOT_DIR, "templates")
@@ -13,10 +12,37 @@ STATIC_DIR = os.path.join(ROOT_DIR, "static")
 
 env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 
+def obtener_nombre_mostrado(numero, nombres_asignados):
+    """
+    Función auxiliar para garantizar que el formato 'Número (Alias)' 
+    sea idéntico en todas partes (HTML, Gráficos, JSON).
+    """
+    numero_str = str(numero).strip()
+    if nombres_asignados and numero_str in nombres_asignados:
+        return f"{numero_str} ({nombres_asignados[numero_str]})"
+    return numero_str
+
+def obtener_top_frecuentes(df, columna_numero, nombres_asignados, top_n=5):
+    """
+    Calcula los números más frecuentes para las cajas de resumen.
+    """
+    if df.empty or columna_numero not in df.columns:
+        return []
+    
+    conteo = df[columna_numero].value_counts().head(top_n)
+    resultado = []
+    for numero, cantidad in conteo.items():
+        nombre_display = obtener_nombre_mostrado(numero, nombres_asignados)
+        resultado.append({
+            'nombre': nombre_display,
+            'frecuencia': cantidad
+        })
+    return resultado
+
 def generar_datos_llamadas_json(df, output_path, nombres_asignados=None):
     """
-    Genera el archivo JS con los datos para los gráficos interactivos.
-    Maneja la ausencia de coordenadas sin romper el código.
+    Genera el archivo call_data.js.
+    Incluye el campo 'numero' con alias para el tooltip interactivo.
     """
     if df.empty:
         print("❌ DataFrame está vacío. No se generará call_data.js")
@@ -29,25 +55,20 @@ def generar_datos_llamadas_json(df, output_path, nombres_asignados=None):
         print(f"❌ Error al crear el directorio: {e}")
         return
 
-    # Verificar si tenemos columnas de coordenadas en este DF
     tiene_coords = "latitud_n" in df.columns and "longitud_w" in df.columns
 
     for _, row in df.iterrows():
-        # Determinar número y nombre
+        # Determinar tipo y participantes
         tipo = row.get("tipo_llamada", "desconocido")
-        originador = row.get("originador", "Desconocido")
-        receptor = row.get("receptor", "Desconocido")
+        originador = str(row.get("originador", "Desconocido"))
+        receptor = str(row.get("receptor", "Desconocido"))
         
-        numero = receptor if tipo == "saliente" else originador
+        # Identificar el número principal de esta fila
+        numero_clave = receptor if tipo == "saliente" else originador
         
-        # Asignar nombre si existe en el diccionario
-        nombre_alias = ""
-        if nombres_asignados and numero in nombres_asignados:
-            nombre_alias = f" ({nombres_asignados[numero]})"
+        # Nombre visual (ej: "300123 (Juan)")
+        numero_mostrar = obtener_nombre_mostrado(numero_clave, nombres_asignados)
         
-        numero_mostrar = f"{numero}{nombre_alias}"
-        
-        # Obtener hora de manera segura
         try:
             hora = row["fecha_hora"].hour
         except:
@@ -56,11 +77,12 @@ def generar_datos_llamadas_json(df, output_path, nombres_asignados=None):
         if numero_mostrar not in call_data:
             call_data[numero_mostrar] = []
 
-        # Extraer coordenadas de forma segura
+        # Extraer coordenadas
         lat = row["latitud_n"] if tiene_coords and pd.notna(row["latitud_n"]) else None
         lon = row["longitud_w"] if tiene_coords and pd.notna(row["longitud_w"]) else None
 
         call_data[numero_mostrar].append({
+            "numero": numero_mostrar, # Campo crítico para el tooltip
             "fecha_hora": row["fecha_hora"].isoformat() if pd.notna(row["fecha_hora"]) else "",
             "hora": hora,
             "tipo_llamada": tipo,
@@ -73,16 +95,16 @@ def generar_datos_llamadas_json(df, output_path, nombres_asignados=None):
             f.write("const CALL_DATA = ")
             json.dump(call_data, f, indent=4)
             f.write(";")
-        print(f"✅ call_data.js generado en: {output_path}")
+        print(f"✅ call_data.js generado correctamente en: {output_path}")
         return output_path
     except Exception as e:
         print(f"❌ Error al guardar call_data.js: {e}")
         return None
 
-def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=None, pdf_financiero_path=None, nombres_asignados=None, datos_generales=None):
+def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=None, lista_adjuntos=None, nombres_asignados=None, datos_generales=None):
     """
     Genera el informe HTML completo.
-    Se adapta dinámicamente si faltan coordenadas u otros datos opcionales.
+    Coordina la creación de los 3 tipos de mapas.
     """
     base_output = os.path.join(ROOT_DIR, "output", nombre_informe)
     reports_dir = os.path.join(base_output, "reports")
@@ -91,129 +113,136 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
     data_dir = os.path.join(base_output, "data")
     static_dir = os.path.join(base_output, "static")
 
-    # Crear directorios necesarios
+    # Crear directorios
     for d in [reports_dir, maps_dir, graphics_dir, data_dir, static_dir]:
         os.makedirs(d, exist_ok=True)
 
-    # --- 1. Gestión del PDF Financiero ---
-    pdf_dest_path = None
-    if pdf_financiero_path and os.path.exists(pdf_financiero_path):
-        try:
-            pdf_dest_path = os.path.join(data_dir, "reporte_financiero.pdf")
-            shutil.copy(pdf_financiero_path, pdf_dest_path)
-            print("✅ PDF financiero copiado.")
-        except Exception as e:
-            print(f"⚠️ No se pudo copiar el PDF financiero: {e}")
+    # --- 1. Procesar Adjuntos (Multi-PDF) ---
+    archivos_procesados = []
+    if lista_adjuntos:
+        print(f"📎 Procesando {len(lista_adjuntos)} adjuntos...")
+        for adjunto in lista_adjuntos:
+            origen = adjunto['ruta']
+            nombre_archivo = adjunto['nombre_archivo']
+            categoria = adjunto['categoria']
+            destino = os.path.join(data_dir, nombre_archivo)
+            
+            try:
+                if os.path.exists(origen):
+                    shutil.copy(origen, destino)
+                    archivos_procesados.append({
+                        "categoria": categoria,
+                        "nombre": nombre_archivo,
+                        "ruta_relativa": f"../data/{nombre_archivo}"
+                    })
+                else:
+                    print(f"  ⚠️ Archivo no encontrado: {origen}")
+            except Exception as e:
+                print(f"  ❌ Error copiando adjunto: {e}")
 
-    # --- 2. Copia de Archivos Estáticos (JS) ---
+    # --- 2. Copiar Estáticos ---
     try:
         js_dest = os.path.join(static_dir, "assets_js")
+        img_dest = os.path.join(static_dir, "assets_img")
         os.makedirs(js_dest, exist_ok=True)
-        # Aseguramos que existan en la fuente antes de copiar
+        os.makedirs(img_dest, exist_ok=True)
+        
         src_map_js = os.path.join(STATIC_DIR, "assets_js", "interactive_maps.js")
         src_chart_js = os.path.join(STATIC_DIR, "assets_js", "interactive_charts.js")
         
-        if os.path.exists(src_map_js):
-            shutil.copy(src_map_js, os.path.join(js_dest, "interactive_maps.js"))
-        if os.path.exists(src_chart_js):
-            shutil.copy(src_chart_js, os.path.join(js_dest, "interactive_charts.js"))
-    except Exception as e:
-        print(f"⚠️ Error copiando scripts JS: {e}")
+        if os.path.exists(src_map_js): shutil.copy(src_map_js, os.path.join(js_dest, "interactive_maps.js"))
+        if os.path.exists(src_chart_js): shutil.copy(src_chart_js, os.path.join(js_dest, "interactive_charts.js"))
+        
+        if logo_path and os.path.exists(logo_path): shutil.copy(logo_path, os.path.join(img_dest, "logo.png"))
+        src_info_img = os.path.join(STATIC_DIR, "assets_img", "info.png")
+        if os.path.exists(src_info_img): shutil.copy(src_info_img, os.path.join(img_dest, "info.png"))
 
-    # --- 3. Detección de Capacidades (Mapas) ---
-    # Verificamos si las columnas existen Y si tienen algún dato válido
+    except Exception as e:
+        print(f"⚠️ Error recursos estáticos: {e}")
+
+    # --- 3. Generar LOS TRES Mapas ---
     has_coords = False
     if "latitud_n" in df.columns and "longitud_w" in df.columns:
         if df["latitud_n"].notna().any() and df["longitud_w"].notna().any():
             has_coords = True
 
-    # Generar mapas SOLO si hay coordenadas
     if has_coords:
-        print("🗺️ Coordenadas detectadas. Generando mapas...")
         try:
-            generar_mapa_interactivo(df, os.path.join(maps_dir, "mapa_general.html"))
+            print("🗺️ Generando set completo de mapas...")
+            
+            # 1. Mapa Agrupado (Clusters)
+            generar_mapa_agrupado(df, os.path.join(maps_dir, "mapa_agrupado.html"), nombres_asignados)
+            
+            # 2. Mapa de Rutas (Cronológico)
+            generar_mapa_rutas(df, os.path.join(maps_dir, "mapa_rutas.html"), nombres_asignados)
+            
+            # 3. Mapa de Calor (Densidad)
             generar_mapa_calor(df, os.path.join(maps_dir, "mapa_calor.html"))
+            
         except Exception as e:
-            print(f"⚠️ Error generando mapas, se omitirán en el informe: {e}")
-            has_coords = False # Desactivar flag si falla la generación
-    else:
-        print("⚠️ No se detectaron coordenadas válidas. Se omitirá la sección de mapas.")
+            print(f"⚠️ Error generando mapas: {e}")
+            has_coords = False
 
-    # --- 4. Preparación de Datos para la Plantilla ---
-    template = env.get_template("report_template.html")
-
+    # --- 4. Preparar Datos ---
     total_llamadas = len(df)
-    # Contamos origen y receptor de forma segura
     uni_orig = df['originador'].dropna().unique() if 'originador' in df.columns else []
     uni_dest = df['receptor'].dropna().unique() if 'receptor' in df.columns else []
-    # Unimos listas y eliminamos duplicados
-    numeros_unicos_set = set(list(uni_orig) + list(uni_dest))
-    total_numeros = len(numeros_unicos_set)
-    promedio_llamadas = total_llamadas / total_numeros if total_numeros > 0 else 0
+    numeros_brutos = set(list(uni_orig) + list(uni_dest))
+    
+    numeros_unicos_lista = sorted([obtener_nombre_mostrado(n, nombres_asignados) for n in numeros_brutos])
+    promedio_llamadas = total_llamadas / len(numeros_brutos) if numeros_brutos else 0
 
+    # Calcular Tops (Cajas)
+    df_entrantes = df[df['tipo_llamada'] == 'entrante']
+    top_entrantes = obtener_top_frecuentes(df_entrantes, 'originador', nombres_asignados)
+
+    df_salientes = df[df['tipo_llamada'] == 'saliente']
+    top_salientes = obtener_top_frecuentes(df_salientes, 'receptor', nombres_asignados)
+
+    # Tablas detalle
     llamadas_entrantes = {}
     llamadas_salientes = {}
     
-    # Lista plana para gráficos
-    # (Jinja la usará, pero los gráficos JS usan call_data.js)
-    
     for _, row in df.iterrows():
-        tipo_llamada = row.get('tipo_llamada', 'desconocido')
-        originador = row.get('originador', 'Desconocido')
-        receptor = row.get('receptor', 'Desconocido')
+        tipo = row.get('tipo_llamada', 'desconocido')
+        originador = str(row.get('originador', 'Desconocido'))
+        receptor = str(row.get('receptor', 'Desconocido'))
         
-        # Obtener alias
-        alias_orig = f" ({nombres_asignados[originador]})" if nombres_asignados and originador in nombres_asignados else ""
-        alias_recep = f" ({nombres_asignados[receptor]})" if nombres_asignados and receptor in nombres_asignados else ""
+        o_show = obtener_nombre_mostrado(originador, nombres_asignados)
+        r_show = obtener_nombre_mostrado(receptor, nombres_asignados)
         
-        o_mostrar = f"{originador}{alias_orig}"
-        r_mostrar = f"{receptor}{alias_recep}"
-        
-        # Ubicación string
-        ubicacion_str = "N/A"
-        if has_coords:
-            lat = row.get('latitud_n')
-            lon = row.get('longitud_w')
-            if pd.notna(lat) and pd.notna(lon):
-                ubicacion_str = f"{lat}, {lon}"
+        loc = f"{row.get('latitud_n')}, {row.get('longitud_w')}" if has_coords and pd.notna(row.get('latitud_n')) else "N/A"
 
-        info_llamada = {
-            'fecha_hora': row['fecha_hora'],
-            'duracion': row.get('duracion', 0),
-            'ubicacion': ubicacion_str
-        }
+        info = {'fecha_hora': row['fecha_hora'], 'duracion': row.get('duracion', 0), 'ubicacion': loc}
 
-        if tipo_llamada == "saliente":
-            if r_mostrar not in llamadas_salientes:
-                llamadas_salientes[r_mostrar] = {'llamadas': []}
-            llamadas_salientes[r_mostrar]['llamadas'].append(info_llamada)
-            
-        elif tipo_llamada == "entrante":
-            if o_mostrar not in llamadas_entrantes:
-                llamadas_entrantes[o_mostrar] = {'llamadas': []}
-            llamadas_entrantes[o_mostrar]['llamadas'].append(info_llamada)
+        if tipo == "saliente":
+            if r_show not in llamadas_salientes: llamadas_salientes[r_show] = {'llamadas': []}
+            llamadas_salientes[r_show]['llamadas'].append(info)
+        elif tipo == "entrante":
+            if o_show not in llamadas_entrantes: llamadas_entrantes[o_show] = {'llamadas': []}
+            llamadas_entrantes[o_show]['llamadas'].append(info)
 
-    # Ordenar números para el filtro
-    numeros_unicos_lista = sorted(list(numeros_unicos_set))
-
-    # --- 5. Renderizado ---
+    # --- 5. Renderizar ---
+    template = env.get_template("report_template.html")
     html_content = template.render(
         total_llamadas=total_llamadas,
-        total_numeros=total_numeros,
+        total_numeros=len(numeros_brutos),
         promedio_llamadas=round(promedio_llamadas, 2),
         llamadas_entrantes=llamadas_entrantes,
         llamadas_salientes=llamadas_salientes,
         numeros_unicos=numeros_unicos_lista,
+        top_entrantes=top_entrantes,
+        top_salientes=top_salientes,
         incluir_membrete=incluir_membrete,
         logo_path=logo_path,
-        pdf_financiero=bool(pdf_dest_path),
+        adjuntos=archivos_procesados,
         datos_generales=datos_generales or {},
-        has_coords=has_coords # <--- Flag Clave para la plantilla
+        has_coords=has_coords
     )
 
     informe_path = os.path.join(reports_dir, "informe_llamadas.html")
     with open(informe_path, "w", encoding="utf-8") as f:
         f.write(html_content)
     
-    print(f'✅ Informe HTML generado exitosamente en: {informe_path}')
+    print(f'✅ Informe generado: {informe_path}')
     return base_output

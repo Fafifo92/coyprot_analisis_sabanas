@@ -1,241 +1,247 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const chartSelect = document.getElementById("chart-number-filter");
-    const canvas = document.getElementById("call-chart");
+// Variables globales
+let currentFilter = 'entrante'; 
+let callChart = null;
 
-    if (!chartSelect || !canvas) {
-        console.error("❌ Elementos requeridos no encontrados en el DOM.");
-        return;
-    }
+// Función global para los botones HTML
+window.setChartFilter = function(type) {
+    currentFilter = type;
+    
+    // Actualizar visualmente los botones
+    document.querySelectorAll('.filter-btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    const activeBtn = document.getElementById(`btn-${type}`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // Actualizar gráfico y cerrar tooltip si estaba abierto
+    updateChartData();
+    hideTooltip();
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+    const canvas = document.getElementById("call-chart");
+    const select = document.getElementById("chart-number-filter");
+
+    if (!canvas || !select) return;
+
+    const ctx = canvas.getContext("2d");
 
     if (typeof TomSelect !== "undefined") {
         new TomSelect("#chart-number-filter", {
-            allowEmptyOption: true,
-            placeholder: "Buscar número...",
-            maxOptions: 100,
-            sortField: { field: "text", direction: "asc" }
+            create: false,
+            sortField: { field: "text", direction: "asc" },
+            placeholder: "Escribe para filtrar...",
+            allowEmptyOption: true
         });
     }
 
-    const ctx = canvas.getContext("2d");
-    let callChart;
-    let currentFilter = 'todas';
-    let tooltipEl = null;
-    let tooltipOpen = false;
-
-    function createFilterButton(type, color, label) {
-        const btn = document.createElement("button");
-        btn.className = `btn btn-sm fw-bold me-2 btn-outline-${color}`;
-        btn.textContent = label;
-        btn.dataset.type = type;
-        btn.style.borderWidth = "2px";
-        btn.addEventListener("click", () => {
-            currentFilter = type;
-            document.querySelectorAll(".chart-filter-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            updateChart();
-        });
-        btn.classList.add("chart-filter-btn");
-        return btn;
-    }
-
-    const chartContainer = canvas.closest(".chart-container");
-    if (chartContainer && !chartContainer.querySelector(".filter-buttons-container")) {
-        const buttonGroup = document.createElement("div");
-        buttonGroup.className = "d-flex justify-content-center mb-3 mt-2 filter-buttons-container";
-        buttonGroup.appendChild(createFilterButton("entrante", "primary", "Entrantes"));
-        buttonGroup.appendChild(createFilterButton("todas", "warning", "Todas"));
-        buttonGroup.appendChild(createFilterButton("saliente", "success", "Salientes"));
-        chartContainer.insertBefore(buttonGroup, canvas);
-    }
-
-    function getCallData(numero) {
-        if (typeof CALL_DATA === "undefined") return [];
-        return numero ? CALL_DATA[numero] || [] : [];
-    }
-
-    function crearTooltipSiNoExiste() {
-        if (!tooltipEl) {
-            tooltipEl = document.createElement("div");
-            tooltipEl.id = 'chartjs-tooltip';
-            tooltipEl.style.background = 'rgba(0, 0, 0, 0.85)';
-            tooltipEl.style.borderRadius = '8px';
-            tooltipEl.style.color = 'white';
-            tooltipEl.style.maxHeight = '250px';
-            tooltipEl.style.overflowY = 'auto';
-            tooltipEl.style.pointerEvents = 'auto';
-            tooltipEl.style.position = 'absolute';
-            tooltipEl.style.transition = 'all .1s ease';
-            tooltipEl.style.padding = '10px';
-            tooltipEl.style.fontSize = '13px';
-            tooltipEl.style.zIndex = 9999;
-            tooltipEl.style.display = 'none';
-            document.body.appendChild(tooltipEl);
-        }
-    }
-
-    function mostrarTooltip(dataIndex, evt) {
-        const numero = chartSelect.value.trim();
-        const llamadas = getCallData(numero).filter(call => {
-            const hora = new Date(call.fecha_hora).getHours();
-            const tipo = currentFilter === "todas" || call.tipo_llamada === currentFilter;
-            return hora === dataIndex && tipo;
-        });
-
-        if (llamadas.length === 0) return;
-
-        const hora12 = dataIndex % 12 === 0 ? 12 : dataIndex % 12;
-        const ampm = dataIndex < 12 ? "AM" : "PM";
-        const horaLabel = `${hora12} ${ampm}`;
-
-        tooltipEl.innerHTML = `
-            <b>${horaLabel} — ${llamadas.length} llamada${llamadas.length !== 1 ? 's' : ''}</b><br>
-            ${llamadas.map(ll => {
-                const fecha = new Date(ll.fecha_hora).toISOString().split("T")[0];
-                return `
-                    • ${numero} el ${fecha}
-                    <a href="https://www.google.com/maps?q=${ll.latitud},${ll.longitud}" 
-                       target="_blank" 
-                       class="btn btn-sm btn-link text-danger ms-1 p-0"
-                       title="Mostrar en Google Maps">📍</a>
-                `;
-            }).join("<br>")}
-        `;
-
-        tooltipEl.style.left = evt.clientX + 10 + 'px';
-        tooltipEl.style.top = evt.clientY + 10 + 'px';
-        tooltipEl.style.display = 'block';
-        tooltipOpen = true;
-    }
-
-    function ocultarTooltip() {
-        if (tooltipEl) {
-            tooltipEl.style.display = 'none';
-            tooltipOpen = false;
-        }
-    }
-
-    function updateChart() {
-        const numero = chartSelect.value.trim();
-        const data = getCallData(numero);
-
-        const horas = Array.from({ length: 24 }, (_, i) => i);
-        const counts = {
-            entrante: new Array(24).fill(0),
-            saliente: new Array(24).fill(0),
-            todas: new Array(24).fill(0)
-        };
-
-        data.forEach(call => {
-            const hora = new Date(call.fecha_hora).getHours();
-            const tipo = call.tipo_llamada;
-            if (tipo === 'entrante') counts.entrante[hora]++;
-            else if (tipo === 'saliente') counts.saliente[hora]++;
-            counts.todas[hora]++;
-        });
-
-        if (callChart) callChart.destroy();
-
-        const colores = {
-            todas: { borde: 'orange', fondo: 'rgba(255,165,0,0.2)' },
-            entrante: { borde: 'blue', fondo: 'rgba(0,0,255,0.2)' },
-            saliente: { borde: 'green', fondo: 'rgba(0,128,0,0.2)' }
-        };
-
-        const color = colores[currentFilter];
-
-        crearTooltipSiNoExiste();
-
-        callChart = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: horas.map(h => {
-                    const hora12 = h % 12 === 0 ? 12 : h % 12;
-                    const ampm = h < 12 ? "AM" : "PM";
-                    return `${hora12} ${ampm}`;
-                }),
-                datasets: [{
-                    label: "Llamadas por hora",
-                    data: counts[currentFilter],
-                    borderColor: color.borde,
-                    backgroundColor: color.fondo,
-                    fill: true,
-                    pointBackgroundColor: color.borde,
-                    borderWidth: 2,
-                    pointRadius: 6,
-                    hitRadius: 12,
-                    hoverRadius: 10
-                }]
+    callChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array.from({length: 24}, (_, i) => {
+                const ampm = i < 12 ? 'AM' : 'PM';
+                const hora = i % 12 === 0 ? 12 : i % 12;
+                return `${hora} ${ampm}`;
+            }),
+            datasets: [{
+                label: 'Llamadas',
+                data: new Array(24).fill(0),
+                fill: true,
+                tension: 0.3,
+                borderWidth: 3,
+                pointRadius: 6, 
+                pointHoverRadius: 9, 
+                pointBackgroundColor: '#fff',
+                pointBorderWidth: 3,
+                pointHitRadius: 15 // Facilita el click
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 600, easing: 'easeOutQuart' },
+            interaction: {
+                mode: 'nearest',
+                intersect: true
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    tooltip: { enabled: false },
-                    legend: {
-                        display: true,
-                        labels: {
-                            color: color.borde,
-                            font: { size: 16, weight: "bold" },
-                            boxWidth: 20,
-                            boxHeight: 12
-                        },
-                        title: {
-                            display: true,
-                            text: "📈 Leyenda de Datos",
-                            color: "black",
-                            font: { size: 14, weight: "bold" },
-                            padding: 10
-                        }
-                    }
-                },
-                onClick: (evt, elements) => {
-                    if (elements.length > 0) {
-                        const index = elements[0].index;
-                        mostrarTooltip(index, evt.native);
-                    } else {
-                        ocultarTooltip();
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: "Hora del día",
-                            color: "black",
-                            font: { size: 18, weight: "bold" },
-                            padding: { top: 10 }
-                        },
-                        ticks: {
-                            color: "#333",
-                            font: { size: 12 }
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: "Número de llamadas",
-                            color: "black",
-                            font: { size: 18, weight: "bold" },
-                            padding: { bottom: 10 }
-                        },
-                        ticks: {
-                            beginAtZero: true,
-                            stepSize: 1,
-                            precision: 0,
-                            color: "#333",
-                            font: { size: 12 }
-                        }
-                    }
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false } // Desactivar nativo
+            },
+            onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const index = elements[0].index;
+                    // Pasamos el evento nativo para obtener coordenadas exactas del mouse
+                    showStickyTooltip(index, e.native);
+                } else {
+                    hideTooltip();
                 }
+            },
+            onHover: (e, el) => {
+                e.native.target.style.cursor = el.length ? 'pointer' : 'default';
             }
-        });
-    }
-
-    document.addEventListener("click", function (e) {
-        if (tooltipOpen && tooltipEl && !tooltipEl.contains(e.target) && !canvas.contains(e.target)) {
-            ocultarTooltip();
         }
     });
 
-    chartSelect.addEventListener("change", updateChart);
-    updateChart();
+    updateChartData();
+    select.addEventListener("change", () => {
+        updateChartData();
+        hideTooltip();
+    });
 });
+
+// --- TOOLTIP INTERACTIVO FIJO (STICKY) ---
+function showStickyTooltip(dataIndex, event) {
+    let tooltipEl = document.getElementById('chartjs-tooltip');
+    
+    if (!tooltipEl) {
+        tooltipEl = document.createElement('div');
+        tooltipEl.id = 'chartjs-tooltip';
+        document.body.appendChild(tooltipEl);
+    }
+
+    const callsForHour = getCallsForHour(dataIndex);
+    
+    // Calcular rango horario
+    const horaFin = dataIndex + 1;
+    const labelHora = `${dataIndex}:00 - ${horaFin}:00`;
+
+    let innerHtml = `
+        <div class="tooltip-header d-flex justify-content-between align-items-center">
+            <span><b>${labelHora}</b> (${callsForHour.length} llamadas)</span>
+            <button onclick="hideTooltip()" style="background:none;border:none;color:#adb5bd;font-size:18px;cursor:pointer;line-height:1;">&times;</button>
+        </div>
+        <div class="tooltip-body">
+    `;
+
+    if (callsForHour.length > 0) {
+        // Limitar a mostrar max 50 para no bloquear el navegador si son demasiadas
+        callsForHour.slice(0, 50).forEach(call => {
+            const fechaObj = new Date(call.fecha_hora);
+            const fechaStr = fechaObj.toISOString().split('T')[0];
+            
+            // Usamos el dato "numero" que viene del backend
+            const nombreDisplay = call.numero || "Desconocido";
+
+            let icon = '';
+            if (call.latitud && call.longitud) {
+                icon = `<a href="https://www.google.com/maps?q=${call.latitud},${call.longitud}" 
+                           target="_blank" class="btn-map-pin" title="Ver en Mapa">📍</a>`;
+            } else {
+                icon = `<span style="opacity:0.2; cursor:default">📞</span>`;
+            }
+
+            innerHtml += `
+                <div class="tooltip-row">
+                    <div style="flex-grow:1; margin-right:10px;">
+                        <div style="font-weight:600; color:#fff; font-size:11px;">${nombreDisplay}</div>
+                        <div style="font-size:10px; color:#adb5bd;">${fechaStr}</div>
+                    </div>
+                    <div>${icon}</div>
+                </div>
+            `;
+        });
+        
+        if(callsForHour.length > 50){
+             innerHtml += `<div class="p-2 text-center text-muted" style="font-size:10px">... y ${callsForHour.length - 50} más</div>`;
+        }
+    } else {
+        innerHtml += '<div class="p-3 text-muted text-center">No hay detalles disponibles.</div>';
+    }
+    
+    innerHtml += '</div>';
+    tooltipEl.innerHTML = innerHtml;
+
+    // --- POSICIONAMIENTO EXACTO (MOUSE) ---
+    const x = event.pageX;
+    const y = event.pageY;
+
+    tooltipEl.style.display = 'block';
+    tooltipEl.style.opacity = 1;
+    
+    // Ajuste inteligente para que no se salga de la pantalla
+    // Si el click es muy a la derecha, mostrar tooltip a la izquierda del mouse
+    if (x + 280 > window.innerWidth) {
+        tooltipEl.style.left = (x - 270) + 'px'; 
+    } else {
+        tooltipEl.style.left = (x + 15) + 'px'; 
+    }
+    
+    tooltipEl.style.top = (y - 50) + 'px';
+}
+
+window.hideTooltip = function() {
+    const el = document.getElementById('chartjs-tooltip');
+    if (el) {
+        el.style.opacity = 0;
+        setTimeout(() => { el.style.display = 'none'; }, 200);
+    }
+}
+
+// --- HELPERS ---
+function getCallsForHour(horaIndex) {
+    const select = document.getElementById("chart-number-filter");
+    const numeroSeleccionado = select.value;
+    if (typeof CALL_DATA === "undefined") return [];
+
+    let rawData = [];
+    if (numeroSeleccionado && CALL_DATA[numeroSeleccionado]) {
+        rawData = CALL_DATA[numeroSeleccionado];
+    } else {
+        Object.values(CALL_DATA).forEach(arr => rawData.push(...arr));
+    }
+
+    return rawData.filter(call => {
+        const matchFilter = currentFilter === 'todas' || call.tipo_llamada === currentFilter;
+        let h = call.hora;
+        if (h === undefined && call.fecha_hora) h = new Date(call.fecha_hora).getHours();
+        return matchFilter && h === horaIndex;
+    });
+}
+
+function updateChartData() {
+    if (!callChart) return;
+    const select = document.getElementById("chart-number-filter");
+    const numeroSeleccionado = select.value;
+    if (typeof CALL_DATA === "undefined") return;
+
+    let rawData = [];
+    if (numeroSeleccionado && CALL_DATA[numeroSeleccionado]) {
+        rawData = CALL_DATA[numeroSeleccionado];
+    } else {
+        Object.values(CALL_DATA).forEach(arr => rawData.push(...arr));
+    }
+
+    const horas = new Array(24).fill(0);
+    rawData.forEach(call => {
+        let h = call.hora;
+        if (h === undefined && call.fecha_hora) h = new Date(call.fecha_hora).getHours();
+        if (currentFilter === 'todas' || call.tipo_llamada === currentFilter) {
+            if (h >= 0 && h < 24) horas[h]++;
+        }
+    });
+
+    const dataset = callChart.data.datasets[0];
+    dataset.data = horas;
+
+    if (currentFilter === 'entrante') {
+        dataset.borderColor = '#0d6efd'; 
+        dataset.backgroundColor = 'rgba(13, 110, 253, 0.15)';
+        dataset.pointBorderColor = '#0d6efd';
+    } else if (currentFilter === 'saliente') {
+        dataset.borderColor = '#198754'; 
+        dataset.backgroundColor = 'rgba(25, 135, 84, 0.15)';
+        dataset.pointBorderColor = '#198754';
+    } else {
+        dataset.borderColor = '#ffc107'; 
+        dataset.backgroundColor = 'rgba(255, 193, 7, 0.15)';
+        dataset.pointBorderColor = '#ffc107';
+    }
+
+    callChart.update();
+}
