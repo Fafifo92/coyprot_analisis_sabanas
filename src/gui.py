@@ -5,11 +5,11 @@ from tkinter import filedialog, messagebox, ttk, scrolledtext, simpledialog
 from ttkthemes import ThemedTk
 import pandas as pd
 import os
+import sys
 import shutil
 import logging
 import threading
 import queue
-import sys
 import subprocess
 
 # --- IMPORTACIONES LOCALES ---
@@ -58,7 +58,7 @@ CATEGORIAS_PDF = ["Financiero", "Propiedades", "Vehículos", "Judicial", "Antece
 class CallAnalyzerGUI(ThemedTk):
     def __init__(self):
         super().__init__(theme="adapta") 
-        self.title("📊 Analizador de Llamadas Pro v2.2")
+        self.title("📊 Analizador de Llamadas Pro v2.3")
         self.geometry("980x750")
         self.minsize(850, 650)
 
@@ -182,12 +182,12 @@ class CallAnalyzerGUI(ThemedTk):
     # --- LÓGICA DE ADJUNTOS (Igual que antes) ---
     def agregar_pdf_adjunto(self):
         if self.is_processing: return
-        path = filedialog.askopenfilename(filetypes=[("PDF", "*.pdf")])
-        if not path: return
+        filepath = filedialog.askopenfilename(title="Seleccionar PDF Adjunto", filetypes=[("Archivos PDF", "*.pdf")])
+        if not filepath: return
         cat = self.pedir_categoria_dialogo()
         if not cat: return 
-        fname = os.path.basename(path)
-        self.lista_pdfs.append({"categoria": cat, "ruta": path, "nombre_archivo": fname})
+        fname = os.path.basename(filepath)
+        self.lista_pdfs.append({"categoria": cat, "ruta": filepath, "nombre_archivo": fname})
         self.tree_adj.insert("", "end", values=(cat, fname))
         self.logger.info(f"📎 Adjuntado: {fname} ({cat})")
 
@@ -210,7 +210,7 @@ class CallAnalyzerGUI(ThemedTk):
             self.tree_adj.delete(item)
             self.logger.info(f"🗑️ Eliminado: {v[1]}")
 
-    # --- CARGA (Igual) ---
+    # --- CARGA ---
     def cargar_archivo(self):
         if self.is_processing: return
         path = filedialog.askopenfilename(filetypes=[("Excel", "*.xlsx *.xls *.csv")])
@@ -476,8 +476,12 @@ class CallAnalyzerGUI(ThemedTk):
             self.btn_datos.config(state=tk.NORMAL)
 
     def mostrar_url(self, url):
+        # FIX URL VACÍA: Separamos creación e inserción
         w = tk.Toplevel(self); w.title("URL"); w.geometry("600x150")
-        ttk.Entry(w, width=70).pack(pady=10).insert(0, url)
+        e = ttk.Entry(w, width=70)
+        e.pack(pady=10)
+        e.insert(0, url)
+        e.config(state="readonly")
         ttk.Button(w, text="Copiar", command=lambda: [self.clipboard_clear(), self.clipboard_append(url)]).pack()
 
 if __name__ == "__main__":
