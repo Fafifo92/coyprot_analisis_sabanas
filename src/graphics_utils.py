@@ -1,77 +1,94 @@
 import os
+import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import logging
 
-def generar_grafico_top_llamadas(datos, columna, titulo, output_path, ascendente=False):
+logger = logging.getLogger()
+plt.style.use('default')
+
+def generar_grafico_top_llamadas(datos, columna, titulo, output_path, nombres_asignados=None, ascendente=False):
     """
-    Genera un gráfico de barras con el top de llamadas realizadas o recibidas.
+    Genera gráfico de barras Top 10 blindado contra errores de ordenamiento.
     """
-    if datos.empty:
-        print(f"⚠️ No hay datos suficientes para generar {titulo}.")
+    if datos is None or datos.empty or columna not in datos.columns:
         return None
-    
-    top_datos = datos[columna].value_counts().sort_values(ascending=ascendente).head(10)  # Tomar los 10 más frecuentes o menos frecuentes
-    
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x=top_datos.index, y=top_datos.values, hue=top_datos.index, legend=False)
-    plt.xlabel("Número")
-    plt.ylabel("Frecuencia")
-    plt.title(titulo)
-    plt.xticks(rotation=45)
+
+    try:
+        # Calcular Top 10
+        # BLINDAJE: value_counts ordena solo (descendente por defecto)
+        conteo = datos[columna].astype(str).value_counts()
+        
+        # Aplicar orden explícito seguro
+        if ascendente:
+            conteo = conteo.sort_values(ascending=True)
+        else:
+            conteo = conteo.sort_values(ascending=False)
+            
+        top_datos = conteo.head(10)
+    except Exception as e:
+        logger.error(f"Error calculando frecuencias para '{titulo}': {e}")
+        return None
+
+    if top_datos.empty:
+        return None
+
+    # Etiquetas personalizadas
+    etiquetas = []
+    for num_str in top_datos.index:
+        nombre = nombres_asignados.get(num_str) if nombres_asignados else None
+        etiquetas.append(f"{num_str}\n({nombre})" if nombre else num_str)
+
+    # Generar Gráfico
+    fig, ax = plt.subplots(figsize=(12, 7))
+    try:
+        sns.barplot(x=etiquetas, y=top_datos.values, palette="tab10", ax=ax)
+    except:
+        plt.close(fig); return None
+
+    ax.set_title(titulo, fontsize=14, fontweight='bold')
+    ax.tick_params(axis='x', labelsize=9)
+    plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
-    
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    plt.savefig(output_path)
-    plt.close()
-    print(f"✅ {titulo} guardado en: {output_path}")
-    return output_path
+
+    try:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        fig.savefig(output_path, dpi=100, bbox_inches='tight')
+        plt.close(fig)
+    except:
+        plt.close(fig)
 
 def generar_grafico_horario_llamadas(datos, output_path):
-    """
-    Genera un gráfico de líneas con la frecuencia de llamadas por hora.
-    """
-    if "fecha_hora" not in datos.columns:
-        print("⚠️ No hay datos de fecha y hora para generar el gráfico.")
+    if datos is None or datos.empty or "fecha_hora" not in datos.columns:
         return None
     
-    datos["hora"] = datos["fecha_hora"].dt.hour
-    conteo_horas = datos["hora"].value_counts().sort_index()
-    
-    plt.figure(figsize=(10, 5))
-    sns.lineplot(x=conteo_horas.index, y=conteo_horas.values, marker="o", color="blue")
-    plt.xlabel("Hora del día")
-    plt.ylabel("Número de llamadas")
-    plt.title("Frecuencia de llamadas por hora")
-    plt.xticks(range(24))
-    plt.grid(True)
-    
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    plt.savefig(output_path)
-    plt.close()
-    print(f"✅ Gráfico de llamadas por hora guardado en: {output_path}")
-    return output_path
+    # Copia segura y validación de tipos
+    try:
+        df = datos.copy()
+        if not pd.api.types.is_datetime64_any_dtype(df['fecha_hora']):
+            df['fecha_hora'] = pd.to_datetime(df['fecha_hora'], errors='coerce')
+        df.dropna(subset=['fecha_hora'], inplace=True)
+        
+        if df.empty: return None
 
-def generar_graficos_todos(datos):
-    """
-    Genera todos los gráficos de llamadas, separando entrantes y salientes.
-    """
-    output_dir = "output/graphics"
-    os.makedirs(output_dir, exist_ok=True)
+        # Conteo por hora
+        df["hora"] = df["fecha_hora"].dt.hour
+        conteo = df["hora"].value_counts().sort_index().reindex(range(24), fill_value=0)
+    except:
+        return None
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.lineplot(x=conteo.index, y=conteo.values, marker="o", color="dodgerblue", ax=ax)
     
-    # Top llamadas
-    generar_grafico_top_llamadas(datos, "originador", "Top Llamadas Recibidas", os.path.join(output_dir, "top_llamadas_recibidas.png"))
-    generar_grafico_top_llamadas(datos, "receptor", "Top Llamadas Realizadas", os.path.join(output_dir, "top_llamadas_realizadas.png"))
-       
-    # Gráfico horario
-    generar_grafico_horario_llamadas(datos, os.path.join(output_dir, "grafico_horario_llamadas.png"))
-    
-    print("✅ Todos los gráficos han sido generados correctamente.")
-    
-if __name__ == "__main__":
-    archivo_excel = "ruta_al_archivo.xlsx"  # Cambiar por la ruta real
-    df = pd.read_excel(archivo_excel)
-    df["fecha_hora"] = pd.to_datetime(df["fecha_hora"], errors='coerce')
-    df.dropna(subset=["fecha_hora"], inplace=True)
-    
-    generar_graficos_todos(df)
+    ax.set_title("Frecuencia por Hora", fontsize=14)
+    ax.set_xticks(range(24))
+    ax.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
+
+    try:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        fig.savefig(output_path, dpi=100)
+        plt.close(fig)
+    except:
+        plt.close(fig)

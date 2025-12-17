@@ -8,7 +8,7 @@ class ColumnMapperDialog(tk.Toplevel):
     def __init__(self, parent, available_columns):
         super().__init__(parent)
         self.title("🔗 Mapeo de Columnas")
-        self.geometry("550x500")
+        self.geometry("550x550")
         self.transient(parent)
         self.grab_set()
         
@@ -22,8 +22,9 @@ class ColumnMapperDialog(tk.Toplevel):
             "receptor": "Número Destino",
             "fecha_hora": "Fecha y Hora",
             "duracion": "Duración (seg)",
-            "latitud_n": "Latitud (Decimal)",
-            "longitud_w": "Longitud (Decimal)"
+            "nombre_celda": "Nombre Celda/Antena (Opcional para Mapa)", # <--- NUEVO
+            "latitud_n": "Latitud (Decimal - Opcional)",
+            "longitud_w": "Longitud (Decimal - Opcional)"
         }
         
         self.selections = {}
@@ -33,8 +34,8 @@ class ColumnMapperDialog(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.on_cancel)
         
     def create_widgets(self):
-        ttk.Label(self, text="⚠️ Coincidencia de columnas requerida", font=("Arial", 11, "bold")).pack(pady=10)
-        ttk.Label(self, text="El sistema necesita identificar qué columna de tu Excel corresponde a cada dato.", wraplength=500).pack(pady=(0, 15))
+        ttk.Label(self, text="⚠️ Configuración de Datos", font=("Arial", 11, "bold")).pack(pady=10)
+        ttk.Label(self, text="Relaciona las columnas de tu Excel con los datos que necesita el sistema.", wraplength=500).pack(pady=(0, 15))
         
         frame_form = ttk.Frame(self, padding=10)
         frame_form.pack(fill="both", expand=True)
@@ -53,12 +54,19 @@ class ColumnMapperDialog(tk.Toplevel):
             for col in self.available_columns:
                 if col == "(No existe / Omitir)": continue
                 
-                # Normalizamos nombres para comparar (minusculas, sin guiones)
+                # Normalizamos nombres para comparar
                 clean_col = col.lower().replace("_", "").replace(" ", "").replace(".", "")
                 clean_internal = internal_name.split("_")[0] # ej: 'latitud' de 'latitud_n'
                 
-                # Si el nombre interno está en la columna del excel (ej: 'lat' en 'Latitud_GPS')
-                if clean_internal in clean_col:
+                # Excepción para nombre de celda (busca 'celda', 'site', 'bts', 'antena')
+                if internal_name == "nombre_celda":
+                    if any(x in clean_col for x in ['celda', 'site', 'bts', 'nom', 'ant']):
+                        combo.set(col)
+                        match_found = True
+                        break
+                
+                # Si el nombre interno está en la columna del excel
+                elif clean_internal in clean_col:
                     combo.set(col)
                     match_found = True
                     break

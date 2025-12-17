@@ -1,39 +1,76 @@
+// Variable global para rastrear qué mapa estamos viendo
+let currentMapType = 'agrupado'; // Por defecto: Clusters (Agrupado)
+
 document.addEventListener("DOMContentLoaded", function () {
     const filterInput = document.getElementById("number-filter");
-    const typeFilter = document.getElementById("call-type-filter");
-    const mapFrame = document.getElementById("map-frame");
 
-    if (!filterInput || !typeFilter || !mapFrame) {
-        console.error("❌ No se encontraron los elementos requeridos del mapa.");
-        return;
-    }
+    // Configurar el buscador si existe
+    if (filterInput) {
+        // Implementar "Debounce": Esperar a que el usuario termine de escribir
+        let timeout = null;
+        
+        filterInput.addEventListener("input", () => {
+            clearTimeout(timeout);
+            // Esperar 1 segundo después de la última tecla antes de recargar el mapa
+            timeout = setTimeout(updateMapUrl, 1000); 
+        });
 
-    filterInput.addEventListener("input", updateMap);
-    typeFilter.addEventListener("change", updateMap);
-
-    function extraerNumeroBase(valor) {
-        const match = valor.match(/^([\d+]+)(\s+\(.+\))?$/);
-        return match ? match[1] : valor.trim();
-    }
-
-    function updateMap() {
-        const seleccionado = filterInput.value.trim();
-        const numero = extraerNumeroBase(seleccionado);
-        const tipo = typeFilter.value;
-
-        let baseMapUrl = "../maps/mapa_general.html";
-        const params = [];
-
-        if (numero) {
-            params.push(`number=${encodeURIComponent(numero)}`);
-        }
-        if (tipo && tipo !== "all") {
-            params.push(`type=${encodeURIComponent(tipo)}`);
-        }
-        if (params.length > 0) {
-            baseMapUrl += "?" + params.join("&");
-        }
-
-        mapFrame.src = baseMapUrl;
+        // Permitir búsqueda inmediata al presionar Enter
+        filterInput.addEventListener("keypress", (e) => {
+            if (e.key === 'Enter') {
+                clearTimeout(timeout);
+                updateMapUrl();
+            }
+        });
     }
 });
+
+// --- Función Principal: Cambiar Tipo de Mapa ---
+// Esta función es llamada por los botones del HTML (onclick="switchMap(...)")
+window.switchMap = function(type) {
+    currentMapType = type;
+    
+    // 1. Actualizar visualmente los botones (Highlight del activo)
+    // Quitamos la clase 'active' de todos los botones de mapa
+    document.querySelectorAll('[id^="btn-map-"]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Ponemos la clase 'active' al botón presionado
+    const activeBtn = document.getElementById(`btn-map-${type}`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+
+    // 2. Actualizar la fuente del Iframe
+    updateMapUrl();
+};
+
+// --- Función Auxiliar: Actualizar el Iframe ---
+function updateMapUrl() {
+    const iframe = document.getElementById('main-map-frame');
+    if (!iframe) return;
+
+    const filterInput = document.getElementById("number-filter");
+    const busqueda = filterInput ? filterInput.value.trim() : "";
+
+    // Construir la URL base según el tipo seleccionado actualmente
+    // Los archivos esperados son: mapa_agrupado.html, mapa_rutas.html, mapa_calor.html
+    let baseUrl = `../maps/mapa_${currentMapType}.html`;
+
+    // Lógica para enviar el filtro al mapa (si el mapa tuviera JS interno para leerlo)
+    // Aunque Folium es estático, mantenemos la estructura URL por si agregas lógica custom después.
+    if (busqueda) {
+        // Intentar limpiar el input: Si es "300123 (Juan)", nos quedamos con "300123"
+        const match = busqueda.match(/^([\d+]+)/); 
+        const numeroLimpio = match ? match[1] : busqueda;
+        
+        // Añadimos el parámetro (útil si inspeccionas la URL o si inyectas JS en el futuro)
+        baseUrl += `?filter=${encodeURIComponent(numeroLimpio)}`;
+        
+        console.log(`🔍 Buscando en mapa: ${numeroLimpio} (Modo: ${currentMapType})`);
+    }
+
+    // Asignar la nueva URL al iframe provoca la recarga
+    iframe.src = baseUrl;
+}
