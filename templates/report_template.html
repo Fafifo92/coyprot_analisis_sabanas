@@ -516,7 +516,25 @@
 
           <hr class="my-5 opacity-25">
 
-          <h5 class="text-secondary text-center mb-4 text-uppercase fw-bold small ls-1">Gráficos Estáticos (Exportables)
+          <h5 class="text-secondary text-center mb-4 text-uppercase fw-bold small ls-1">Gráficos de Ubicación (Municipios/Celdas)</h5>
+          
+          <div class="row g-4 mb-5">
+            <div class="col-md-6">
+              <div class="card h-100 border p-2 text-center shadow-none">
+                <h6 class="fw-bold my-2 text-primary">Top Origen + Ubicación (Entrantes)</h6>
+                <img src="../graphics/top_ubicacion_recibidas.png" class="img-fluid rounded" alt="Sin datos suficientes"
+                  onerror="this.style.display='none'; this.parentElement.innerHTML+='<div class=\'py-5 text-muted small\'>No hay datos de ubicación suficientes.</div>'">
+              </div>
+            </div>
+            <div class="col-md-6">
+               <div class="card h-100 border p-2 text-center shadow-none">
+                <h6 class="fw-bold my-2 text-success">Top Destino + Ubicación (Salientes)</h6>
+                <img src="../graphics/top_ubicacion_realizadas.png" class="img-fluid rounded" alt="Sin datos suficientes"
+                  onerror="this.style.display='none'; this.parentElement.innerHTML+='<div class=\'py-5 text-muted small\'>No hay datos de ubicación suficientes.</div>'">
+              </div>
+            </div>
+          </div>
+          <h5 class="text-secondary text-center mb-4 text-uppercase fw-bold small ls-1">Gráficos de Frecuencia Simple (Exportables)
           </h5>
           <div class="row g-4">
             <div class="col-md-6">
