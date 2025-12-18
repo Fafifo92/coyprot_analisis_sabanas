@@ -1,5 +1,3 @@
-# src/gui.py
-
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk, scrolledtext, simpledialog
 from ttkthemes import ThemedTk
@@ -24,7 +22,8 @@ try:
     from column_mapper import ColumnMapperDialog 
     from report_generator import generar_informe_html, generar_datos_llamadas_json
     from geo_utils import generar_mapa_agrupado, generar_mapa_rutas, generar_mapa_calor
-    from graphics_utils import generar_grafico_top_llamadas, generar_grafico_horario_llamadas
+    # IMPORTANTE: Añadimos la nueva función de gráficos aquí
+    from graphics_utils import generar_grafico_top_llamadas, generar_grafico_horario_llamadas, generar_grafico_top_ubicacion
     from ftp_utils import subir_archivo_ftp
     from cell_geocoder import CellGeocoder 
 except ImportError as e:
@@ -58,7 +57,7 @@ CATEGORIAS_PDF = ["Financiero", "Propiedades", "Vehículos", "Judicial", "Antece
 class CallAnalyzerGUI(ThemedTk):
     def __init__(self):
         super().__init__(theme="adapta") 
-        self.title("📊 Analizador de Llamadas Pro v2.3")
+        self.title("📊 Analizador de Llamadas Pro v2.4 - Edición Municipios")
         self.geometry("980x750")
         self.minsize(850, 650)
 
@@ -91,7 +90,7 @@ class CallAnalyzerGUI(ThemedTk):
             self.logger.info(f"🔄 Cargando base de datos de celdas desde: {DB_NAME}")
             self.geocoder = CellGeocoder(db_path)
         else:
-            self.logger.warning(f"⚠️ No se encontró {DB_NAME}. Geolocalización desactivada.")
+            self.logger.warning(f"⚠️ No se encontró {DB_NAME}. Geolocalización por DB desactivada.")
             self.geocoder = None
 
         self.logger.info("Interfaz lista.")
@@ -179,7 +178,7 @@ class CallAnalyzerGUI(ThemedTk):
         self.log_text_widget = scrolledtext.ScrolledText(f_log, wrap=tk.WORD, height=8, state='disabled', font=('Consolas', 9))
         self.log_text_widget.grid(row=0, column=0, sticky="nsew")
 
-    # --- LÓGICA DE ADJUNTOS (Igual que antes) ---
+    # --- LÓGICA DE ADJUNTOS ---
     def agregar_pdf_adjunto(self):
         if self.is_processing: return
         filepath = filedialog.askopenfilename(title="Seleccionar PDF Adjunto", filetypes=[("Archivos PDF", "*.pdf")])
@@ -236,19 +235,82 @@ class CallAnalyzerGUI(ThemedTk):
             self.logger.warning("Cancelado."); self.is_processing = False; self.bloquear_botones(False); return
         threading.Thread(target=self._thread_proceso_final, args=(df_raw, d.result), daemon=True).start()
 
+    # --- AQUÍ LA MEJORA PRINCIPAL DE CARGA ---
     def _thread_proceso_final(self, df_raw, mapping):
         try:
             self.logger.info("Procesando datos...")
             self.df = procesar_dataframe_con_mapeo(df_raw, mapping)
+            
+            # 1. Intento Normal (GPS nativo o DB Celdas)
             if self.df is not None and self.geocoder:
-                if "nombre_celda" in self.df.columns and not self.df.get("latitud_n", pd.Series()).notna().any():
-                     self.logger.info("Geolocalizando...")
-                     self.df = self.geocoder.buscar_coordenadas(self.df, "nombre_celda")
-            self.work_queue.put(("carga_ok", len(self.df)))
+                if "nombre_celda" in self.df.columns:
+                    # Si no tiene coordenadas gps nativas, intenta DB
+                    if not self.df.get("latitud_n", pd.Series()).notna().any():
+                         self.logger.info("Geolocalizando con base de datos de celdas...")
+                         self.df = self.geocoder.buscar_coordenadas(self.df, "nombre_celda")
+
+            # 2. Verificación para Inferencia por Municipio (LA MEJORA)
+            # Contamos cuántos siguen sin coordenadas
+            registros_sin_coords = 0
+            if "latitud_n" in self.df.columns:
+                 registros_sin_coords = self.df["latitud_n"].isna().sum()
+            else:
+                 registros_sin_coords = len(self.df)
+
+            # Si faltan muchos datos y tenemos nombre de celda, PREGUNTAR
+            if registros_sin_coords > 0 and "nombre_celda" in self.df.columns:
+                self.work_queue.put(("confirmar_inferencia", registros_sin_coords))
+                return # Detenemos este hilo, esperamos respuesta de GUI
+
+            # Si no hace falta preguntar, terminamos
+            self.finalizar_carga_datos()
+
         except Exception as e:
             self.work_queue.put(("error", f"Error proceso: {e}"))
 
-    # --- NUEVA VENTANA: ASIGNAR NOMBRES (MEJORADA) ---
+    def finalizar_carga_datos(self):
+        """Método auxiliar para terminar la carga después de la decisión del usuario"""
+        self.work_queue.put(("carga_ok", len(self.df)))
+
+    def ejecutar_inferencia_municipios(self):
+        """Lógica que corre en hilo si el usuario dice SI a inferir municipios"""
+        threading.Thread(target=self._thread_inferencia, daemon=True).start()
+
+    def _thread_inferencia(self):
+        try:
+            # Importación tardía para no romper si no se creó el archivo (aunque debería)
+            try:
+                from colombia_data import inferir_municipio_y_coords
+            except ImportError:
+                 self.work_queue.put(("error", "Falta el archivo 'src/colombia_data.py' para la inferencia."))
+                 return
+
+            self.logger.info("🕵️ Intentando inferir ubicación por nombre de municipio...")
+            
+            count_inferidos = 0
+            
+            # Asegurar columnas si no existen
+            if "latitud_n" not in self.df.columns: self.df["latitud_n"] = None
+            if "longitud_w" not in self.df.columns: self.df["longitud_w"] = None
+
+            # Iteramos sobre filas sin coordenadas
+            for idx, row in self.df.iterrows():
+                # Si lat o lon son NaN o vacíos
+                if pd.isna(row.get("latitud_n")) or pd.isna(row.get("longitud_w")):
+                    nombre_celda = row.get("nombre_celda")
+                    muni, lat, lon = inferir_municipio_y_coords(nombre_celda)
+                    
+                    if muni:
+                        self.df.at[idx, "latitud_n"] = lat
+                        self.df.at[idx, "longitud_w"] = lon
+                        count_inferidos += 1
+
+            self.logger.info(f"✅ Inferencia completada. {count_inferidos} registros recuperados por municipio.")
+            self.finalizar_carga_datos()
+        except Exception as e:
+            self.work_queue.put(("error", f"Error en inferencia: {e}"))
+
+    # --- VENTANA: ASIGNAR NOMBRES ---
     def asignar_nombres(self):
         if self.df is None: return
         numeros = sorted(list(set(self.df['originador'].dropna().astype(str).unique()) | set(self.df['receptor'].dropna().astype(str).unique())))
@@ -270,22 +332,18 @@ class CallAnalyzerGUI(ThemedTk):
         canv.create_window((0,0), window=frm_list, anchor="nw"); canv.configure(yscrollcommand=s.set)
         canv.pack(side="left", fill="both", expand=True); s.pack(side="right", fill="y")
         
-        # Diccionario para guardar referencias a los Entry widgets
         self.entry_widgets = {} 
         
         def render_list(filter_text=""):
-            # Limpiar frame
             for widget in frm_list.winfo_children(): widget.destroy()
             self.entry_widgets = {}
 
             row_idx = 0
             for num in numeros:
-                # Filtrado
                 alias_actual = self.nombres_asignados.get(num, "")
                 if filter_text and filter_text.lower() not in num.lower() and filter_text.lower() not in alias_actual.lower():
                     continue
 
-                # Estilo fila
                 bg = "#ffffff" if row_idx % 2 == 0 else "#f0f0f0"
                 f_row = tk.Frame(frm_list, bg=bg, pady=2); f_row.pack(fill="x", expand=True)
                 
@@ -296,24 +354,18 @@ class CallAnalyzerGUI(ThemedTk):
                 e = ttk.Entry(f_row, textvariable=v, width=40)
                 e.pack(side="left", fill="x", expand=True, padx=10)
                 
-                # Guardar referencia
                 self.entry_widgets[num] = v
                 row_idx += 1
 
-        # Render inicial
         render_list()
-
-        # Evento búsqueda
         search_var.trace("w", lambda *args: render_list(search_var.get()))
 
-        # Botón Guardar Flotante
         f_bot = ttk.Frame(w, padding="10"); f_bot.pack(fill="x")
         def save():
-            # Actualizar diccionario principal con lo que hay en los widgets visibles Y mantener lo previo
             for num, var in self.entry_widgets.items():
                 val = var.get().strip()
                 if val: self.nombres_asignados[num] = val
-                elif num in self.nombres_asignados: del self.nombres_asignados[num] # Borrar si se limpia
+                elif num in self.nombres_asignados: del self.nombres_asignados[num] 
             
             self.logger.info(f"Nombres actualizados: {len(self.nombres_asignados)}")
             messagebox.showinfo("Guardado", "Nombres asignados correctamente."); w.destroy()
@@ -321,38 +373,33 @@ class CallAnalyzerGUI(ThemedTk):
         ttk.Button(f_bot, text="💾 Guardar Cambios", command=save, style="Accent.TButton").pack(fill="x", ipady=5)
 
 
-    # --- NUEVA VENTANA: DATOS GENERALES (MEJORADA) ---
+    # --- VENTANA: DATOS GENERALES ---
     def abrir_editor_datos(self):
         w = tk.Toplevel(self); w.title("📝 Datos del Caso"); w.geometry("500x600"); w.transient(self); w.grab_set()
         
         f_main = ttk.Frame(w, padding="15"); f_main.pack(fill="both", expand=True)
         ttk.Label(f_main, text="Información General del Informe", font=("Arial", 12, "bold")).pack(pady=(0, 15))
 
-        # Canvas Scroll
         f_canv = ttk.Frame(f_main); f_canv.pack(fill="both", expand=True)
         cv = tk.Canvas(f_canv, bg="white", height=300); sb = ttk.Scrollbar(f_canv, command=cv.yview)
         f_items = ttk.Frame(cv); f_items.bind("<Configure>", lambda e: cv.configure(scrollregion=cv.bbox("all")))
         cv.create_window((0,0), window=f_items, anchor="nw", width=440); cv.configure(yscrollcommand=sb.set)
         cv.pack(side="left", fill="both", expand=True); sb.pack(side="right", fill="y")
 
-        # Almacén de referencias
-        self.datos_entries = {} # key: (label_var, entry_var)
+        self.datos_entries = {} 
 
         def add_row(k="", v=""):
-            row_id = len(self.datos_entries) + 1 # ID único simple
+            row_id = len(self.datos_entries) + 1 
             f_row = ttk.Frame(f_items); f_row.pack(fill="x", pady=2)
             
-            # Botón Eliminar
             btn_del = ttk.Button(f_row, text="✖", width=3, command=lambda: remove_row(row_id, f_row))
             btn_del.pack(side="left", padx=(0, 5))
 
-            # Campo Clave (Editable si es nuevo, Fijo si es default?) -> Mejor editable todo
             k_var = tk.StringVar(value=k)
             e_key = ttk.Entry(f_row, textvariable=k_var, width=18, font=('Arial', 9, 'bold'))
             e_key.pack(side="left", padx=2)
             ttk.Label(f_row, text=":").pack(side="left")
             
-            # Campo Valor
             v_var = tk.StringVar(value=v)
             e_val = ttk.Entry(f_row, textvariable=v_var)
             e_val.pack(side="left", fill="x", expand=True, padx=5)
@@ -363,13 +410,9 @@ class CallAnalyzerGUI(ThemedTk):
             if rid in self.datos_entries: del self.datos_entries[rid]
             widget.destroy()
 
-        # Cargar datos existentes o defaults
         defaults = ["Cliente", "Ciudad", "Teléfono", "Caso", "Periodo"]
-        
-        # Primero cargar lo que ya existe en self.datos_generales
         existing_keys = set(self.datos_generales.keys())
         
-        # Ordenar: Primero defaults, luego el resto
         for k in defaults:
             val = self.datos_generales.get(k, "")
             add_row(k, val)
@@ -378,7 +421,6 @@ class CallAnalyzerGUI(ThemedTk):
         for k in existing_keys:
             add_row(k, self.datos_generales[k])
 
-        # Botones de Acción
         f_acts = ttk.Frame(w, padding="15"); f_acts.pack(fill="x")
         ttk.Button(f_acts, text="➕ Agregar Campo Nuevo", command=lambda: add_row("", "")).pack(fill="x", pady=5)
         
@@ -395,7 +437,7 @@ class CallAnalyzerGUI(ThemedTk):
 
         ttk.Button(f_acts, text="💾 Guardar y Cerrar", command=save_all, style="Accent.TButton").pack(fill="x", pady=10)
 
-    # --- EXPORTAR (Igual que antes) ---
+    # --- EXPORTAR ---
     def iniciar_exportacion(self):
         if self.is_processing or self.df is None: return
         name = self.nombre_informe.get().strip().replace(" ", "_") or "Informe_Llamadas"
@@ -415,10 +457,21 @@ class CallAnalyzerGUI(ThemedTk):
             ent = self.df[self.df["tipo_llamada"] == "entrante"]
             sal = self.df[self.df["tipo_llamada"] == "saliente"]
             
-            if not ent.empty: generar_grafico_top_llamadas(ent, "originador", "Recibidas", os.path.join(g_dir, "top_llamadas_recibidas.png"), self.nombres_asignados)
-            if not sal.empty: generar_grafico_top_llamadas(sal, "receptor", "Realizadas", os.path.join(g_dir, "top_llamadas_realizadas.png"), self.nombres_asignados)
+            # --- GENERACIÓN DE GRÁFICOS (MEJORADO) ---
+            if not ent.empty: 
+                generar_grafico_top_llamadas(ent, "originador", "Recibidas", os.path.join(g_dir, "top_llamadas_recibidas.png"), self.nombres_asignados)
+                # NUEVO GRÁFICO: Top Entrantes + Ubicación
+                generar_grafico_top_ubicacion(ent, "originador", "nombre_celda", "Top Origen y Ubicación (Desde dónde llaman)", os.path.join(g_dir, "top_ubicacion_recibidas.png"), self.nombres_asignados)
+
+            if not sal.empty: 
+                generar_grafico_top_llamadas(sal, "receptor", "Realizadas", os.path.join(g_dir, "top_llamadas_realizadas.png"), self.nombres_asignados)
+                # NUEVO GRÁFICO: Top Salientes + Ubicación
+                generar_grafico_top_ubicacion(sal, "receptor", "nombre_celda", "Top Destino y Ubicación (Desde dónde se llamó)", os.path.join(g_dir, "top_ubicacion_realizadas.png"), self.nombres_asignados)
+
             generar_grafico_horario_llamadas(self.df, os.path.join(g_dir, "grafico_horario_llamadas.png"))
 
+            # --- MAPAS ---
+            # Se generan si hay coordenadas (sea GPS nativo, DB o INFERENCIA por municipio)
             if "latitud_n" in self.df.columns and self.df["latitud_n"].notna().any():
                  m_dir = os.path.join(base_dir, "maps")
                  generar_mapa_agrupado(self.df, os.path.join(m_dir, "mapa_agrupado.html"), self.nombres_asignados)
@@ -447,20 +500,41 @@ class CallAnalyzerGUI(ThemedTk):
                 tipo = msg[0]
                 
                 if tipo == "pedir_mapeo": self.continuar_carga_con_mapeo(msg[1])
+                
+                # NUEVO CASO: CONFIRMACIÓN DE INFERENCIA
+                elif tipo == "confirmar_inferencia":
+                    cant = msg[1]
+                    resp = messagebox.askyesno(
+                        "Ubicación Incompleta", 
+                        f"El sistema detectó {cant} registros sin ubicación exacta.\n\n"
+                        "¿Desea intentar ubicar las llamadas basándose en el nombre del municipio?\n"
+                        "(Ej: Si la celda dice 'ANT.BARBOSA', se ubicará en el centro de Barbosa)."
+                    )
+                    if resp:
+                        self.logger.info("Usuario aceptó inferencia por municipio.")
+                        self.ejecutar_inferencia_municipios()
+                    else:
+                        self.logger.info("Usuario declinó inferencia.")
+                        self.finalizar_carga_datos()
+
                 elif tipo == "carga_ok": 
                     self.logger.info(f"Cargado: {msg[1]}")
-                    messagebox.showinfo("OK", f"Registros: {msg[1]}")
+                    messagebox.showinfo("OK", f"Registros listos: {msg[1]}")
                     self.is_processing = False; self.bloquear_botones(False)
+                
                 elif tipo == "error": 
                     self.logger.error(msg[1]); messagebox.showerror("Error", msg[1])
                     self.is_processing = False; self.bloquear_botones(False)
+                
                 elif tipo == "status": self.btn_export.config(text=msg[1])
+                
                 elif tipo == "local_ok":
                     self.is_processing = False; self.bloquear_botones(False)
                     self.btn_export.config(text="💾 Generar")
                     if messagebox.askyesno("Éxito", f"Guardado en:\n{msg[1]}\n¿Abrir?"):
                         try: os.startfile(msg[1])
                         except: pass
+                
                 elif tipo == "ftp_ok":
                     self.is_processing = False; self.bloquear_botones(False)
                     self.btn_export.config(text="💾 Generar")
@@ -476,7 +550,6 @@ class CallAnalyzerGUI(ThemedTk):
             self.btn_datos.config(state=tk.NORMAL)
 
     def mostrar_url(self, url):
-        # FIX URL VACÍA: Separamos creación e inserción
         w = tk.Toplevel(self); w.title("URL"); w.geometry("600x150")
         e = ttk.Entry(w, width=70)
         e.pack(pady=10)
