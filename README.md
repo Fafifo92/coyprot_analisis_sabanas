@@ -1,6 +1,6 @@
 # 📊 Analizador de Llamadas Pro (Coyprot Analysis)
 
-> **Herramienta avanzada para el análisis forense de registros de detalles de llamadas (CDR), geolocalización y generación de informes interactivos.**
+> **Herramienta avanzada para el análisis forense de registros de detalles de llamadas (CDR), geolocalización multinivel y generación de informes interactivos.**
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=for-the-badge&logo=python&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Data-Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
@@ -16,17 +16,19 @@ Este software permite procesar sábanas de llamadas (Excel/CSV), normalizar dato
 ### 🔍 Procesamiento de Datos
 * **Mapeo Inteligente:** Asistente gráfico para relacionar columnas de cualquier formato de Excel con el sistema (Origen, Destino, Duración, etc.).
 * **Limpieza Automática:** Normalización estricta de números telefónicos (eliminación de prefijos `57`, `009`, espacios, etc.) para evitar duplicados en el análisis.
-* **Geocodificación Híbrida:**
-    * Uso automático de coordenadas GPS nativas si están presentes en el archivo.
-    * Cruce automático con base de datos de celdas (`celdas.csv`) si solo existen nombres de antena.
+* **Geocodificación Multi-Nivel (Plan A, B y C):**
+    1.  **GPS Nativo:** Uso automático de coordenadas latitud/longitud si están presentes en el archivo.
+    2.  **Base de Datos de Celdas:** Cruce automático con `celdas.csv` si existen nombres técnicos de antena (ej: `ANT.BARBOSA-2_R1`).
+    3.  **Inferencia por Municipio (Nuevo):** Si los anteriores fallan, el sistema detecta patrones de texto (ej: "BARBOSA", "MEDELLIN") en la celda y asigna coordenadas geográficas del municipio automáticamente tras confirmación del usuario.
 
 ### 📈 Análisis Visual
 * **Dashboard Interactivo:** Gráficos de líneas con animación suave para analizar tendencias horarias (Entrantes vs Salientes vs Todas).
+* **Gráficos de Ubicación (Nuevo):** Visualización de barras que cruza los números más frecuentes con su ubicación geográfica (¿Desde dónde llaman? / ¿Dónde estaba el objetivo?).
 * **Tooltips Inteligentes:** Inspección detallada de llamadas al hacer clic en los puntos del gráfico, con enlaces directos a Google Maps.
-* **Top 5:** Tablas de frecuencia para identificar rápidamente los números más contactados y los originadores más frecuentes.
+* **Top 10:** Tablas de frecuencia para identificar rápidamente los números más contactados y los originadores más frecuentes.
 
 ### 🗺️ Mapeo Avanzado
-Generación automática de 3 tipos de mapas interactivos integrados en una interfaz de pestañas:
+Generación automática de 3 tipos de mapas interactivos integrados en una interfaz de pestañas (incluso usando ubicaciones inferidas):
 1.  **Mapa Agrupado (Clusters):** Agrupación de marcadores para visualizar grandes volúmenes de datos sin saturación.
 2.  **Rutas Cronológicas:** Trazado de líneas secuenciales con marcadores numerados (1, 2, 3...) para seguir el desplazamiento del objetivo.
 3.  **Mapa de Calor:** Visualización de densidad para identificar zonas de alta actividad.
@@ -89,10 +91,10 @@ ttkthemes
     ```
 
 4.  **Configurar Base de Datos de Celdas (Opcional):**
-    Para que la geolocalización por nombre de celda funcione (cuando no hay GPS), debes colocar tu archivo maestro de antenas en:
+    Para que la geolocalización por nombre técnico de celda funcione (cuando no hay GPS), debes colocar tu archivo maestro de antenas en:
     `static/db/celdas.csv`
     
-    > **Nota:** El sistema valida si el archivo existe. Si no está, la geolocalización por celda se desactiva automáticamente, pero el resto funciona normal.
+    > **Nota:** Si no tienes este archivo, el sistema te ofrecerá la opción de inferir la ubicación por el nombre del municipio presente en la sábana.
 
 ---
 
@@ -118,14 +120,15 @@ python src/main.py
 
 1.  **Cargar Sábana:**
     * Haz clic en "Seleccionar Archivo" y elige tu Excel/CSV de llamadas.
-    * Si las columnas no son estándar, aparecerá un asistente para mapearlas (Ej: "Teléfono A" -> "Originador").
+    * Si las columnas no son estándar, aparecerá un asistente para mapearlas.
+    * **Asistente de Ubicación:** Si faltan coordenadas, el sistema preguntará si deseas intentar inferir la ubicación basándose en los nombres de los municipios (ej: `ANT.BARBOSA`).
 
 2.  **Gestión de Adjuntos:**
     * Usa el botón "➕ Agregar" en la sección de adjuntos.
-    * Selecciona tus PDFs (Financiero, Antecedentes, etc.) y asígnales una categoría. Aparecerán como pestañas en el reporte.
+    * Selecciona tus PDFs (Financiero, Antecedentes, etc.) y asígnales una categoría.
 
 3.  **Enriquecer Datos (Opcional):**
-    * **Asignar Nombres:** Haz clic en "👤 Asignar Nombres" para poner alias (ej: "Mamá", "Jefe", "Alias X") a los números clave. Esto actualizará todos los gráficos y tablas.
+    * **Asignar Nombres:** Haz clic en "👤 Asignar Nombres" para poner alias a los números clave. Esto actualizará todos los gráficos y tablas.
     * **Datos del Caso:** Ingresa información como Cliente, Radicado, Ciudad, etc.
 
 4.  **Generar Informe:**
@@ -152,7 +155,8 @@ coyprot_analisis_sabanas/
 │   ├── graphics_utils.py    # Generación de gráficos estáticos (Matplotlib)
 │   ├── report_generator.py  # Orquestador del reporte HTML (Jinja2)
 │   ├── ftp_utils.py         # Cliente FTP
-│   ├── cell_geocoder.py     # Lógica de búsqueda de antenas
+│   ├── cell_geocoder.py     # Lógica de búsqueda de antenas (DB)
+│   ├── colombia_data.py     # Lógica de inferencia por Municipios (Nuevo)
 │   ├── column_mapper.py     # UI para mapeo de columnas
 │   └── utils.py             # Utilidades generales y logging
 │
