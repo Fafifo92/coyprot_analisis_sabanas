@@ -1,62 +1,136 @@
-import re
+import pandas as pd
+import math
+import os
+import sys
+import unicodedata
 
-# Diccionario simplificado de Municipios principales y sus coordenadas aproximadas
-# Se puede expandir según necesidad. Formato: MUNICIPIO: (LAT, LON)
-MUNICIPIOS_COORDS = {
-    "MEDELLIN": (6.2442, -75.5812), "BOGOTA": (4.7110, -74.0721), "CALI": (3.4516, -76.5320),
-    "BARRANQUILLA": (10.9685, -74.7813), "CARTAGENA": (10.3910, -75.4794), "CUCUTA": (7.8939, -72.5078),
-    "BUCARAMANGA": (7.1193, -73.1227), "PEREIRA": (4.8133, -75.6961), "SANTA MARTA": (11.2408, -74.1990),
-    "IBAGUE": (4.4389, -75.2322), "BELLO": (6.3373, -75.5579), "PASTO": (1.2136, -77.2811),
-    "MANIZALES": (5.0703, -75.5138), "NEIVA": (2.9273, -75.2819), "SOACHA": (4.5794, -74.2160),
-    "VILLAVICENCIO": (4.1420, -73.6266), "ARMENIA": (4.5339, -75.6811), "SOLEDAD": (10.9184, -74.7699),
-    "VALLEDUPAR": (10.4631, -73.2532), "ITAGUI": (6.1846, -75.5991), "MONTERIA": (8.7480, -75.8814),
-    "SINCELEJO": (9.3047, -75.3978), "POPAYAN": (2.4378, -76.6132), "FLORENCIA": (1.6175, -75.6038),
-    "RIOHACHA": (11.5444, -72.9072), "TUNJA": (5.5353, -73.3678), "YOPAL": (5.3378, -72.3959),
-    "QUIBDO": (5.6947, -76.6611), "BARBOSA": (6.4388, -75.3333), # Antioquia
-    "AMAGA": (6.0400, -75.7032), "COVENAS": (9.4217, -75.6833), "LORICA": (9.2394, -75.8139),
-    "ENVIGADO": (6.1759, -75.5917), "SABANETA": (6.1515, -75.6166), "RIONEGRO": (6.1551, -75.3737),
-    "APARTADO": (7.8828, -76.6321), "TURBO": (8.0927, -76.7278), "CAUCASIA": (7.9865, -75.1932),
-    "GIRARDOTA": (6.3789, -75.4455), "COPACABANA": (6.3466, -75.5088), "LA ESTRELLA": (6.1578, -75.6433),
-    "CALDAS": (6.0911, -75.6357), "GUARNE": (6.2796, -75.4429), "MARINILLA": (6.1783, -75.3385),
-    "SAN GIL": (6.5543, -73.1311), "BARRANCABERMEJA": (7.0653, -73.8547), "GIRON": (7.0682, -73.1698),
-    "PIEDECUESTA": (6.9874, -73.0494), "FLORIDABLANCA": (7.0622, -73.0864), "DUITAMA": (5.8256, -73.0335),
-    "SOGAMOSO": (5.7145, -72.9339), "ZIPAQUIRA": (5.0267, -74.0016), "FUSAGASUGA": (4.3365, -74.3638),
-    "FACATATIVA": (4.8115, -74.3541), "CHIA": (4.8624, -74.0586), "MOSQUERA": (4.7059, -74.2302),
-    "MADRID": (4.7323, -74.2642), "FUNZA": (4.7167, -74.2117), "CAJICA": (4.9189, -74.0272)
-}
+# --- CONFIGURACIÓN DE RUTA ---
+def get_db_path():
+    """Encuentra el CSV sin importar si corres desde src/ o desde la raíz"""
+    # Intento 1: Ruta relativa desde src/
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = os.path.join(base_dir, "static", "db", "municipios_colombia.csv")
+    
+    if os.path.exists(path):
+        return path
+        
+    # Intento 2: Si estamos congelados con PyInstaller
+    if getattr(sys, 'frozen', False):
+        return os.path.join(sys._MEIPASS, "static", "db", "municipios_colombia.csv")
+        
+    return path
+
+# --- CARGA DE DATOS ---
+_df_municipios = None
+
+def cargar_municipios():
+    global _df_municipios
+    path = get_db_path()
+    
+    if os.path.exists(path):
+        try:
+            # LEER CON UTF-8-SIG (Para manejar las tildes que generó tu script)
+            _df_municipios = pd.read_csv(path, sep=';', encoding='utf-8-sig')
+            
+            # Normalizar para búsquedas (crear columna sin tildes oculta)
+            _df_municipios['Muni_Norm'] = _df_municipios['Municipio'].apply(lambda x: normalizar_texto(str(x)))
+            _df_municipios['Depto_Norm'] = _df_municipios['Departamento'].apply(lambda x: normalizar_texto(str(x)))
+            
+            print(f"🇨🇴 Base de datos geográfica cargada: {len(_df_municipios)} municipios.")
+        except Exception as e:
+            print(f"❌ Error leyendo municipios_colombia.csv: {e}")
+            _df_municipios = pd.DataFrame()
+    else:
+        print(f"⚠️ No se encontró la base de datos en: {path}")
+        _df_municipios = pd.DataFrame()
+
+def normalizar_texto(texto):
+    """Quita tildes para comparar (BOGOTÁ -> BOGOTA)"""
+    if not isinstance(texto, str): return ""
+    s = unicodedata.normalize('NFD', texto)
+    s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+    return s.upper().strip()
+
+# Cargar al importar
+cargar_municipios()
+
+# --- FUNCIONES MATEMÁTICAS ---
+def calcular_distancia(lat1, lon1, lat2, lon2):
+    """Fórmula de Haversine (Distancia en Km)"""
+    try:
+        R = 6371 # Radio tierra km
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat/2) * math.sin(dlat/2) + \
+            math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * \
+            math.sin(dlon/2) * math.sin(dlon/2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        return R * c
+    except:
+        return float('inf')
+
+def obtener_ubicacion_completa(lat, lon):
+    """
+    Recibe Lat/Lon y devuelve (Departamento, Municipio) del punto más cercano.
+    """
+    global _df_municipios
+    if _df_municipios is None or _df_municipios.empty:
+        return "Desconocido", "Desconocido"
+        
+    if not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
+        return "Desconocido", "Desconocido"
+
+    # Optimización: Buscar solo en un radio de ~100km (1 grado latitud)
+    lat_min, lat_max = lat - 1, lat + 1
+    lon_min, lon_max = lon - 1, lon + 1
+    
+    df_cerca = _df_municipios[
+        (_df_municipios['Latitud'] > lat_min) & (_df_municipios['Latitud'] < lat_max) &
+        (_df_municipios['Longitud'] > lon_min) & (_df_municipios['Longitud'] < lon_max)
+    ]
+    
+    # Si no hay nada cerca, buscar en todo el país (caso raro)
+    df_search = df_cerca if not df_cerca.empty else _df_municipios
+    
+    min_dist = float('inf')
+    best_muni = "Desconocido"
+    best_depto = "Desconocido"
+
+    for _, row in df_search.iterrows():
+        dist = calcular_distancia(lat, lon, row['Latitud'], row['Longitud'])
+        if dist < min_dist:
+            min_dist = dist
+            best_muni = row['Municipio']
+            best_depto = row['Departamento']
+            
+    # Umbral de precisión: si está a menos de 30km, asignamos el municipio.
+    # Si no, es zona rural lejana.
+    if min_dist < 30:
+        return best_depto, best_muni
+    else:
+        # Devolvemos el más cercano igual, pero indicando lejanía si quisieras
+        return best_depto, best_muni 
 
 def inferir_municipio_y_coords(nombre_celda):
     """
-    Analiza cadenas como 'ANT.BARBOSA-2_R1', 'SUC.COVENAS-5' o 'MED.CORDOBA'.
-    Extrae 'BARBOSA', 'COVENAS', 'CORDOBA' y busca coordenadas.
-    Retorna: (NombreMunicipio, Lat, Lon) o (None, None, None)
+    Intenta adivinar coordenadas buscando el nombre del municipio dentro del texto de la celda.
+    Ej: "ANT.MEDELLIN-2" -> Encuentra "MEDELLIN" -> Devuelve coords de Medellín.
     """
-    if not nombre_celda or not isinstance(nombre_celda, str):
-        return None, None, None
-
-    texto = nombre_celda.upper().strip()
+    global _df_municipios
+    if _df_municipios is None or _df_municipios.empty: return None, None, None
+    if not nombre_celda or not isinstance(nombre_celda, str): return None, None, None
     
-    # Lógica 1: Buscar patrones tipo DEPTO.MUNICIPIO o MUNICIPIO-SECTOR
-    # Eliminamos sufijos técnicos comunes primero (_R1, -2, etc)
-    texto_limpio = re.sub(r'[-_][A-Z0-9]+$', '', texto) # Quita _R1, -5
-    texto_limpio = re.sub(r'[-_][A-Z0-9]+$', '', texto_limpio) # Repite por si acaso (ANT.BARBOSA-2_R1)
-
-    # Separar por punto (común en celdas Claro/Movistar: ANT.BARBOSA)
-    partes = re.split(r'[.]', texto_limpio)
+    texto_sucio = nombre_celda.upper().strip()
+    texto_norm = normalizar_texto(texto_sucio) # "ANT.MEDELLIN"
     
-    candidato = ""
-    
-    # Si hay punto, generalmente el segundo es el municipio (ANT.BARBOSA)
-    if len(partes) >= 2:
-        candidato = partes[1].strip()
-    else:
-        # Si no hay punto, tomamos todo el texto limpio
-        candidato = texto_limpio.strip()
-
-    # Buscamos coincidencias parciales o exactas en el diccionario
-    for muni, coords in MUNICIPIOS_COORDS.items():
-        # Verificamos si el candidato contiene el municipio (ej: BARBOSA contiene BARBOSA)
-        if muni == candidato or (len(candidato) > 4 and muni in candidato):
-            return muni, coords[0], coords[1]
-    
+    # Buscar coincidencia exacta de palabra
+    for _, row in _df_municipios.iterrows():
+        muni_norm = row['Muni_Norm'] # "MEDELLIN"
+        
+        # Evitar falsos positivos con nombres cortos (ej: "Ica", "Une")
+        if len(muni_norm) < 4: continue
+            
+        if muni_norm in texto_norm:
+            return row['Municipio'], row['Latitud'], row['Longitud']
+            
     return None, None, None

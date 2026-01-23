@@ -7,3 +7,4 @@ seaborn
 phonenumbers
 openpyxl
 ttkthemes
+plotly
