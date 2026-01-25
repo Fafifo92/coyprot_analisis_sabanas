@@ -289,16 +289,21 @@ class CallAnalyzerGUI(ThemedTk):
             filas_limpias = len(self.df)
             filas_descartadas = filas_originales - filas_limpias
             
-            # Conteo de tipos
+            # Conteo de tipos: Entrantes y Salientes
             entrantes = len(self.df[self.df["tipo_llamada"] == "entrante"])
             salientes = len(self.df[self.df["tipo_llamada"] == "saliente"])
+            
+            # NUEVO: Conteo de Datos de Internet
+            # Buscamos cualquier cosa que tenga "DATO" en el nombre (mayúsculas/minúsculas)
+            mask_datos = self.df['tipo_llamada'].astype(str).str.upper().str.contains('DATO')
+            datos_internet = len(self.df[mask_datos])
             
             # Conteo de Coordenadas
             con_gps = 0
             if "latitud_n" in self.df.columns:
                 con_gps = self.df["latitud_n"].notna().sum()
             
-            # Reporte al Log
+            # Reporte al Log (ACTUALIZADO CON DATOS DE INTERNET)
             self.logger.info("-" * 40)
             self.logger.info("📊 REPORTE DE DIAGNÓSTICO DE CARGA")
             self.logger.info("-" * 40)
@@ -309,7 +314,7 @@ class CallAnalyzerGUI(ThemedTk):
             else:
                 self.logger.info("✨ Calidad de datos perfecta: 0 descartes.")
                 
-            self.logger.info(f"📥 Entrantes: {entrantes} | 📤 Salientes: {salientes}")
+            self.logger.info(f"📥 Entrantes: {entrantes} | 📤 Salientes: {salientes} | 📡 Datos Internet: {datos_internet}")
             
             if con_gps > 0:
                 self.logger.info(f"📍 Coordenadas detectadas: {con_gps} registros.")
@@ -344,9 +349,25 @@ class CallAnalyzerGUI(ThemedTk):
             self.work_queue.put(("error", f"Error proceso: {e}"))
 
     def finalizar_carga_datos(self):
-        """Método auxiliar para terminar la carga después de la decisión del usuario"""
-        count = len(self.df)
-        self.work_queue.put(("carga_ok", count))
+        """Método auxiliar para terminar la carga y pasar estadísticas finales"""
+        # Recalculamos las estadísticas aquí para asegurar que incluyen 
+        # cualquier cambio hecho por la inferencia o geolocalización
+        total = len(self.df)
+        entrantes = len(self.df[self.df["tipo_llamada"] == "entrante"])
+        salientes = len(self.df[self.df["tipo_llamada"] == "saliente"])
+        
+        # Conteo Datos
+        mask_datos = self.df['tipo_llamada'].astype(str).str.upper().str.contains('DATO')
+        datos_internet = len(self.df[mask_datos])
+        
+        stats = {
+            "total": total,
+            "entrantes": entrantes,
+            "salientes": salientes,
+            "datos": datos_internet
+        }
+        
+        self.work_queue.put(("carga_ok", stats))
 
     def ejecutar_inferencia_municipios(self):
         """Lógica que corre en hilo si el usuario dice SI a inferir municipios"""
@@ -595,8 +616,18 @@ class CallAnalyzerGUI(ThemedTk):
                         self.finalizar_carga_datos()
 
                 elif tipo == "carga_ok": 
-                    self.logger.info(f"Carga finalizada. {msg[1]} registros listos.")
-                    messagebox.showinfo("OK", f"Datos listos para trabajar.\nTotal registros: {msg[1]}")
+                    # msg[1] ahora es un diccionario de estadísticas
+                    stats = msg[1]
+                    self.logger.info(f"Carga finalizada. {stats['total']} registros listos.")
+                    
+                    # Mensaje detallado para el usuario
+                    msj = (f"Datos listos para trabajar.\n\n"
+                           f"📊 Total Registros: {stats['total']}\n"
+                           f"📥 Entrantes: {stats['entrantes']}\n"
+                           f"📤 Salientes: {stats['salientes']}\n"
+                           f"📡 Datos Internet: {stats['datos']}")
+                    
+                    messagebox.showinfo("Carga Exitosa", msj)
                     self.is_processing = False; self.bloquear_botones(False)
                     self.update_semaphore("green", "Datos Listos") # Semáforo Verde
                 

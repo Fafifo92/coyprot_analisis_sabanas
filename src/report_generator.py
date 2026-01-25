@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import shutil
 from jinja2 import Environment, FileSystemLoader
-# Importamos las funciones de mapas (incluyendo el nuevo Timeline de Plotly)
+# Importamos las funciones de mapas
 from geo_utils import generar_mapa_agrupado, generar_mapa_rutas, generar_mapa_calor
 # Importamos la lógica geográfica mejorada
 from colombia_data import obtener_ubicacion_completa
@@ -37,16 +37,27 @@ def obtener_top_frecuentes(df, columna_numero, nombres_asignados, top_n=5):
     return resultado
 
 def generar_datos_llamadas_json(df, output_path, nombres_asignados=None):
-    """Genera call_data.js para los gráficos interactivos."""
-    if df.empty:
+    """Genera call_data.js para los gráficos interactivos (SOLO LLAMADAS)."""
+    # 1. FILTRO: Excluir filas de tipo 'DATOS' para no ensuciar los gráficos de llamadas
+    if 'tipo_llamada' in df.columns:
+        mask_datos = df['tipo_llamada'].astype(str).str.upper().str.contains('DATO')
+        df_llamadas = df[~mask_datos].copy()
+    else:
+        df_llamadas = df.copy()
+
+    if df_llamadas.empty:
+        try:
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write("const CALL_DATA = {};")
+        except: pass
         return
 
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         call_data = {}
-        tiene_coords = "latitud_n" in df.columns and "longitud_w" in df.columns
+        tiene_coords = "latitud_n" in df_llamadas.columns and "longitud_w" in df_llamadas.columns
 
-        for _, row in df.iterrows():
+        for _, row in df_llamadas.iterrows():
             tipo = row.get("tipo_llamada", "desconocido")
             originador = str(row.get("originador", "Desconocido"))
             receptor = str(row.get("receptor", "Desconocido"))
@@ -91,7 +102,21 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
     for d in [reports_dir, maps_dir, graphics_dir, data_dir, static_dir]:
         os.makedirs(d, exist_ok=True)
 
-    # 1. Adjuntos
+    # ==============================================================================
+    # 1. SEPARACIÓN CRÍTICA DE DATOS
+    # ==============================================================================
+    # Identificamos filas que contengan "DATO" en su tipo (ej: "DATOS", "dato", "datos")
+    mask_datos = df['tipo_llamada'].astype(str).str.upper().str.contains('DATO')
+    
+    # DataFrame EXCLUSIVO para la pestaña "Recorrido por datos"
+    df_datos = df[mask_datos].copy()
+    
+    # DataFrame EXCLUSIVO para estadísticas de llamadas, tablas y gráficos
+    df_llamadas = df[~mask_datos].copy()
+    
+    print(f"📊 Separación de registros -> Llamadas: {len(df_llamadas)} | Datos Internet: {len(df_datos)}")
+
+    # 2. Adjuntos
     archivos_procesados = []
     if lista_adjuntos:
         print(f"📎 Procesando {len(lista_adjuntos)} adjuntos...")
@@ -105,7 +130,7 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
                 })
             except: pass
 
-    # 2. Recursos Estáticos
+    # 3. Recursos Estáticos
     try:
         js_dest = os.path.join(static_dir, "assets_js")
         img_dest = os.path.join(static_dir, "assets_img")
@@ -122,35 +147,48 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
     except Exception as e:
         print(f"⚠️ Error assets: {e}")
 
-    # 3. Mapas (Generación Separada)
+    # 4. Mapas (Generación Separada y Específica)
     has_coords = False
+    has_datos_recorrido = False # Nueva bandera específica
+    
+    # Verificamos si hay coordenadas en general (en el DF completo original para activar la flag)
     if "latitud_n" in df.columns and "longitud_w" in df.columns:
         if df["latitud_n"].notna().any():
             has_coords = True
             try:
                 print("🗺️ Generando mapas...")
-                # Mapas Generales (Para pestaña 'Mapas')
-                generar_mapa_agrupado(df, os.path.join(maps_dir, "mapa_agrupado.html"), nombres_asignados)
-                generar_mapa_calor(df, os.path.join(maps_dir, "mapa_calor.html"))
                 
-                # Mapa de Recorrido/Timeline (Para nueva pestaña 'Recorrido')
-                # IMPORTANTE: Se guarda como 'mapa_recorrido.html' para coincidir con el template
-                generar_mapa_rutas(df, os.path.join(maps_dir, "mapa_recorrido.html"), nombres_asignados)
+                # A) Mapas Generales (Agrupado y Calor): 
+                # Usamos df_llamadas para no saturar con datos de internet
+                generar_mapa_agrupado(df_llamadas, os.path.join(maps_dir, "mapa_agrupado.html"), nombres_asignados)
+                generar_mapa_calor(df_llamadas, os.path.join(maps_dir, "mapa_calor.html"))
+                
+                # B) Mapa de Recorrido (ESTRICTAMENTE SOLO DATOS): 
+                if not df_datos.empty:
+                    print(f"🗺️ Generando mapa de recorrido con {len(df_datos)} registros de DATOS...")
+                    generar_mapa_rutas(df_datos, os.path.join(maps_dir, "mapa_recorrido.html"), nombres_asignados)
+                    has_datos_recorrido = True
+                else:
+                    # NO generamos nada ni usamos fallback.
+                    print("⚠️ No hay registros de DATOS. No se generará el mapa de recorrido.")
+                    
             except Exception as e:
                 print(f"⚠️ Error mapas: {e}")
 
-    # 4. Datos del Reporte
-    total_llamadas = len(df)
-    uni_orig = df['originador'].dropna().unique() if 'originador' in df.columns else []
-    uni_dest = df['receptor'].dropna().unique() if 'receptor' in df.columns else []
+    # 5. Datos del Reporte (ESTADÍSTICAS BASADAS EN SOLO LLAMADAS)
+    total_llamadas = len(df_llamadas)
+    
+    uni_orig = df_llamadas['originador'].dropna().unique() if 'originador' in df_llamadas.columns else []
+    uni_dest = df_llamadas['receptor'].dropna().unique() if 'receptor' in df_llamadas.columns else []
     numeros_brutos = set(list(uni_orig) + list(uni_dest))
+    
     numeros_unicos_lista = sorted([obtener_nombre_mostrado(n, nombres_asignados) for n in numeros_brutos])
     promedio_llamadas = total_llamadas / len(numeros_brutos) if numeros_brutos else 0
 
-    top_entrantes = obtener_top_frecuentes(df[df['tipo_llamada'] == 'entrante'], 'originador', nombres_asignados)
-    top_salientes = obtener_top_frecuentes(df[df['tipo_llamada'] == 'saliente'], 'receptor', nombres_asignados)
+    top_entrantes = obtener_top_frecuentes(df_llamadas[df_llamadas['tipo_llamada'] == 'entrante'], 'originador', nombres_asignados)
+    top_salientes = obtener_top_frecuentes(df_llamadas[df_llamadas['tipo_llamada'] == 'saliente'], 'receptor', nombres_asignados)
 
-    # Preparar Tablas y Geografía
+    # Preparar Tablas y Geografía (USANDO SOLO LLAMADAS)
     llamadas_entrantes = {}
     llamadas_salientes = {}
     
@@ -159,7 +197,7 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
 
     print("📍 Calculando geografía completa (Depto/Muni)...")
 
-    for _, row in df.iterrows():
+    for _, row in df_llamadas.iterrows():
         tipo = row.get('tipo_llamada', 'desconocido')
         originador = str(row.get('originador', 'Desconocido'))
         receptor = str(row.get('receptor', 'Desconocido'))
@@ -203,14 +241,12 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
             llamadas_entrantes[o_show]['llamadas'].append(info)
 
     # --- PREPARAR DATOS PARA EL HTML (JSON SAFE) ---
-    # Convertimos el mapa de Sets a mapa de Listas ordenadas
     mapa_dep_mun = {}
     for d, m_set in mapa_geografico_temp.items():
         mapa_dep_mun[d] = sorted(list(m_set))
         
     lista_departamentos = sorted(list(mapa_dep_mun.keys()))
     
-    # Lista plana de todos los municipios para el filtro simple
     todos_municipios = set()
     for m_list in mapa_dep_mun.values():
         todos_municipios.update(m_list)
@@ -232,10 +268,10 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
             adjuntos=archivos_procesados,
             datos_generales=datos_generales or {},
             has_coords=has_coords,
-            # NUEVAS VARIABLES PARA FILTROS
+            has_datos_recorrido=has_datos_recorrido, # <-- NUEVA VARIABLE AL TEMPLATE
             lista_municipios=lista_municipios,
             lista_departamentos=lista_departamentos,
-            mapa_dep_mun=mapa_dep_mun # Diccionario limpio para JavaScript
+            mapa_dep_mun=mapa_dep_mun
         )
 
         informe_path = os.path.join(reports_dir, "informe_llamadas.html")

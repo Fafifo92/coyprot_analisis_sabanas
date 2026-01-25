@@ -48,7 +48,7 @@ def robust_date_parser(value):
 def cargar_excel_crudo(file_path):
     """
     Lee el Excel buscando hojas de 'entrantes', 'salientes' Y 'DATOS'.
-    Elimina filas vacías y normaliza columnas.
+    Elimina filas vacías y normaliza columnas basándose en tu estructura.
     """
     if not os.path.exists(file_path):
         return None, "El archivo no existe."
@@ -62,25 +62,27 @@ def cargar_excel_crudo(file_path):
         
         for key, real_name in hojas.items():
             
-            # --- 1. HOJA DE DATOS ---
+            # --- 1. HOJA DE DATOS (LA QUE TIENE COORDENADAS PROPIAS) ---
             if "dato" in key: 
                 try:
                     print(f"📡 Procesando hoja de DATOS: {real_name}")
                     # Leemos todo como string
                     temp = pd.read_excel(file_path, sheet_name=real_name, dtype=str)
                     
-                    # 1. ELIMINAR FILAS VACÍAS (CRÍTICO PARA TU EXCEL)
+                    # 1. ELIMINAR FILAS VACÍAS
                     temp.dropna(how='all', inplace=True)
                     
-                    # Mapeo basado en tu imagen
+                    # 2. MAPEO EXACTO BASADO EN TU ESTRUCTURA REAL
+                    # Traduce tus columnas de Excel a las columnas internas del sistema
                     rename_map = {
                         "numero": "originador",
-                        "fecha_trafico": "fecha_hora",
-                        "latitud": "latitud_n",
-                        "longitud": "longitud_w",
-                        "tipo_cdr": "tipo_llamada",
+                        "fecha_trafico": "fecha_hora",       # Tu columna -> Sistema
+                        "tipo_cdr": "tipo_llamada",          # Tu columna -> Sistema
+                        "latitud": "latitud_n",              # CORRECCIÓN CLAVE
+                        "longitud": "longitud_w",            # CORRECCIÓN CLAVE
                         "cell_identity_decimal": "cell_identity_decimal",
-                        "nombre_celda": "nombre_celda"
+                        "nombre_celda": "nombre_celda",
+                        "location_area_code_decimal": "lac"
                     }
                     
                     # Renombrar columnas insensible a mayúsculas/minúsculas
@@ -92,11 +94,14 @@ def cargar_excel_crudo(file_path):
                             
                     temp.rename(columns=nuevo_mapa, inplace=True)
                     
-                    # Asegurar tipo llamada
+                    # Asegurar tipo llamada tenga valor si está vacío
                     if "tipo_llamada" not in temp.columns:
                         temp["tipo_llamada"] = "DATOS"
+                    else:
+                        # Rellenar nulos en tipo_llamada con "DATOS" por si acaso
+                        temp["tipo_llamada"] = temp["tipo_llamada"].fillna("DATOS")
                     
-                    # Rellenar receptor
+                    # Rellenar receptor para que no falle la lógica general
                     if "receptor" not in temp.columns:
                         temp["receptor"] = "INTERNET/DATOS"
                         
@@ -112,7 +117,7 @@ def cargar_excel_crudo(file_path):
             elif "entrant" in key or "incoming" in key: 
                 try:
                     temp = pd.read_excel(file_path, sheet_name=real_name, dtype=str)
-                    temp.dropna(how='all', inplace=True) # Limpiar vacías
+                    temp.dropna(how='all', inplace=True) 
                     temp.columns = temp.columns.str.lower().str.strip()
                     temp["tipo_llamada"] = "entrante"
                     df_list.append(temp)
@@ -124,7 +129,7 @@ def cargar_excel_crudo(file_path):
             elif "salient" in key or "outgoing" in key: 
                 try:
                     temp = pd.read_excel(file_path, sheet_name=real_name, dtype=str)
-                    temp.dropna(how='all', inplace=True) # Limpiar vacías
+                    temp.dropna(how='all', inplace=True) 
                     temp.columns = temp.columns.str.lower().str.strip()
                     temp["tipo_llamada"] = "saliente"
                     df_list.append(temp)
@@ -197,17 +202,19 @@ def procesar_dataframe_con_mapeo(df, mapping):
         else:
             df["duracion"] = 0
 
-        # 6. Coordenadas
+        # 6. Coordenadas (CRÍTICO: Manejo de punto/coma y valores inválidos)
         def corregir_coordenadas(valor):
-            if pd.isna(valor) or str(valor).strip() in ["", "?", "nan", "0"]:
+            if pd.isna(valor) or str(valor).strip() in ["", "?", "nan", "0", "None"]:
                 return np.nan
             try:
-                # Tu imagen muestra puntos decimales correctos (7.375060)
-                # Pero Excel a veces lo lee como 7375060 si la config regional está mal.
+                # Tu Excel parece usar punto (7.375060), lo cual es estándar.
+                # Pero forzamos string y reemplazo por si acaso viene con coma.
                 s_val = str(valor).replace(',', '.')
                 val_f = float(s_val)
                 
-                # Corrección solo si es absurdo (> 180)
+                # Corrección solo si es absurdo (ej: 7375060 en vez de 7.375060)
+                # Latitud Colombia aprox: -4 a 13
+                # Longitud Colombia aprox: -66 a -79
                 if abs(val_f) > 180:
                     if abs(val_f) > 100000: val_f /= 1000000
                     else: val_f /= 10000

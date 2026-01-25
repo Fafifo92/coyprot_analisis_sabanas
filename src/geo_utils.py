@@ -55,7 +55,7 @@ def generar_mapa_agrupado(df, output_path, nombres_asignados=None):
 
     cluster_entrantes = MarkerCluster(name="📥 Entrantes (Azul)").add_to(mapa)
     cluster_salientes = MarkerCluster(name="📤 Salientes (Verde)").add_to(mapa)
-    # Cluster nuevo para Datos
+    # Cluster exclusivo para datos de internet
     cluster_datos = MarkerCluster(name="📡 Datos (Morado)").add_to(mapa)
 
     for _, row in df_clean.iterrows():
@@ -63,22 +63,29 @@ def generar_mapa_agrupado(df, output_path, nombres_asignados=None):
             lat, lon = row["latitud_n"], row["longitud_w"]
             tipo = str(row.get("tipo_llamada", "desconocido")).lower()
             
+            # Lógica para diferenciar Datos vs Llamadas
             if "dato" in tipo:
-                # Si es dato, mostramos la celda o el ID
+                # Si es dato, intentamos mostrar la celda o el ID
                 cid = str(row.get("cell_identity_decimal", ""))
                 celda = str(row.get("nombre_celda", ""))
-                # Priorizar ID, si no Nombre, si no "Datos"
-                if cid and cid != "nan": num = cid
-                elif celda and celda != "nan": num = celda
+                
+                if cid and cid not in ["nan", "None", ""]: num = f"Celda: {cid}"
+                elif celda and celda not in ["nan", "None", ""]: num = f"Antena: {celda}"
                 else: num = "Tráfico de Datos"
                 
-                grp = cluster_datos; color = "purple"; icon = "globe"
+                grp = cluster_datos
+                color = "purple"
+                icon = "globe"
             elif tipo == "saliente":
                 num = str(row.get("receptor", "N/A"))
-                grp = cluster_salientes; color = "green"; icon = "arrow-up"
+                grp = cluster_salientes
+                color = "green"
+                icon = "arrow-up"
             else:
                 num = str(row.get("originador", "N/A"))
-                grp = cluster_entrantes; color = "blue"; icon = "arrow-down"
+                grp = cluster_entrantes
+                color = "blue"
+                icon = "arrow-down"
 
             alias = nombres_asignados.get(str(row.get("originador", "")), "") if nombres_asignados else ""
             label = f"{num} ({alias})" if alias else num
@@ -93,13 +100,13 @@ def generar_mapa_agrupado(df, output_path, nombres_asignados=None):
 
 def generar_mapa_rutas(df, output_path, nombres_asignados=None):
     """
-    NUEVO MOTOR DE RUTAS (PLOTLY) - MANUAL Y ESTILIZADO.
-    - Soporte para hoja de DATOS (Muestra cell_identity o nombre celda).
-    - Sin botones Play/Pausa (Control manual puro).
-    - Slider resaltado en "caja" visible.
-    - Sin líneas, solo puntos rojos.
+    MOTOR DE RUTAS EXCLUSIVO PARA DATOS (PLOTLY).
+    - Sin autoplay.
+    - Sin leyenda de caja.
+    - Muestra fecha/hora grande en el slider.
+    - Tooltip estilo "Card" HTML moderno con etiquetas explícitas.
     """
-    logger.info(f"Generando Timeline Plotly (Manual): {output_path}")
+    logger.info(f"Generando Timeline Plotly (Manual/Datos): {output_path}")
     df_clean = _limpiar_coordenadas(df)
     
     if df_clean.empty or "fecha_hora" not in df_clean.columns:
@@ -107,115 +114,141 @@ def generar_mapa_rutas(df, output_path, nombres_asignados=None):
         return
 
     try:
-        # 1. Preparar Datos
+        # 1. Preparar Datos y Ordenar
         df_clean = df_clean.sort_values(by="fecha_hora")
-        df_clean["Tiempo"] = df_clean["fecha_hora"].dt.strftime('%Y-%m-%d %H:%M:%S')
         
-        # Función de etiqueta inteligente mejorada para DATOS
-        def get_label(row):
-            tipo = str(row.get("tipo_llamada", "")).lower()
+        # --- UNIFICACIÓN DE FORMATO DE TIEMPO ---
+        # Usamos el mismo string para el Slider y para el Tooltip para evitar discrepancias
+        df_clean["Tiempo_Str"] = df_clean["fecha_hora"].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+        # Limpieza de columnas clave para el Tooltip
+        # Rellenamos vacíos con cadenas vacías para que no salga "nan" o "null"
+        df_clean["clean_cell_id"] = df_clean["cell_identity_decimal"].fillna("").astype(str).replace(["nan", "None", "0", "0.0"], "")
+        df_clean["clean_nombre_celda"] = df_clean["nombre_celda"].fillna("").astype(str).replace(["nan", "None"], "")
+
+        # --- LÓGICA DE ETIQUETA PRINCIPAL (Título del Tooltip) ---
+        def get_main_label(row):
+            nom = row["clean_nombre_celda"]
+            cid = row["clean_cell_id"]
             
-            # Si es un registro de DATOS
-            if "dato" in tipo:
-                # Prioridad 1: Cell Identity Decimal
-                cid = row.get("cell_identity_decimal")
-                if pd.notna(cid) and str(cid).strip() not in ["", "nan", "None"]:
-                    return f"Celda ID: {cid}"
-                
-                # Prioridad 2: Nombre Celda
-                nom = row.get("nombre_celda")
-                if pd.notna(nom) and str(nom).strip() not in ["", "nan", "None"]:
-                    return f"Antena: {nom}"
-                
-                return "Datos (Ubicación)"
+            # Preferencia: Nombre > ID > "Punto de Datos"
+            # AQUÍ AGREGAMOS EL PREFIJO EXPLÍCITO QUE PEDISTE
+            if nom and len(nom) > 1:
+                return f"Antena: {nom}"
+            if cid and len(cid) > 0:
+                return f"Celda: {cid}"
+            return "Ubicación de Datos"
 
-            # Lógica normal para llamadas
-            num = str(row.get("receptor") if tipo == "saliente" else row.get("originador"))
-            alias = nombres_asignados.get(num, "") if nombres_asignados else ""
-            return f"{num} ({alias})" if alias else num
-
-        df_clean["Objetivo"] = df_clean.apply(get_label, axis=1)
+        df_clean["Main_Label"] = df_clean.apply(get_main_label, axis=1)
         
         # 2. Generar Mapa (Plotly Express)
-        
-        # Configurar tooltip dinámico
-        hover_cols = {
-            "latitud_n": False, 
-            "longitud_w": False, 
-            "tipo_llamada": True, 
-            "duracion": True, 
-            "nombre_celda": True, 
-            "Tiempo": True
-        }
-        # Si existe la columna de ID de celda, la agregamos al tooltip
-        if "cell_identity_decimal" in df_clean.columns:
-            hover_cols["cell_identity_decimal"] = True
-            
         fig = px.scatter_mapbox(
             df_clean,
             lat="latitud_n",
             lon="longitud_w",
-            color="Objetivo", 
-            animation_frame="Tiempo",
-            hover_name="Objetivo",
-            hover_data=hover_cols,
+            # Usamos una constante para el color para que no genere leyenda de grupos
+            color_discrete_sequence=["#FF0000"], 
+            animation_frame="Tiempo_Str", # Usamos el string formateado
             zoom=12,
-            height=900,
-            color_discrete_sequence=["#FF0000"] * len(df_clean["Objetivo"].unique())
+            height=900
         )
 
-        # 3. Estilos de Puntos (Rojos, sin líneas)
-        fig.update_traces(marker=dict(size=10, opacity=0.9))
+        # 3. Personalización del Tooltip (Estilo CARD moderno + Icono)
+        fig.update_traces(
+            marker=dict(size=15, opacity=0.9, color="#d62728"), # Rojo Intenso
+            hovertemplate="""
+            <div style="
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                background-color: white; 
+                padding: 12px; 
+                border-radius: 8px; 
+                border-left: 5px solid #d62728;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                min-width: 220px;
+                color: #333;">
+                
+                <div style="display: flex; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                    <span style="font-size: 24px; margin-right: 10px;">📡</span>
+                    <div>
+                        <div style="font-size: 14px; font-weight: bold; color: #d62728; line-height: 1.2;">%{customdata[0]}</div>
+                    </div>
+                </div>
+                
+                <div style="font-size: 12px; margin-bottom: 4px;">
+                    <span style="color: #666;">🆔 ID:</span> 
+                    <b>%{customdata[1]}</b>
+                </div>
+                
+                <div style="font-size: 12px;">
+                    <span style="color: #666;">📅 Fecha:</span> 
+                    <b>%{customdata[2]}</b>
+                </div>
+            </div>
+            <extra></extra>
+            """,
+            # Pasamos los datos limpios al customdata: [0]=Label, [1]=ID, [2]=Tiempo
+            customdata=df_clean[["Main_Label", "clean_cell_id", "Tiempo_Str"]]
+        )
 
-        # 4. Layout Limpio
+        # 4. Layout: Controles y Estilo
         fig.update_layout(
             mapbox_style="open-street-map", 
-            margin={"r":0,"t":50,"l":0,"b":0},
-            
+            margin={"r":0,"t":40,"l":0,"b":0},
+            showlegend=False, # Oculta la caja de leyenda superior izquierda
+
             title=dict(
-                text="<b>Análisis de Recorrido por Datos</b>",
-                y=0.98, x=0.01, xanchor='left', yanchor='top'
+                text="<b>📍 Recorrido Histórico (Datos de Internet)</b>",
+                y=0.99, x=0.01, xanchor='left', yanchor='top',
+                font=dict(size=16, color="#333")
             ),
             
-            legend=dict(
-                bgcolor="rgba(255,255,255,0.9)",
-                bordercolor="#333", borderwidth=1,
-                yanchor="top", y=0.95, xanchor="left", x=0.01,
-                title_text="Objetivos / Celdas"
-            ),
+            # --- CONTROLES DE REPRODUCCIÓN (SIN AUTOPLAY) ---
+            updatemenus=[dict(
+                type="buttons",
+                showactive=False,
+                x=0.05, y=0.03, # Posición abajo a la izquierda, cerca del slider
+                xanchor="right", yanchor="bottom",
+                pad=dict(t=0, r=10),
+                bgcolor="white",
+                bordercolor="#ccc",
+                borderwidth=1,
+                buttons=[
+                    dict(
+                        label="▶", # Play
+                        method="animate",
+                        args=[None, dict(frame=dict(duration=800, redraw=True), fromcurrent=True)]
+                    ),
+                    dict(
+                        label="⏸", # Pausa
+                        method="animate",
+                        args=[[None], dict(mode="immediate", frame=dict(duration=0, redraw=False))]
+                    )
+                ]
+            )],
             
-            # Sin updatemenus (Botones eliminados)
-            
-            # SLIDER ESTILIZADO (CAJA VISIBLE)
+            # --- SLIDER ESTILIZADO ---
             sliders=[dict(
                 active=0, 
                 yanchor="bottom", xanchor="center",
-                x=0.5, y=0.02,  # Centrado abajo
-                len=0.9,        # Ocupa casi todo el ancho
+                x=0.5, y=0.02,
+                len=0.85, # Un poco menos ancho para dejar espacio a los botones
                 
                 currentvalue=dict(
-                    font=dict(size=22, color="red", family="Arial Black"), 
-                    prefix="📅 ", 
+                    font=dict(size=20, color="#d62728", family="Arial Black"), 
+                    prefix="🕒 ", 
                     visible=True, 
-                    xanchor="center", # Fecha centrada sobre la barra
+                    xanchor="center",
                     offset=25
                 ),
-                
-                # Estilo de la "Caja" del slider
-                bgcolor="#f8f9fa",      # Fondo gris claro
-                bordercolor="#333",     # Borde oscuro
-                borderwidth=2,          # Grosor del borde
-                pad=dict(b=10, t=50, l=20, r=20), # Margen interno generoso
-                
-                # Ocultar ticks labels de abajo (manchón negro)
-                font=dict(size=1, color="rgba(0,0,0,0)") 
+                bgcolor="#ffffff", bordercolor="#666", borderwidth=1,
+                pad=dict(b=10, t=50)
             )]
         )
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        # Scroll Zoom activado
-        fig.write_html(output_path, config={'scrollZoom': True, 'displayModeBar': True}) 
-        logger.info("✅ Mapa Recorrido (Manual Estilizado) generado.")
+        # config={'scrollZoom': True} permite zoom con rueda. displayModeBar=True muestra herramientas.
+        fig.write_html(output_path, config={'scrollZoom': True, 'displayModeBar': True, 'responsive': True}) 
+        logger.info("✅ Mapa Recorrido (Solo Datos, Manual) generado.")
 
     except Exception as e:
         logger.error(f"❌ Error generando mapa Plotly: {e}")
