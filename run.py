@@ -1,16 +1,16 @@
 """
-Punto de entrada dentro de src/.
+Punto de entrada de la aplicación.
 
-Lanza la aplicación GUI principal.
-Para ejecutar desde la raíz del proyecto use: python run.py
+Resuelve el path de importación y lanza la GUI.
+Compatible con ejecución directa y con PyInstaller.
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-# Asegurar que src/ esté en el path
-_SRC_DIR = Path(__file__).resolve().parent
+# Agregar src/ al path para que los imports relativos funcionen
+_SRC_DIR = Path(__file__).resolve().parent / "src"
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 

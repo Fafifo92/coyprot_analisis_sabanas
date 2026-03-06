@@ -279,7 +279,7 @@
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tendencias"><i
             class="bi bi-graph-up-arrow"></i> Tendencias</button></li>
 
-      {% if has_coords %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+      {% if has_datos_recorrido %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
           data-bs-target="#recorrido"><i class="bi bi-signpost-split-fill"></i> Recorrido por datos</button></li>{%
       endif %}
 
@@ -589,7 +589,7 @@
         </div>
       </div>
 
-      {% if has_coords %}
+      {% if has_datos_recorrido %}
       <div class="tab-pane fade" id="recorrido">
         <div class="card overflow-hidden">
           <div class="card-header bg-white d-flex justify-content-between align-items-center">
