@@ -3,8 +3,10 @@ import pandas as pd
 import json
 import shutil
 from jinja2 import Environment, FileSystemLoader
-# Importamos las 3 funciones de mapas para generarlos durante el reporte
+# Importamos las funciones de mapas
 from geo_utils import generar_mapa_agrupado, generar_mapa_rutas, generar_mapa_calor
+# Importamos la lógica geográfica mejorada
+from colombia_data import obtener_ubicacion_completa
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 TEMPLATE_DIR = os.path.join(ROOT_DIR, "templates")
@@ -13,19 +15,14 @@ STATIC_DIR = os.path.join(ROOT_DIR, "static")
 env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 
 def obtener_nombre_mostrado(numero, nombres_asignados):
-    """
-    Función auxiliar para garantizar que el formato 'Número (Alias)' 
-    sea idéntico en todas partes (HTML, Gráficos, JSON).
-    """
+    """Garantiza formato 'Número (Alias)' consistente."""
     numero_str = str(numero).strip()
     if nombres_asignados and numero_str in nombres_asignados:
         return f"{numero_str} ({nombres_asignados[numero_str]})"
     return numero_str
 
 def obtener_top_frecuentes(df, columna_numero, nombres_asignados, top_n=5):
-    """
-    Calcula los números más frecuentes para las cajas de resumen del reporte.
-    """
+    """Calcula Top 5 para resumen."""
     if df.empty or columna_numero not in df.columns:
         return []
     
@@ -40,74 +37,61 @@ def obtener_top_frecuentes(df, columna_numero, nombres_asignados, top_n=5):
     return resultado
 
 def generar_datos_llamadas_json(df, output_path, nombres_asignados=None):
-    """
-    Genera el archivo call_data.js.
-    Incluye el campo 'numero' con alias para el tooltip interactivo.
-    Detecta si hay coordenadas (originales o inferidas por municipio) para incluir el pin en el tooltip.
-    """
-    if df.empty:
-        print("❌ DataFrame está vacío. No se generará call_data.js")
+    """Genera call_data.js para los gráficos interactivos (SOLO LLAMADAS)."""
+    # 1. FILTRO: Excluir filas de tipo 'DATOS' para no ensuciar los gráficos de llamadas
+    if 'tipo_llamada' in df.columns:
+        mask_datos = df['tipo_llamada'].astype(str).str.upper().str.contains('DATO')
+        df_llamadas = df[~mask_datos].copy()
+    else:
+        df_llamadas = df.copy()
+
+    if df_llamadas.empty:
+        try:
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write("const CALL_DATA = {};")
+        except: pass
         return
 
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         call_data = {}
-    except Exception as e:
-        print(f"❌ Error al crear el directorio: {e}")
-        return
+        tiene_coords = "latitud_n" in df_llamadas.columns and "longitud_w" in df_llamadas.columns
 
-    # Verificamos si existen las columnas, incluso si fueron rellenadas por inferencia
-    tiene_coords = "latitud_n" in df.columns and "longitud_w" in df.columns
+        for _, row in df_llamadas.iterrows():
+            tipo = row.get("tipo_llamada", "desconocido")
+            originador = str(row.get("originador", "Desconocido"))
+            receptor = str(row.get("receptor", "Desconocido"))
+            
+            numero_clave = receptor if tipo == "saliente" else originador
+            numero_mostrar = obtener_nombre_mostrado(numero_clave, nombres_asignados)
+            
+            try: hora = row["fecha_hora"].hour
+            except: hora = 0
 
-    for _, row in df.iterrows():
-        # Determinar tipo y participantes
-        tipo = row.get("tipo_llamada", "desconocido")
-        originador = str(row.get("originador", "Desconocido"))
-        receptor = str(row.get("receptor", "Desconocido"))
-        
-        # Identificar el número principal de esta fila para agrupar en el gráfico
-        numero_clave = receptor if tipo == "saliente" else originador
-        
-        # Nombre visual (ej: "300123 (Juan)")
-        numero_mostrar = obtener_nombre_mostrado(numero_clave, nombres_asignados)
-        
-        try:
-            hora = row["fecha_hora"].hour
-        except:
-            hora = 0
+            if numero_mostrar not in call_data:
+                call_data[numero_mostrar] = []
 
-        if numero_mostrar not in call_data:
-            call_data[numero_mostrar] = []
+            lat = row["latitud_n"] if tiene_coords and pd.notna(row["latitud_n"]) else None
+            lon = row["longitud_w"] if tiene_coords and pd.notna(row["longitud_w"]) else None
 
-        # Extraer coordenadas (si existen y no son nulas)
-        lat = row["latitud_n"] if tiene_coords and pd.notna(row["latitud_n"]) else None
-        lon = row["longitud_w"] if tiene_coords and pd.notna(row["longitud_w"]) else None
+            call_data[numero_mostrar].append({
+                "numero": numero_mostrar,
+                "fecha_hora": row["fecha_hora"].isoformat() if pd.notna(row["fecha_hora"]) else "",
+                "hora": hora,
+                "tipo_llamada": tipo,
+                "latitud": lat,
+                "longitud": lon
+            })
 
-        call_data[numero_mostrar].append({
-            "numero": numero_mostrar, # Campo crítico para el tooltip
-            "fecha_hora": row["fecha_hora"].isoformat() if pd.notna(row["fecha_hora"]) else "",
-            "hora": hora,
-            "tipo_llamada": tipo,
-            "latitud": lat,
-            "longitud": lon
-        })
-
-    try:
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("const CALL_DATA = ")
             json.dump(call_data, f, indent=4)
             f.write(";")
-        print(f"✅ call_data.js generado correctamente en: {output_path}")
-        return output_path
     except Exception as e:
-        print(f"❌ Error al guardar call_data.js: {e}")
-        return None
+        print(f"❌ Error generando JSON: {e}")
 
 def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=None, lista_adjuntos=None, nombres_asignados=None, datos_generales=None):
-    """
-    Genera el informe HTML completo.
-    Coordina la creación de los 3 tipos de mapas si hay coordenadas (originales o inferidas).
-    """
+    """Genera el informe HTML completo con lógica geográfica."""
     base_output = os.path.join(ROOT_DIR, "output", nombre_informe)
     reports_dir = os.path.join(base_output, "reports")
     maps_dir = os.path.join(base_output, "maps")
@@ -115,100 +99,105 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
     data_dir = os.path.join(base_output, "data")
     static_dir = os.path.join(base_output, "static")
 
-    # Crear estructura de directorios
     for d in [reports_dir, maps_dir, graphics_dir, data_dir, static_dir]:
         os.makedirs(d, exist_ok=True)
 
-    # --- 1. Procesar Adjuntos (Multi-PDF) ---
+    # ==============================================================================
+    # 1. SEPARACIÓN CRÍTICA DE DATOS
+    # ==============================================================================
+    # Identificamos filas que contengan "DATO" en su tipo (ej: "DATOS", "dato", "datos")
+    mask_datos = df['tipo_llamada'].astype(str).str.upper().str.contains('DATO')
+    
+    # DataFrame EXCLUSIVO para la pestaña "Recorrido por datos"
+    df_datos = df[mask_datos].copy()
+    
+    # DataFrame EXCLUSIVO para estadísticas de llamadas, tablas y gráficos
+    df_llamadas = df[~mask_datos].copy()
+    
+    print(f"📊 Separación de registros -> Llamadas: {len(df_llamadas)} | Datos Internet: {len(df_datos)}")
+
+    # 2. Adjuntos
     archivos_procesados = []
     if lista_adjuntos:
         print(f"📎 Procesando {len(lista_adjuntos)} adjuntos...")
         for adjunto in lista_adjuntos:
-            origen = adjunto['ruta']
-            nombre_archivo = adjunto['nombre_archivo']
-            categoria = adjunto['categoria']
-            destino = os.path.join(data_dir, nombre_archivo)
-            
             try:
-                if os.path.exists(origen):
-                    shutil.copy(origen, destino)
-                    archivos_procesados.append({
-                        "categoria": categoria,
-                        "nombre": nombre_archivo,
-                        "ruta_relativa": f"../data/{nombre_archivo}"
-                    })
-                else:
-                    print(f"  ⚠️ Archivo no encontrado: {origen}")
-            except Exception as e:
-                print(f"  ❌ Error copiando adjunto: {e}")
+                shutil.copy(adjunto['ruta'], os.path.join(data_dir, adjunto['nombre_archivo']))
+                archivos_procesados.append({
+                    "categoria": adjunto['categoria'],
+                    "nombre": adjunto['nombre_archivo'],
+                    "ruta_relativa": f"../data/{adjunto['nombre_archivo']}"
+                })
+            except: pass
 
-    # --- 2. Copiar Recursos Estáticos ---
+    # 3. Recursos Estáticos
     try:
         js_dest = os.path.join(static_dir, "assets_js")
         img_dest = os.path.join(static_dir, "assets_img")
         os.makedirs(js_dest, exist_ok=True)
         os.makedirs(img_dest, exist_ok=True)
         
-        # Copiar JS originales
-        src_map_js = os.path.join(STATIC_DIR, "assets_js", "interactive_maps.js")
-        src_chart_js = os.path.join(STATIC_DIR, "assets_js", "interactive_charts.js")
-        
-        if os.path.exists(src_map_js): shutil.copy(src_map_js, os.path.join(js_dest, "interactive_maps.js"))
-        if os.path.exists(src_chart_js): shutil.copy(src_chart_js, os.path.join(js_dest, "interactive_charts.js"))
-        
-        # Copiar Logos e Imágenes
+        for js in ["interactive_maps.js", "interactive_charts.js"]:
+            src = os.path.join(STATIC_DIR, "assets_js", js)
+            if os.path.exists(src): shutil.copy(src, os.path.join(js_dest, js))
+            
         if logo_path and os.path.exists(logo_path): shutil.copy(logo_path, os.path.join(img_dest, "logo.png"))
-        src_info_img = os.path.join(STATIC_DIR, "assets_img", "info.png")
-        if os.path.exists(src_info_img): shutil.copy(src_info_img, os.path.join(img_dest, "info.png"))
-
+        src_info = os.path.join(STATIC_DIR, "assets_img", "info.png")
+        if os.path.exists(src_info): shutil.copy(src_info, os.path.join(img_dest, "info.png"))
     except Exception as e:
-        print(f"⚠️ Error recursos estáticos: {e}")
+        print(f"⚠️ Error assets: {e}")
 
-    # --- 3. Detección de Coordenadas y Generación de Mapas ---
+    # 4. Mapas (Generación Separada y Específica)
     has_coords = False
+    has_datos_recorrido = False # Nueva bandera específica
+    
+    # Verificamos si hay coordenadas en general (en el DF completo original para activar la flag)
     if "latitud_n" in df.columns and "longitud_w" in df.columns:
-        # Verificamos si hay ALGUN dato válido (ya sea GPS o inferido)
-        if df["latitud_n"].notna().any() and df["longitud_w"].notna().any():
+        if df["latitud_n"].notna().any():
             has_coords = True
+            try:
+                print("🗺️ Generando mapas...")
+                
+                # A) Mapas Generales (Agrupado y Calor): 
+                # Usamos df_llamadas para no saturar con datos de internet
+                generar_mapa_agrupado(df_llamadas, os.path.join(maps_dir, "mapa_agrupado.html"), nombres_asignados)
+                generar_mapa_calor(df_llamadas, os.path.join(maps_dir, "mapa_calor.html"))
+                
+                # B) Mapa de Recorrido (ESTRICTAMENTE SOLO DATOS): 
+                if not df_datos.empty:
+                    print(f"🗺️ Generando mapa de recorrido con {len(df_datos)} registros de DATOS...")
+                    generar_mapa_rutas(df_datos, os.path.join(maps_dir, "mapa_recorrido.html"), nombres_asignados)
+                    has_datos_recorrido = True
+                else:
+                    # NO generamos nada ni usamos fallback.
+                    print("⚠️ No hay registros de DATOS. No se generará el mapa de recorrido.")
+                    
+            except Exception as e:
+                print(f"⚠️ Error mapas: {e}")
 
-    if has_coords:
-        try:
-            print("🗺️ Generando set completo de mapas interactivos...")
-            
-            # 1. Mapa Agrupado (Clusters)
-            generar_mapa_agrupado(df, os.path.join(maps_dir, "mapa_agrupado.html"), nombres_asignados)
-            
-            # 2. Mapa de Rutas (Cronológico)
-            generar_mapa_rutas(df, os.path.join(maps_dir, "mapa_rutas.html"), nombres_asignados)
-            
-            # 3. Mapa de Calor (Densidad)
-            generar_mapa_calor(df, os.path.join(maps_dir, "mapa_calor.html"))
-            
-        except Exception as e:
-            print(f"⚠️ Error generando mapas: {e}")
-            has_coords = False
-
-    # --- 4. Preparar Datos para el Reporte HTML ---
-    total_llamadas = len(df)
-    uni_orig = df['originador'].dropna().unique() if 'originador' in df.columns else []
-    uni_dest = df['receptor'].dropna().unique() if 'receptor' in df.columns else []
+    # 5. Datos del Reporte (ESTADÍSTICAS BASADAS EN SOLO LLAMADAS)
+    total_llamadas = len(df_llamadas)
+    
+    uni_orig = df_llamadas['originador'].dropna().unique() if 'originador' in df_llamadas.columns else []
+    uni_dest = df_llamadas['receptor'].dropna().unique() if 'receptor' in df_llamadas.columns else []
     numeros_brutos = set(list(uni_orig) + list(uni_dest))
     
     numeros_unicos_lista = sorted([obtener_nombre_mostrado(n, nombres_asignados) for n in numeros_brutos])
     promedio_llamadas = total_llamadas / len(numeros_brutos) if numeros_brutos else 0
 
-    # Calcular Tops (Cajas de resumen)
-    df_entrantes = df[df['tipo_llamada'] == 'entrante']
-    top_entrantes = obtener_top_frecuentes(df_entrantes, 'originador', nombres_asignados)
+    top_entrantes = obtener_top_frecuentes(df_llamadas[df_llamadas['tipo_llamada'] == 'entrante'], 'originador', nombres_asignados)
+    top_salientes = obtener_top_frecuentes(df_llamadas[df_llamadas['tipo_llamada'] == 'saliente'], 'receptor', nombres_asignados)
 
-    df_salientes = df[df['tipo_llamada'] == 'saliente']
-    top_salientes = obtener_top_frecuentes(df_salientes, 'receptor', nombres_asignados)
-
-    # Preparar Tablas de Detalle
+    # Preparar Tablas y Geografía (USANDO SOLO LLAMADAS)
     llamadas_entrantes = {}
     llamadas_salientes = {}
     
-    for _, row in df.iterrows():
+    # Contenedor temporal para armar el mapa de dependencias (Depto -> Municipios)
+    mapa_geografico_temp = {}
+
+    print("📍 Calculando geografía completa (Depto/Muni)...")
+
+    for _, row in df_llamadas.iterrows():
         tipo = row.get('tipo_llamada', 'desconocido')
         originador = str(row.get('originador', 'Desconocido'))
         receptor = str(row.get('receptor', 'Desconocido'))
@@ -216,15 +205,32 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
         o_show = obtener_nombre_mostrado(originador, nombres_asignados)
         r_show = obtener_nombre_mostrado(receptor, nombres_asignados)
         
-        # Determinar ubicación para la tabla (Coords para botón Google Maps)
-        loc = "N/A"
+        # --- LÓGICA DE UBICACIÓN ---
+        loc_coords = "N/A"
+        depto = "Desconocido"
+        muni = "Desconocido"
+        
         if has_coords and pd.notna(row.get('latitud_n')) and pd.notna(row.get('longitud_w')):
-             loc = f"{row.get('latitud_n')}, {row.get('longitud_w')}"
+            lat, lon = row.get('latitud_n'), row.get('longitud_w')
+            loc_coords = f"{lat}, {lon}"
+            
+            # Calculamos Depto y Municipio usando colombia_data
+            d_calc, m_calc = obtener_ubicacion_completa(lat, lon)
+            
+            # Guardamos para el filtro en cascada si son válidos
+            if d_calc not in ["Desconocido", "Otros / Rural"] and m_calc not in ["Desconocido", "Zona Rural"]:
+                if d_calc not in mapa_geografico_temp:
+                    mapa_geografico_temp[d_calc] = set()
+                mapa_geografico_temp[d_calc].add(m_calc)
+            
+            depto, muni = d_calc, m_calc
 
         info = {
             'fecha_hora': row['fecha_hora'], 
             'duracion': row.get('duracion', 0), 
-            'ubicacion': loc
+            'ubicacion_coords': loc_coords,
+            'departamento': depto,
+            'municipio': muni
         }
 
         if tipo == "saliente":
@@ -234,7 +240,18 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
             if o_show not in llamadas_entrantes: llamadas_entrantes[o_show] = {'llamadas': []}
             llamadas_entrantes[o_show]['llamadas'].append(info)
 
-    # --- 5. Renderizar Plantilla Jinja2 ---
+    # --- PREPARAR DATOS PARA EL HTML (JSON SAFE) ---
+    mapa_dep_mun = {}
+    for d, m_set in mapa_geografico_temp.items():
+        mapa_dep_mun[d] = sorted(list(m_set))
+        
+    lista_departamentos = sorted(list(mapa_dep_mun.keys()))
+    
+    todos_municipios = set()
+    for m_list in mapa_dep_mun.values():
+        todos_municipios.update(m_list)
+    lista_municipios = sorted(list(todos_municipios))
+
     try:
         template = env.get_template("report_template.html")
         html_content = template.render(
@@ -250,14 +267,18 @@ def generar_informe_html(df, nombre_informe, incluir_membrete=False, logo_path=N
             logo_path=logo_path,
             adjuntos=archivos_procesados,
             datos_generales=datos_generales or {},
-            has_coords=has_coords # Esto activa las pestañas de mapas en el HTML
+            has_coords=has_coords,
+            has_datos_recorrido=has_datos_recorrido, # <-- NUEVA VARIABLE AL TEMPLATE
+            lista_municipios=lista_municipios,
+            lista_departamentos=lista_departamentos,
+            mapa_dep_mun=mapa_dep_mun
         )
 
         informe_path = os.path.join(reports_dir, "informe_llamadas.html")
         with open(informe_path, "w", encoding="utf-8") as f:
             f.write(html_content)
         
-        print(f'✅ Informe HTML generado exitosamente: {informe_path}')
+        print(f'✅ Informe generado: {informe_path}')
         return base_output
         
     except Exception as e:

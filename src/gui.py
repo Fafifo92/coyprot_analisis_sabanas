@@ -57,9 +57,9 @@ CATEGORIAS_PDF = ["Financiero", "Propiedades", "Vehículos", "Judicial", "Antece
 class CallAnalyzerGUI(ThemedTk):
     def __init__(self):
         super().__init__(theme="adapta") 
-        self.title("📊 Analizador de Llamadas Pro v2.4 - Edición Municipios")
-        self.geometry("980x750")
-        self.minsize(850, 650)
+        self.title("📊 Analizador de Llamadas Pro v2.5 - Smart Diagnostic")
+        self.geometry("1000x800")
+        self.minsize(900, 700)
 
         # Variables
         self.df = None
@@ -93,7 +93,7 @@ class CallAnalyzerGUI(ThemedTk):
             self.logger.warning(f"⚠️ No se encontró {DB_NAME}. Geolocalización por DB desactivada.")
             self.geocoder = None
 
-        self.logger.info("Interfaz lista.")
+        self.logger.info("Interfaz lista. Esperando datos...")
         self.after(100, self.process_queue)
 
     def _configure_gui_logging(self):
@@ -118,21 +118,39 @@ class CallAnalyzerGUI(ThemedTk):
         main_frame.grid_rowconfigure(4, weight=1) 
         main_frame.grid_columnconfigure(0, weight=1); main_frame.grid_columnconfigure(1, weight=1) 
 
+        # --- SECCIÓN SUPERIOR: CARGA Y ESTADO ---
+        f_top = ttk.Frame(main_frame)
+        f_top.grid(row=0, column=0, columnspan=2, sticky="ew", pady=5)
+        f_top.grid_columnconfigure(0, weight=3) # Peso para el cargador
+        f_top.grid_columnconfigure(1, weight=1) # Peso para el semáforo
+
         # 1. Carga
-        f_load = ttk.LabelFrame(main_frame, text="📂 Archivo Principal", padding="15")
-        f_load.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        f_load = ttk.LabelFrame(f_top, text="📂 Archivo Principal", padding="15")
+        f_load.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
         f_load.grid_columnconfigure(1, weight=1)
+        
         ttk.Label(f_load, text="Excel/CSV:").grid(row=0, column=0, padx=5, sticky="w")
-        ttk.Entry(f_load, textvariable=self.archivo_path, width=70, state='readonly').grid(row=0, column=1, padx=10, sticky="ew")
+        ttk.Entry(f_load, textvariable=self.archivo_path, width=50, state='readonly').grid(row=0, column=1, padx=10, sticky="ew")
         self.btn_cargar = ttk.Button(f_load, text="Seleccionar Archivo", command=self.cargar_archivo)
         self.btn_cargar.grid(row=0, column=2, padx=5)
+
+        # 1.5. Semáforo de Estado (NUEVO)
+        self.f_status = ttk.LabelFrame(f_top, text="🚦 Estado de Datos", padding="10")
+        self.f_status.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
+        
+        # Canvas para dibujar el círculo de color
+        self.canvas_status = tk.Canvas(self.f_status, width=30, height=30, highlightthickness=0)
+        self.canvas_status.pack(side="left", padx=5)
+        self.status_light = self.canvas_status.create_oval(5, 5, 25, 25, fill="gray", outline="gray") # Luz apagada por defecto
+        
+        self.lbl_status_text = ttk.Label(self.f_status, text="Esperando...", font=("Arial", 9, "bold"))
+        self.lbl_status_text.pack(side="left", padx=5)
 
         # 2. Adjuntos
         f_adj = ttk.LabelFrame(main_frame, text="📎 Adjuntos (PDF)", padding="10")
         f_adj.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
         f_adj.grid_columnconfigure(0, weight=1)
         
-        # Treeview mejorado con scroll
         self.tree_adj = ttk.Treeview(f_adj, columns=("cat", "arch"), show="headings", height=5)
         self.tree_adj.heading("cat", text="Categoría"); self.tree_adj.column("cat", width=180, anchor="center")
         self.tree_adj.heading("arch", text="Nombre del Archivo"); self.tree_adj.column("arch", width=600, anchor="w")
@@ -172,11 +190,24 @@ class CallAnalyzerGUI(ThemedTk):
         except: pass
 
         # 5. Logs
-        f_log = ttk.LabelFrame(main_frame, text="📋 Registro de Actividad", padding="10")
+        f_log = ttk.LabelFrame(main_frame, text="📋 Registro de Actividad y Diagnóstico", padding="10")
         f_log.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
         f_log.grid_rowconfigure(0, weight=1); f_log.grid_columnconfigure(0, weight=1)
-        self.log_text_widget = scrolledtext.ScrolledText(f_log, wrap=tk.WORD, height=8, state='disabled', font=('Consolas', 9))
+        self.log_text_widget = scrolledtext.ScrolledText(f_log, wrap=tk.WORD, height=10, state='disabled', font=('Consolas', 9))
         self.log_text_widget.grid(row=0, column=0, sticky="nsew")
+
+    def update_semaphore(self, color, text):
+        """ Actualiza el color y texto del semáforo de estado """
+        # Colores hex para mejor visualización
+        color_map = {
+            "green": "#28a745",   # Verde éxito
+            "yellow": "#ffc107",  # Amarillo alerta/proceso
+            "red": "#dc3545",     # Rojo error
+            "gray": "#6c757d"     # Gris inactivo
+        }
+        fill_color = color_map.get(color, "gray")
+        self.canvas_status.itemconfig(self.status_light, fill=fill_color, outline=fill_color)
+        self.lbl_status_text.config(text=text)
 
     # --- LÓGICA DE ADJUNTOS ---
     def agregar_pdf_adjunto(self):
@@ -217,7 +248,8 @@ class CallAnalyzerGUI(ThemedTk):
             self.archivo_path.set(path)
             self.is_processing = True
             self.bloquear_botones(True)
-            self.logger.info(f"Cargando: {os.path.basename(path)}")
+            self.update_semaphore("yellow", "Analizando Archivo...") # Semáforo Amarillo
+            self.logger.info(f"📂 Cargando: {os.path.basename(path)}")
             threading.Thread(target=self._thread_cargar, args=(path,), daemon=True).start()
 
     def _thread_cargar(self, path):
@@ -232,25 +264,73 @@ class CallAnalyzerGUI(ThemedTk):
         d = ColumnMapperDialog(self, df_raw.columns)
         self.wait_window(d)
         if not d.result:
-            self.logger.warning("Cancelado."); self.is_processing = False; self.bloquear_botones(False); return
+            self.logger.warning("Carga cancelada."); 
+            self.is_processing = False; self.bloquear_botones(False)
+            self.update_semaphore("gray", "Carga Cancelada") # Semáforo Gris
+            return
+        
+        self.update_semaphore("yellow", "Limpiando Datos...")
         threading.Thread(target=self._thread_proceso_final, args=(df_raw, d.result), daemon=True).start()
 
-    # --- AQUÍ LA MEJORA PRINCIPAL DE CARGA ---
+    # --- AQUÍ LA MEJORA PRINCIPAL DE CARGA Y DIAGNÓSTICO ---
     def _thread_proceso_final(self, df_raw, mapping):
         try:
-            self.logger.info("Procesando datos...")
+            self.logger.info("⚙️ Ejecutando limpieza profunda y normalización...")
+            
+            # Guardamos tamaño original para auditoría
+            filas_originales = len(df_raw)
+            
             self.df = procesar_dataframe_con_mapeo(df_raw, mapping)
             
-            # 1. Intento Normal (GPS nativo o DB Celdas)
+            if self.df is None or self.df.empty:
+                raise Exception("El archivo no contiene datos válidos después de la limpieza.")
+            
+            # --- AUDITORÍA DE DATOS ---
+            filas_limpias = len(self.df)
+            filas_descartadas = filas_originales - filas_limpias
+            
+            # Conteo de tipos: Entrantes y Salientes
+            entrantes = len(self.df[self.df["tipo_llamada"] == "entrante"])
+            salientes = len(self.df[self.df["tipo_llamada"] == "saliente"])
+            
+            # NUEVO: Conteo de Datos de Internet
+            # Buscamos cualquier cosa que tenga "DATO" en el nombre (mayúsculas/minúsculas)
+            mask_datos = self.df['tipo_llamada'].astype(str).str.upper().str.contains('DATO')
+            datos_internet = len(self.df[mask_datos])
+            
+            # Conteo de Coordenadas
+            con_gps = 0
+            if "latitud_n" in self.df.columns:
+                con_gps = self.df["latitud_n"].notna().sum()
+            
+            # Reporte al Log (ACTUALIZADO CON DATOS DE INTERNET)
+            self.logger.info("-" * 40)
+            self.logger.info("📊 REPORTE DE DIAGNÓSTICO DE CARGA")
+            self.logger.info("-" * 40)
+            self.logger.info(f"🔹 Filas Totales Originales: {filas_originales}")
+            self.logger.info(f"🔹 Filas Válidas Procesadas: {filas_limpias}")
+            if filas_descartadas > 0:
+                self.logger.warning(f"⚠️ Filas Descartadas (Error fecha/número): {filas_descartadas}")
+            else:
+                self.logger.info("✨ Calidad de datos perfecta: 0 descartes.")
+                
+            self.logger.info(f"📥 Entrantes: {entrantes} | 📤 Salientes: {salientes} | 📡 Datos Internet: {datos_internet}")
+            
+            if con_gps > 0:
+                self.logger.info(f"📍 Coordenadas detectadas: {con_gps} registros.")
+            else:
+                self.logger.warning("⚠️ No se detectaron coordenadas GPS nativas.")
+            self.logger.info("-" * 40)
+            
+            # 1. Intento Normal (DB Celdas)
             if self.df is not None and self.geocoder:
                 if "nombre_celda" in self.df.columns:
                     # Si no tiene coordenadas gps nativas, intenta DB
                     if not self.df.get("latitud_n", pd.Series()).notna().any():
-                         self.logger.info("Geolocalizando con base de datos de celdas...")
+                         self.logger.info("📡 Geolocalizando con base de datos de celdas...")
                          self.df = self.geocoder.buscar_coordenadas(self.df, "nombre_celda")
 
-            # 2. Verificación para Inferencia por Municipio (LA MEJORA)
-            # Contamos cuántos siguen sin coordenadas
+            # 2. Verificación para Inferencia por Municipio
             registros_sin_coords = 0
             if "latitud_n" in self.df.columns:
                  registros_sin_coords = self.df["latitud_n"].isna().sum()
@@ -269,8 +349,25 @@ class CallAnalyzerGUI(ThemedTk):
             self.work_queue.put(("error", f"Error proceso: {e}"))
 
     def finalizar_carga_datos(self):
-        """Método auxiliar para terminar la carga después de la decisión del usuario"""
-        self.work_queue.put(("carga_ok", len(self.df)))
+        """Método auxiliar para terminar la carga y pasar estadísticas finales"""
+        # Recalculamos las estadísticas aquí para asegurar que incluyen 
+        # cualquier cambio hecho por la inferencia o geolocalización
+        total = len(self.df)
+        entrantes = len(self.df[self.df["tipo_llamada"] == "entrante"])
+        salientes = len(self.df[self.df["tipo_llamada"] == "saliente"])
+        
+        # Conteo Datos
+        mask_datos = self.df['tipo_llamada'].astype(str).str.upper().str.contains('DATO')
+        datos_internet = len(self.df[mask_datos])
+        
+        stats = {
+            "total": total,
+            "entrantes": entrantes,
+            "salientes": salientes,
+            "datos": datos_internet
+        }
+        
+        self.work_queue.put(("carga_ok", stats))
 
     def ejecutar_inferencia_municipios(self):
         """Lógica que corre en hilo si el usuario dice SI a inferir municipios"""
@@ -278,7 +375,6 @@ class CallAnalyzerGUI(ThemedTk):
 
     def _thread_inferencia(self):
         try:
-            # Importación tardía para no romper si no se creó el archivo (aunque debería)
             try:
                 from colombia_data import inferir_municipio_y_coords
             except ImportError:
@@ -286,6 +382,7 @@ class CallAnalyzerGUI(ThemedTk):
                  return
 
             self.logger.info("🕵️ Intentando inferir ubicación por nombre de municipio...")
+            self.update_semaphore("yellow", "Infiriendo Ubicaciones...")
             
             count_inferidos = 0
             
@@ -443,6 +540,7 @@ class CallAnalyzerGUI(ThemedTk):
         name = self.nombre_informe.get().strip().replace(" ", "_") or "Informe_Llamadas"
         self.is_processing = True; self.bloquear_botones(True)
         self.btn_export.config(text="⚙️ Trabajando...")
+        self.update_semaphore("yellow", "Generando Informe...")
         threading.Thread(target=self._thread_export, args=(name,), daemon=True).start()
 
     def _thread_export(self, name):
@@ -518,19 +616,34 @@ class CallAnalyzerGUI(ThemedTk):
                         self.finalizar_carga_datos()
 
                 elif tipo == "carga_ok": 
-                    self.logger.info(f"Cargado: {msg[1]}")
-                    messagebox.showinfo("OK", f"Registros listos: {msg[1]}")
+                    # msg[1] ahora es un diccionario de estadísticas
+                    stats = msg[1]
+                    self.logger.info(f"Carga finalizada. {stats['total']} registros listos.")
+                    
+                    # Mensaje detallado para el usuario
+                    msj = (f"Datos listos para trabajar.\n\n"
+                           f"📊 Total Registros: {stats['total']}\n"
+                           f"📥 Entrantes: {stats['entrantes']}\n"
+                           f"📤 Salientes: {stats['salientes']}\n"
+                           f"📡 Datos Internet: {stats['datos']}")
+                    
+                    messagebox.showinfo("Carga Exitosa", msj)
                     self.is_processing = False; self.bloquear_botones(False)
+                    self.update_semaphore("green", "Datos Listos") # Semáforo Verde
                 
                 elif tipo == "error": 
                     self.logger.error(msg[1]); messagebox.showerror("Error", msg[1])
                     self.is_processing = False; self.bloquear_botones(False)
+                    self.update_semaphore("red", "Error de Carga") # Semáforo Rojo
                 
-                elif tipo == "status": self.btn_export.config(text=msg[1])
+                elif tipo == "status": 
+                    self.btn_export.config(text=msg[1])
+                    self.update_semaphore("yellow", msg[1])
                 
                 elif tipo == "local_ok":
                     self.is_processing = False; self.bloquear_botones(False)
                     self.btn_export.config(text="💾 Generar")
+                    self.update_semaphore("green", "Informe Generado")
                     if messagebox.askyesno("Éxito", f"Guardado en:\n{msg[1]}\n¿Abrir?"):
                         try: os.startfile(msg[1])
                         except: pass
@@ -538,6 +651,7 @@ class CallAnalyzerGUI(ThemedTk):
                 elif tipo == "ftp_ok":
                     self.is_processing = False; self.bloquear_botones(False)
                     self.btn_export.config(text="💾 Generar")
+                    self.update_semaphore("green", "Subido a Web")
                     self.mostrar_url(msg[1])
         except queue.Empty: pass
         finally: self.after(100, self.process_queue)

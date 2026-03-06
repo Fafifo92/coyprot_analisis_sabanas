@@ -5,106 +5,106 @@ import pandas as pd
 def normalizar_numero_colombia(numero):
     """
     Limpia y estandariza números telefónicos al formato de 10 dígitos de Colombia.
-    Elimina prefijos de país (57), prefijos de operador (132, 005, 009) y basura.
-    
-    Objetivo: Que '573001234567', '+57 300 123 4567' y '3001234567' 
-    sean tratados como el mismo número único.
+    MEJORA: Ahora es más tolerante a errores de formato de Excel y celdas sucias.
     """
-    # 1. Manejo de valores vacíos o nulos
-    if pd.isna(numero) or str(numero).strip() in ["", "nan", "None", "Desconocido"]:
+    # 1. Manejo de valores nulos o basura común en Excel
+    if pd.isna(numero) or str(numero).strip() in ["", "nan", "None", "Desconocido", "?", "0"]:
         return "Desconocido"
     
-    # 2. Convertir a string y eliminar todo lo que no sea dígito
-    # Esto elimina +, -, espacios, paréntesis
+    # 2. Convertir a string y extraer SOLO los dígitos
+    # Esto elimina: +57, espacios, comas (,), puntos (.) y guiones (-)
     s = re.sub(r'\D', '', str(numero))
     
     longitud = len(s)
     
-    # 3. Lógica de normalización
+    # 3. Lógica de normalización inteligente
     
-    # Caso ideal: Ya tiene 10 dígitos (Ej: 3001234567)
+    # Caso A: Ya tiene los 10 dígitos correctos (ej: 3001234567)
     if longitud == 10:
         return s
     
-    # Caso mayor a 10 dígitos (Posible prefijo país o carrier)
+    # Caso B: Tiene prefijo de país (ej: 573001234567 -> 12 dígitos)
+    if longitud == 12 and s.startswith('57'):
+        return s[2:]
+    
+    # Caso C: Números con prefijos internacionales largos (ej: 009573001234567)
     if longitud > 10:
         ultimos_10 = s[-10:]
-        
-        # Validamos si esos últimos 10 dígitos parecen un número colombiano válido
-        # - Móvil: Empieza por 3 (Ej: 310...)
-        # - Fijo Nuevo: Empieza por 60 (Ej: 601...)
+        # Verificamos si los últimos 10 dígitos son un móvil (empieza por 3) 
+        # o un fijo nacional (empieza por 60)
         if ultimos_10.startswith('3') or ultimos_10.startswith('60'):
             return ultimos_10
-            
-        # Caso específico: Prefijo país 57 + 10 dígitos = 12 dígitos
-        if s.startswith('57') and longitud == 12:
-            return s[2:]
-            
-        # Caso específico: Prefijos de larga distancia (005, 009, 007) + 57 + Número
-        # Ej: 009573001234567 -> 15 dígitos
-        if s.startswith('00') and '57' in s:
-            # Intentar buscar donde empieza el 57 y tomar lo que sigue
+        
+        # Si tiene un "57" atravesado, intentamos capturar lo que sigue
+        if '57' in s:
             partes = s.split('57', 1)
-            if len(partes) > 1 and len(partes[1]) == 10:
-                return partes[1]
+            posible_num = partes[1][:10]
+            if len(posible_num) == 10 and (posible_num.startswith('3') or posible_num.startswith('60')):
+                return posible_num
 
-    # Si tiene menos de 10 dígitos (Ej: #123, 112, 911) o no coincide con reglas, se retorna limpio
-    return s
+    # 4. Si es un número corto (ej: #123, 112) o no pudimos normalizar,
+    # retornamos los dígitos limpios que encontramos para no perder información.
+    return s if len(s) > 0 else "Desconocido"
 
 def validar_numero(numero, region="CO"):
     """
-    Valida si un número es técnicamente posible y válido para una región específica.
+    Valida si un número es técnicamente posible según la librería phonenumbers.
     """
     try:
-        # Asegurar que se pasa como string para el parser
-        parsed_num = phonenumbers.parse(str(numero), region)
+        num_str = str(numero)
+        # Si no tiene el +, se lo ponemos temporalmente para validar con la región
+        if not num_str.startswith('+'):
+            parsed_num = phonenumbers.parse(num_str, region)
+        else:
+            parsed_num = phonenumbers.parse(num_str, None)
         return phonenumbers.is_valid_number(parsed_num)
-    except phonenumbers.NumberParseException:
+    except:
         return False
 
 def formatear_numero(numero, region="CO", formato=phonenumbers.PhoneNumberFormat.INTERNATIONAL):
     """
-    Da formato visual estético (Ej: +57 300 1234567).
-    Útil para la visualización en el reporte PDF/HTML si se desea.
+    Da formato visual estético para el reporte (Ej: +57 300 123 4567).
     """
     try:
-        parsed_num = phonenumbers.parse(str(numero), region)
+        s_num = str(numero)
+        if not s_num.startswith('+'):
+            parsed_num = phonenumbers.parse(s_num, region)
+        else:
+            parsed_num = phonenumbers.parse(s_num, None)
+            
         if phonenumbers.is_valid_number(parsed_num):
             return phonenumbers.format_number(parsed_num, formato)
-        return str(numero)
-    except phonenumbers.NumberParseException:
-        return str(numero)
+        return s_num
+    except:
+        return s_num
 
 def detectar_region(numero):
     """
-    Intenta detectar el código de país (ISO) de un número.
+    Detecta el código de país (ISO) del número.
     """
     try:
-        # Parseamos sin región por defecto para ver si el número trae el prefijo (+)
         parsed_num = phonenumbers.parse(str(numero), None)
         return phonenumbers.region_code_for_number(parsed_num)
-    except phonenumbers.NumberParseException:
+    except:
         return None
 
 def verificar_whatsapp(numero):
     """
-    Placeholder para futura funcionalidad de verificación de WhatsApp.
-    Actualmente solo retorna False.
+    Placeholder para futura integración.
     """
-    # Aquí se podría integrar una API externa en el futuro
     return False
 
 if __name__ == "__main__":
-    # Pruebas rápidas
+    # Pruebas de fuego con casos reales de Excel
     pruebas = [
-        "3001234567",           # Normal
-        "573001234567",         # Con 57
-        "+57 300 123 4567",     # Con formato
-        "009573001234567",      # Salida internacional
-        "310 555 5555",         # Espacios
-        "123",                  # Corto
-        "NaN"                   # Nulo
+        "300.123.4567",       # Con puntos
+        "57,300,123,4567",    # Con comas
+        "009573105554433",    # Internacional
+        "   315 123 4567  ",  # Con espacios locos
+        "3001234567",         # Normal
+        "?",                  # Basura
+        "42452.23"            # Error de fecha pegado en columna de teléfono
     ]
-    print("--- Test de Normalización ---")
+    print("--- Test de Limpieza Profunda ---")
     for p in pruebas:
-        print(f"Entrada: {p} -> Salida: {normalizar_numero_colombia(p)}")
+        print(f"Entrada: [{p}] -> Salida: [{normalizar_numero_colombia(p)}]")
