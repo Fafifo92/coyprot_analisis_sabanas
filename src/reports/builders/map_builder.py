@@ -225,6 +225,12 @@ class RouteMapBuilder:
             .dt.strftime("%H:%M")
             .fillna("—")
         )
+        plot_df["_latitud"] = pd.to_numeric(plot_df[COL_LATITUDE], errors="coerce").map(
+            lambda v: f"{v:.6f}" if pd.notna(v) else "—"
+        )
+        plot_df["_longitud"] = pd.to_numeric(plot_df[COL_LONGITUDE], errors="coerce").map(
+            lambda v: f"{v:.6f}" if pd.notna(v) else "—"
+        )
 
         logger.info(
             "Recorrido: %d registros crudos → %d puntos únicos (%d días).",
@@ -259,16 +265,26 @@ class RouteMapBuilder:
             color_discrete_sequence=["#d62728"],
             animation_frame="fecha",
             category_orders={"fecha": period_order},
-            custom_data=["_main_label", "_cell_id", "fecha", "_seq", "_hora"],
+            custom_data=[
+                "_main_label", "_cell_id", "fecha", "_seq", "_hora", "_latitud", "_longitud"
+            ],
             zoom=initial_zoom,
             center=dict(lat=center_lat, lon=center_lon),
             height=900,
         )
 
+        hover = self._hover_template()
         fig.update_traces(
             marker=dict(size=18, opacity=0.9),
-            hovertemplate=self._hover_template(),
+            hovertemplate=hover,
         )
+        # Propagar el hovertemplate a cada frame de animación.
+        # update_traces() solo actualiza la traza base; sin esto, Plotly Express
+        # regenera el hover por defecto (mostrando "latitud_n", "longitud_w") en
+        # cada frame al avanzar la animación.
+        for frame in fig.frames:
+            for trace in frame.data:
+                trace.update(hovertemplate=hover)
 
         # Limpiar etiquetas y aplicar cosmética al slider SIN reemplazarlo.
         # update_layout(sliders=[...]) sustituye el slider completo borrando los steps
@@ -301,34 +317,16 @@ class RouteMapBuilder:
 
     @staticmethod
     def _hover_template() -> str:
+        # scatter_mapbox solo renderiza HTML básico (<b>, <br>); los divs con CSS
+        # se muestran como texto literal.
         return (
-            "<div style='font-family:Segoe UI,sans-serif;background:#fff;padding:12px;"
-            "border-radius:8px;border-left:5px solid #d62728;"
-            "box-shadow:0 4px 12px rgba(0,0,0,.2);min-width:240px;color:#333'>"
-            # Cabecera: icono + nombre celda + número de orden
-            "<div style='display:flex;align-items:center;margin-bottom:8px;"
-            "border-bottom:1px solid #eee;padding-bottom:8px'>"
-            "<span style='font-size:22px;margin-right:8px'>📡</span>"
-            "<div style='font-size:14px;font-weight:bold;color:#d62728;flex:1'>"
-            "%{customdata[0]}</div>"
-            "<span style='background:#d62728;color:#fff;border-radius:50%;"
-            "width:26px;height:26px;display:flex;align-items:center;"
-            "justify-content:center;font-size:12px;font-weight:bold;flex-shrink:0'>"
-            "#%{customdata[3]}</span>"
-            "</div>"
-            # Fila ID
-            "<div style='font-size:12px;margin-bottom:4px'>"
-            "<span style='color:#666'>🆔 ID:</span> <b>%{customdata[1]}</b>"
-            "</div>"
-            # Fila fecha
-            "<div style='font-size:12px;margin-bottom:4px'>"
-            "<span style='color:#666'>📅 Fecha:</span> <b>%{customdata[2]}</b>"
-            "</div>"
-            # Fila hora
-            "<div style='font-size:12px'>"
-            "<span style='color:#666'>🕐 Hora:</span> <b>%{customdata[4]}</b>"
-            "</div>"
-            "</div><extra></extra>"
+            "<b>📡 %{customdata[0]}</b> &nbsp;#%{customdata[3]}<br>"
+            "🆔 ID: <b>%{customdata[1]}</b><br>"
+            "📅 Fecha: <b>%{customdata[2]}</b><br>"
+            "🕐 Hora: <b>%{customdata[4]}</b><br>"
+            "📍 Latitud: <b>%{customdata[5]}</b><br>"
+            "🧭 Longitud: <b>%{customdata[6]}</b>"
+            "<extra></extra>"
         )
 
     @staticmethod

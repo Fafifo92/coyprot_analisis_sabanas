@@ -83,16 +83,19 @@ class UploadService:
     # ── Helpers privados ──────────────────────────────────────────────────────
 
     @staticmethod
-    def _ensure_remote_path(ftp: FTP_TLS, path: str) -> None:
+    def _list_names(ftp: FTP_TLS) -> set[str]:
+        """Devuelve solo los nombres (sin ruta) del directorio actual."""
+        try:
+            return {os.path.basename(p) for p in ftp.nlst()}
+        except Exception:
+            return set()
+
+    def _ensure_remote_path(self, ftp: FTP_TLS, path: str) -> None:
         """Crea y navega a la ruta remota, creando subdirectorios si es necesario."""
         for part in path.strip("/").split("/"):
             if not part:
                 continue
-            try:
-                existing = ftp.nlst()
-            except Exception:
-                existing = []
-            if part not in existing:
+            if part not in self._list_names(ftp):
                 try:
                     ftp.mkd(part)
                 except Exception:
@@ -108,11 +111,7 @@ class UploadService:
 
             if parts:
                 for part in parts:
-                    try:
-                        existing = ftp.nlst()
-                    except Exception:
-                        existing = []
-                    if part not in existing:
+                    if part not in self._list_names(ftp):
                         try:
                             ftp.mkd(part)
                         except Exception:

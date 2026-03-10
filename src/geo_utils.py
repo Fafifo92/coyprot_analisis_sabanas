@@ -120,6 +120,8 @@ def generar_mapa_rutas(df, output_path, nombres_asignados=None):
         # --- UNIFICACIÓN DE FORMATO DE TIEMPO ---
         # Usamos el mismo string para el Slider y para el Tooltip para evitar discrepancias
         df_clean["Tiempo_Str"] = df_clean["fecha_hora"].dt.strftime('%Y-%m-%d %H:%M:%S')
+        df_clean["Fecha_Str"] = df_clean["fecha_hora"].dt.strftime('%Y-%m-%d')
+        df_clean["Hora_Str"] = df_clean["fecha_hora"].dt.strftime('%H:%M:%S')
 
         # Limpieza de columnas clave para el Tooltip
         # Rellenamos vacíos con cadenas vacías para que no salga "nan" o "null"
@@ -183,11 +185,26 @@ def generar_mapa_rutas(df, output_path, nombres_asignados=None):
                     <span style="color: #666;">📅 Fecha:</span> 
                     <b>%{customdata[2]}</b>
                 </div>
+                
+                <div style="font-size: 12px; margin-top: 4px;">
+                    <span style="color: #666;">🕐 Hora:</span> 
+                    <b>%{customdata[3]}</b>
+                </div>
+                
+                <div style="font-size: 12px; margin-top: 4px;">
+                    <span style="color: #666;">📍 Latitud:</span> 
+                    <b>%{lat:.6f}</b>
+                </div>
+                
+                <div style="font-size: 12px; margin-top: 4px;">
+                    <span style="color: #666;">🧭 Longitud:</span> 
+                    <b>%{lon:.6f}</b>
+                </div>
             </div>
             <extra></extra>
             """,
-            # Pasamos los datos limpios al customdata: [0]=Label, [1]=ID, [2]=Tiempo
-            customdata=df_clean[["Main_Label", "clean_cell_id", "Tiempo_Str"]]
+            # Pasamos los datos limpios al customdata: [0]=Label, [1]=ID, [2]=Fecha, [3]=Hora
+            customdata=df_clean[["Main_Label", "clean_cell_id", "Fecha_Str", "Hora_Str"]]
         )
 
         # 4. Layout: Controles y Estilo
