@@ -173,7 +173,7 @@ class RouteMapBuilder:
             return
 
         clean = clean.sort_values(by=COL_DATETIME)
-        clean["_period"] = clean[COL_DATETIME].apply(
+        clean["fecha"] = clean[COL_DATETIME].apply(
             lambda dt: (
                 f"{dt.day} de {_MESES_ES[dt.month]} de {dt.year}"
                 if pd.notna(dt) else "—"
@@ -201,23 +201,23 @@ class RouteMapBuilder:
         # Antes: 1 frame por timestamp → 100 k frames con toda la data = 38 MB
         # Ahora: 1 frame por día       → ~90 frames con celdas únicas   < 1 MB
         if COL_CELL_NAME in clean.columns and clean[COL_CELL_NAME].notna().any():
-            dedup_key = ["_period", COL_CELL_NAME]
+            dedup_key = ["fecha", COL_CELL_NAME]
         else:
             clean["_lat_r"] = clean[COL_LATITUDE].round(4)
             clean["_lon_r"] = clean[COL_LONGITUDE].round(4)
-            dedup_key = ["_period", "_lat_r", "_lon_r"]
+            dedup_key = ["fecha", "_lat_r", "_lon_r"]
 
         plot_df = (
             clean.drop_duplicates(subset=dedup_key, keep="first")
-            .sort_values(["_period", COL_DATETIME])
+            .sort_values(["fecha", COL_DATETIME])
             .reset_index(drop=True)
         )
 
         # Orden cronológico de los períodos (el strftime español no ordena alfab.)
-        period_order = clean.drop_duplicates("_period", keep="first")["_period"].tolist()
+        period_order = clean.drop_duplicates("fecha", keep="first")["fecha"].tolist()
 
         # Número de orden dentro del día (1, 2, 3…) — str obligatorio para Plotly text
-        plot_df["_seq"] = (plot_df.groupby("_period").cumcount() + 1).astype(str)
+        plot_df["_seq"] = (plot_df.groupby("fecha").cumcount() + 1).astype(str)
 
         # Hora de la primera aparición de esa celda en el día
         plot_df["_hora"] = (
@@ -225,12 +225,18 @@ class RouteMapBuilder:
             .dt.strftime("%H:%M")
             .fillna("—")
         )
+        plot_df["_latitud"] = pd.to_numeric(plot_df[COL_LATITUDE], errors="coerce").map(
+            lambda v: f"{v:.6f}" if pd.notna(v) else "—"
+        )
+        plot_df["_longitud"] = pd.to_numeric(plot_df[COL_LONGITUDE], errors="coerce").map(
+            lambda v: f"{v:.6f}" if pd.notna(v) else "—"
+        )
 
         logger.info(
             "Recorrido: %d registros crudos → %d puntos únicos (%d días).",
             len(clean),
             len(plot_df),
-            plot_df["_period"].nunique(),
+            plot_df["fecha"].nunique(),
         )
 
         # Zoom inicial para encuadrar todos los puntos
@@ -257,18 +263,28 @@ class RouteMapBuilder:
             lat=COL_LATITUDE,
             lon=COL_LONGITUDE,
             color_discrete_sequence=["#d62728"],
-            animation_frame="_period",
-            category_orders={"_period": period_order},
-            custom_data=["_main_label", "_cell_id", "_period", "_seq", "_hora"],
+            animation_frame="fecha",
+            category_orders={"fecha": period_order},
+            custom_data=[
+                "_main_label", "_cell_id", "fecha", "_seq", "_hora", "_latitud", "_longitud"
+            ],
             zoom=initial_zoom,
             center=dict(lat=center_lat, lon=center_lon),
             height=900,
         )
 
+        hover = self._hover_template()
         fig.update_traces(
             marker=dict(size=18, opacity=0.9),
-            hovertemplate=self._hover_template(),
+            hovertemplate=hover,
         )
+        # Propagar el hovertemplate a cada frame de animación.
+        # update_traces() solo actualiza la traza base; sin esto, Plotly Express
+        # regenera el hover por defecto (mostrando "latitud_n", "longitud_w") en
+        # cada frame al avanzar la animación.
+        for frame in fig.frames:
+            for trace in frame.data:
+                trace.update(hovertemplate=hover)
 
         # Limpiar etiquetas y aplicar cosmética al slider SIN reemplazarlo.
         # update_layout(sliders=[...]) sustituye el slider completo borrando los steps
@@ -301,34 +317,16 @@ class RouteMapBuilder:
 
     @staticmethod
     def _hover_template() -> str:
+        # scatter_mapbox solo renderiza HTML básico (<b>, <br>); los divs con CSS
+        # se muestran como texto literal.
         return (
-            "<div style='font-family:Segoe UI,sans-serif;background:#fff;padding:12px;"
-            "border-radius:8px;border-left:5px solid #d62728;"
-            "box-shadow:0 4px 12px rgba(0,0,0,.2);min-width:240px;color:#333'>"
-            # Cabecera: icono + nombre celda + número de orden
-            "<div style='display:flex;align-items:center;margin-bottom:8px;"
-            "border-bottom:1px solid #eee;padding-bottom:8px'>"
-            "<span style='font-size:22px;margin-right:8px'>📡</span>"
-            "<div style='font-size:14px;font-weight:bold;color:#d62728;flex:1'>"
-            "%{customdata[0]}</div>"
-            "<span style='background:#d62728;color:#fff;border-radius:50%;"
-            "width:26px;height:26px;display:flex;align-items:center;"
-            "justify-content:center;font-size:12px;font-weight:bold;flex-shrink:0'>"
-            "#%{customdata[3]}</span>"
-            "</div>"
-            # Fila ID
-            "<div style='font-size:12px;margin-bottom:4px'>"
-            "<span style='color:#666'>🆔 ID:</span> <b>%{customdata[1]}</b>"
-            "</div>"
-            # Fila fecha
-            "<div style='font-size:12px;margin-bottom:4px'>"
-            "<span style='color:#666'>📅 Fecha:</span> <b>%{customdata[2]}</b>"
-            "</div>"
-            # Fila hora
-            "<div style='font-size:12px'>"
-            "<span style='color:#666'>🕐 Hora:</span> <b>%{customdata[4]}</b>"
-            "</div>"
-            "</div><extra></extra>"
+            "<b>📡 %{customdata[0]}</b> &nbsp;#%{customdata[3]}<br>"
+            "🆔 ID: <b>%{customdata[1]}</b><br>"
+            "📅 Fecha: <b>%{customdata[2]}</b><br>"
+            "🕐 Hora: <b>%{customdata[4]}</b><br>"
+            "📍 Latitud: <b>%{customdata[5]}</b><br>"
+            "🧭 Longitud: <b>%{customdata[6]}</b>"
+            "<extra></extra>"
         )
 
     @staticmethod
