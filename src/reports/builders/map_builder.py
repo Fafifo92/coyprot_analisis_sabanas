@@ -6,12 +6,12 @@ Implementa IReportBuilder para cada tipo de mapa.
 """
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
 import folium
 import pandas as pd
-import plotly.express as px
 from folium.plugins import HeatMap, MarkerCluster
 
 from config.constants import (
@@ -27,7 +27,6 @@ from config.constants import (
     COL_RECEIVER,
     MAP_HEATMAP_BLUR,
     MAP_HEATMAP_RADIUS,
-    ROUTE_MAP_FRAME_DURATION_MS,
 )
 
 logger = logging.getLogger(__name__)
@@ -153,10 +152,10 @@ class HeatMapBuilder:
 
 
 class RouteMapBuilder:
-    """Genera mapa animado de recorrido de datos de internet (Plotly).
+    """Genera mapa interactivo de recorrido usando Leaflet + MarkerCluster.
 
-    Agrega los registros por día y celda única para mantener el archivo
-    HTML liviano (< 1 MB) incluso con cientos de miles de registros crudos.
+    Muestra TODOS los registros de datos de internet sin deduplicación,
+    con navegación por día y filtro por hora.
     """
 
     def build(
@@ -165,7 +164,7 @@ class RouteMapBuilder:
         output_path: Path,
         aliases: dict[str, str] | None = None,
     ) -> None:
-        logger.info("Generando mapa de recorrido (Plotly): %s", output_path)
+        logger.info("Generando mapa de recorrido (Leaflet): %s", output_path)
         clean = _clean_for_maps(df)
 
         if clean.empty or COL_DATETIME not in clean.columns:
@@ -173,202 +172,360 @@ class RouteMapBuilder:
             return
 
         clean = clean.sort_values(by=COL_DATETIME)
-        clean["fecha"] = clean[COL_DATETIME].apply(
-            lambda dt: (
-                f"{dt.day} de {_MESES_ES[dt.month]} de {dt.year}"
-                if pd.notna(dt) else "—"
-            )
-        )
 
-        def _label(row: pd.Series) -> str:
-            cell = str(row.get(COL_CELL_NAME, ""))
-            cid = str(row.get(COL_CELL_ID, ""))
-            if cell and cell not in ("nan", "None"):
-                return f"Antena: {cell}"
-            if cid and cid not in ("nan", "None", "0", "0.0"):
-                return f"Celda: {cid}"
-            return "Ubicación de Datos"
+        # Columnas auxiliares para agrupar por día
+        # Nota: no usar prefijo _ porque itertuples() no expone esos atributos
+        dt_parsed = pd.to_datetime(clean[COL_DATETIME], errors="coerce")
+        clean["aux_date"] = dt_parsed.dt.date
+        clean["aux_time"] = dt_parsed.dt.strftime("%H:%M:%S").fillna("--:--")
+        clean["aux_hour"] = dt_parsed.dt.hour.fillna(0).astype(int)
 
-        clean["_main_label"] = clean.apply(_label, axis=1)
-        clean["_cell_id"] = (
-            clean.get(COL_CELL_ID, pd.Series("", index=clean.index))
-            .fillna("")
-            .astype(str)
-            .replace(["nan", "None", "0", "0.0"], "")
-        )
+        # Construir estructura agrupada por día
+        days_data: list[dict] = []
+        for date_val, group in clean.groupby("aux_date", sort=True):
+            group_sorted = group.sort_values(COL_DATETIME).reset_index(drop=True)
+            dt = pd.Timestamp(date_val)
+            label = f"{dt.day} de {_MESES_ES[dt.month]} de {dt.year}"
 
-        # ── Reducir peso: un punto por (día × celda única) ────────────────────
-        # Antes: 1 frame por timestamp → 100 k frames con toda la data = 38 MB
-        # Ahora: 1 frame por día       → ~90 frames con celdas únicas   < 1 MB
-        if COL_CELL_NAME in clean.columns and clean[COL_CELL_NAME].notna().any():
-            dedup_key = ["fecha", COL_CELL_NAME]
+            points: list[dict] = []
+            for seq, row in enumerate(group_sorted.itertuples(index=False), start=1):
+                cell_name = str(getattr(row, COL_CELL_NAME, ""))
+                if cell_name in ("nan", "None", ""):
+                    cell_name = "Ubicacion de Datos"
+                cell_id = str(getattr(row, COL_CELL_ID, ""))
+                if cell_id in ("nan", "None", "0", "0.0", ""):
+                    cell_id = ""
+
+                points.append({
+                    "lat": round(float(getattr(row, COL_LATITUDE)), 6),
+                    "lon": round(float(getattr(row, COL_LONGITUDE)), 6),
+                    "time": getattr(row, "aux_time"),
+                    "hour": int(getattr(row, "aux_hour")),
+                    "cell": cell_name,
+                    "cellId": cell_id,
+                    "seq": seq,
+                })
+
+            days_data.append({
+                "label": label,
+                "date": str(date_val),
+                "count": len(points),
+                "points": points,
+            })
+
+        # Centro y zoom para encuadrar todos los puntos
+        lat_min = float(clean[COL_LATITUDE].min())
+        lat_max = float(clean[COL_LATITUDE].max())
+        lon_min = float(clean[COL_LONGITUDE].min())
+        lon_max = float(clean[COL_LONGITUDE].max())
+        center_lat = (lat_min + lat_max) / 2
+        center_lon = (lon_min + lon_max) / 2
+
+        span = max(lat_max - lat_min, lon_max - lon_min, 0.001)
+        if span >= 10:
+            zoom = 5
+        elif span >= 5:
+            zoom = 6
+        elif span >= 2:
+            zoom = 7
+        elif span >= 1:
+            zoom = 8
+        elif span >= 0.5:
+            zoom = 9
         else:
-            clean["_lat_r"] = clean[COL_LATITUDE].round(4)
-            clean["_lon_r"] = clean[COL_LONGITUDE].round(4)
-            dedup_key = ["fecha", "_lat_r", "_lon_r"]
+            zoom = 11
 
-        plot_df = (
-            clean.drop_duplicates(subset=dedup_key, keep="first")
-            .sort_values(["fecha", COL_DATETIME])
-            .reset_index(drop=True)
-        )
+        total_points = sum(d["count"] for d in days_data)
 
-        # Orden cronológico de los períodos (el strftime español no ordena alfab.)
-        period_order = clean.drop_duplicates("fecha", keep="first")["fecha"].tolist()
+        route_json = json.dumps({
+            "days": days_data,
+            "meta": {
+                "centerLat": round(center_lat, 6),
+                "centerLon": round(center_lon, 6),
+                "zoom": zoom,
+                "totalDays": len(days_data),
+                "totalPoints": total_points,
+            },
+        }, ensure_ascii=False)
 
-        # Número de orden dentro del día (1, 2, 3…) — str obligatorio para Plotly text
-        plot_df["_seq"] = (plot_df.groupby("fecha").cumcount() + 1).astype(str)
-
-        # Hora de la primera aparición de esa celda en el día
-        plot_df["_hora"] = (
-            pd.to_datetime(plot_df[COL_DATETIME], errors="coerce")
-            .dt.strftime("%H:%M")
-            .fillna("—")
-        )
-        plot_df["_latitud"] = pd.to_numeric(plot_df[COL_LATITUDE], errors="coerce").map(
-            lambda v: f"{v:.6f}" if pd.notna(v) else "—"
-        )
-        plot_df["_longitud"] = pd.to_numeric(plot_df[COL_LONGITUDE], errors="coerce").map(
-            lambda v: f"{v:.6f}" if pd.notna(v) else "—"
-        )
+        # Prevenir inyección de </script> en datos de celdas
+        route_json = route_json.replace("</script>", r"<\/script>")
 
         logger.info(
-            "Recorrido: %d registros crudos → %d puntos únicos (%d días).",
-            len(clean),
-            len(plot_df),
-            plot_df["fecha"].nunique(),
+            "Recorrido Leaflet: %d registros, %d dias, ~%.1f MB JSON.",
+            total_points,
+            len(days_data),
+            len(route_json) / 1_048_576,
         )
 
-        # Zoom inicial para encuadrar todos los puntos
-        lat_span = clean[COL_LATITUDE].max() - clean[COL_LATITUDE].min()
-        lon_span = clean[COL_LONGITUDE].max() - clean[COL_LONGITUDE].min()
-        span = max(lat_span, lon_span, 0.001)
-        if span >= 10:
-            initial_zoom = 5
-        elif span >= 5:
-            initial_zoom = 6
-        elif span >= 2:
-            initial_zoom = 7
-        elif span >= 1:
-            initial_zoom = 8
-        elif span >= 0.5:
-            initial_zoom = 9
-        else:
-            initial_zoom = 11
-        center_lat = (clean[COL_LATITUDE].max() + clean[COL_LATITUDE].min()) / 2
-        center_lon = (clean[COL_LONGITUDE].max() + clean[COL_LONGITUDE].min()) / 2
-
-        fig = px.scatter_mapbox(
-            plot_df,
-            lat=COL_LATITUDE,
-            lon=COL_LONGITUDE,
-            color_discrete_sequence=["#d62728"],
-            animation_frame="fecha",
-            category_orders={"fecha": period_order},
-            custom_data=[
-                "_main_label", "_cell_id", "fecha", "_seq", "_hora", "_latitud", "_longitud"
-            ],
-            zoom=initial_zoom,
-            center=dict(lat=center_lat, lon=center_lon),
-            height=900,
-        )
-
-        hover = self._hover_template()
-        fig.update_traces(
-            marker=dict(size=18, opacity=0.9),
-            hovertemplate=hover,
-        )
-        # Propagar el hovertemplate a cada frame de animación.
-        # update_traces() solo actualiza la traza base; sin esto, Plotly Express
-        # regenera el hover por defecto (mostrando "latitud_n", "longitud_w") en
-        # cada frame al avanzar la animación.
-        for frame in fig.frames:
-            for trace in frame.data:
-                trace.update(hovertemplate=hover)
-
-        # Limpiar etiquetas y aplicar cosmética al slider SIN reemplazarlo.
-        # update_layout(sliders=[...]) sustituye el slider completo borrando los steps
-        # → la animación queda sin frames y no avanza. fig.layout.sliders[0].update()
-        # hace un merge parcial que conserva los steps generados por Plotly Express.
-        if fig.layout.sliders:
-            for step in fig.layout.sliders[0].steps:
-                if "=" in (step.label or ""):
-                    step.label = step.label.split("=", 1)[1]
-            fig.layout.sliders[0].update(**self._slider_config())
-
-        fig.update_layout(
-            mapbox_style="open-street-map",
-            margin={"r": 0, "t": 40, "l": 0, "b": 0},
-            showlegend=False,
-            title=dict(
-                text="<b>Recorrido Histórico (Datos de Internet)</b>",
-                y=0.99, x=0.01, xanchor="left", yanchor="top",
-                font=dict(size=16, color="#333"),
-            ),
-            updatemenus=[self._play_buttons()],
-        )
-
+        html_content = self._leaflet_html_template(route_json)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        fig.write_html(
-            str(output_path),
-            config={"scrollZoom": True, "displayModeBar": True, "responsive": True},
-        )
-        logger.info("Mapa de recorrido generado.")
+        output_path.write_text(html_content, encoding="utf-8")
+        logger.info("Mapa de recorrido Leaflet generado.")
 
     @staticmethod
-    def _hover_template() -> str:
-        # scatter_mapbox solo renderiza HTML básico (<b>, <br>); los divs con CSS
-        # se muestran como texto literal.
-        return (
-            "<b>📡 %{customdata[0]}</b> &nbsp;#%{customdata[3]}<br>"
-            "🆔 ID: <b>%{customdata[1]}</b><br>"
-            "📅 Fecha: <b>%{customdata[2]}</b><br>"
-            "🕐 Hora: <b>%{customdata[4]}</b><br>"
-            "📍 Latitud: <b>%{customdata[5]}</b><br>"
-            "🧭 Longitud: <b>%{customdata[6]}</b>"
-            "<extra></extra>"
-        )
+    def _leaflet_html_template(route_data_json: str) -> str:
+        return f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recorrido por Datos</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+html,body{{height:100%;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow:hidden}}
 
-    @staticmethod
-    def _play_buttons() -> dict:
-        return dict(
-            type="buttons",
-            showactive=False,
-            x=0.05, y=0.03,
-            xanchor="right", yanchor="bottom",
-            bgcolor="white", bordercolor="#ccc", borderwidth=1,
-            pad=dict(t=0, r=10),
-            buttons=[
-                dict(
-                    label="▶",
-                    method="animate",
-                    args=[None, dict(
-                        frame=dict(duration=ROUTE_MAP_FRAME_DURATION_MS, redraw=True),
-                        fromcurrent=True,
-                    )],
-                ),
-                dict(
-                    label="⏸",
-                    method="animate",
-                    args=[[None], dict(
-                        mode="immediate",
-                        frame=dict(duration=0, redraw=False),
-                    )],
-                ),
-            ],
-        )
+#controls{{
+  position:absolute;top:0;left:0;right:0;z-index:1000;
+  background:rgba(255,255,255,0.97);
+  border-bottom:2px solid #dee2e6;
+  padding:8px 14px;
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}}
+#map{{position:absolute;top:80px;bottom:38px;left:0;right:0}}
+#summary-panel{{
+  position:absolute;bottom:0;left:0;right:0;height:38px;
+  background:rgba(33,37,41,0.92);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12.5px;gap:16px;z-index:1000;letter-spacing:0.2px;
+}}
 
-    @staticmethod
-    def _slider_config() -> dict:
-        return dict(
-            active=0,
-            yanchor="bottom", xanchor="center",
-            x=0.5, y=0.02, len=0.85,
-            currentvalue=dict(
-                font=dict(size=20, color="#d62728", family="Arial Black"),
-                prefix="📅 Día: ",
-                visible=True, xanchor="center", offset=25,
-            ),
-            bgcolor="#ffffff", bordercolor="#666", borderwidth=1,
-            pad=dict(b=10, t=50),
-        )
+.nav-btn{{
+  background:#0d6efd;color:#fff;border:none;
+  padding:5px 12px;border-radius:6px;cursor:pointer;
+  font-weight:600;font-size:12px;transition:background .15s;
+}}
+.nav-btn:hover{{background:#0b5ed7}}
+.nav-btn:disabled{{background:#adb5bd;cursor:not-allowed}}
+
+#day-select{{
+  padding:4px 8px;border:1px solid #ced4da;border-radius:6px;
+  font-size:12px;min-width:200px;
+}}
+
+.slider-group{{display:flex;align-items:center;gap:6px}}
+.slider-group label{{font-size:11px;font-weight:700;color:#6c757d;text-transform:uppercase;white-space:nowrap}}
+.slider-group input[type=range]{{width:110px;cursor:pointer}}
+.slider-group .hour-val{{font-size:12px;font-weight:600;color:#0d6efd;min-width:82px;text-align:center}}
+
+.route-toggle{{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#495057;cursor:pointer}}
+.route-toggle input{{cursor:pointer}}
+
+.day-badge{{
+  font-weight:700;font-size:12px;color:#6c757d;white-space:nowrap;
+}}
+
+.route-popup{{font-size:12px;line-height:1.7}}
+.route-popup b{{color:#0d6efd}}
+.route-popup .seq-badge{{
+  display:inline-block;background:#d62728;color:#fff;border-radius:10px;
+  padding:0 7px;font-size:11px;font-weight:700;margin-left:4px;
+}}
+
+.numbered-marker{{
+  background:#d62728;color:#fff;border-radius:50%;
+  width:24px;height:24px;display:flex;align-items:center;
+  justify-content:center;font-size:10px;font-weight:700;
+  border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);
+}}
+.dot-marker{{
+  background:#d62728;border-radius:50%;
+  width:10px;height:10px;
+  border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);
+}}
+
+.leaflet-popup-content{{margin:10px 14px}}
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <button class="nav-btn" id="btn-prev" onclick="prevDay()">&laquo; Ant</button>
+  <select id="day-select" onchange="goToDay(parseInt(this.value))"></select>
+  <button class="nav-btn" id="btn-next" onclick="nextDay()">Sig &raquo;</button>
+  <span class="day-badge" id="day-counter"></span>
+
+  <div style="flex-grow:1"></div>
+
+  <div class="slider-group">
+    <label>Desde</label>
+    <input type="range" id="hour-min" min="0" max="23" value="0" oninput="updateHourFilter()">
+    <label>Hasta</label>
+    <input type="range" id="hour-max" min="0" max="23" value="23" oninput="updateHourFilter()">
+    <span class="hour-val" id="hour-label">0:00 – 23:59</span>
+  </div>
+
+  <label class="route-toggle">
+    <input type="checkbox" id="show-route" checked onchange="applyHourFilter()"> Ruta
+  </label>
+</div>
+
+<div id="map"></div>
+<div id="summary-panel"><span id="summary-text"></span></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+const R = {route_data_json};
+
+var map, cluster, routeLine;
+var curDay = 0;
+var hMin = 0, hMax = 23;
+var dayMarkers = [];
+
+function init() {{
+  map = L.map('map', {{
+    center: [R.meta.centerLat, R.meta.centerLon],
+    zoom: R.meta.zoom,
+    zoomControl: true
+  }});
+  L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19
+  }}).addTo(map);
+
+  cluster = L.markerClusterGroup({{
+    maxClusterRadius: 50,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    disableClusteringAtZoom: 17,
+    chunkedLoading: true
+  }});
+  map.addLayer(cluster);
+
+  var sel = document.getElementById('day-select');
+  R.days.forEach(function(d, i) {{
+    var o = document.createElement('option');
+    o.value = i;
+    o.textContent = d.label + ' (' + d.count + ')';
+    sel.appendChild(o);
+  }});
+
+  renderDay(0);
+}}
+
+function goToDay(i) {{
+  i = parseInt(i, 10);
+  if (i < 0 || i >= R.days.length) return;
+  curDay = i;
+  document.getElementById('day-select').value = i;
+  renderDay(i);
+}}
+function prevDay() {{ if (curDay > 0) goToDay(curDay - 1); }}
+function nextDay() {{ if (curDay < R.days.length - 1) goToDay(curDay + 1); }}
+
+function makeIcon(seq, total) {{
+  if (total > 200) {{
+    return L.divIcon({{
+      className: '',
+      html: '<div class="dot-marker"></div>',
+      iconSize: [10, 10], iconAnchor: [5, 5]
+    }});
+  }}
+  return L.divIcon({{
+    className: '',
+    html: '<div class="numbered-marker">' + seq + '</div>',
+    iconSize: [24, 24], iconAnchor: [12, 12]
+  }});
+}}
+
+function esc(s) {{
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}}
+
+function renderDay(idx) {{
+  var day = R.days[idx];
+  if (!day) return;
+
+  document.getElementById('btn-prev').disabled = (idx === 0);
+  document.getElementById('btn-next').disabled = (idx === R.days.length - 1);
+  document.getElementById('day-counter').textContent =
+    'Dia ' + (idx + 1) + ' de ' + R.days.length;
+
+  cluster.clearLayers();
+  if (routeLine) {{ map.removeLayer(routeLine); routeLine = null; }}
+  dayMarkers = [];
+
+  var total = day.points.length;
+  day.points.forEach(function(pt) {{
+    var m = L.marker([pt.lat, pt.lon], {{ icon: makeIcon(pt.seq, total) }});
+    m._rd = pt;
+    m.bindPopup(
+      '<div class="route-popup">' +
+      '<b>' + esc(pt.cell) + '</b><span class="seq-badge">#' + pt.seq + '</span><br>' +
+      (pt.cellId ? 'ID: <b>' + esc(pt.cellId) + '</b><br>' : '') +
+      'Hora: <b>' + pt.time + '</b><br>' +
+      'Lat: ' + pt.lat.toFixed(6) + ', Lon: ' + pt.lon.toFixed(6) +
+      '</div>', {{ maxWidth: 300 }}
+    );
+    dayMarkers.push(m);
+  }});
+
+  applyHourFilter();
+
+  if (day.points.length > 0) {{
+    var bounds = day.points.map(function(p) {{ return [p.lat, p.lon]; }});
+    map.fitBounds(bounds, {{ padding: [40, 40], maxZoom: 15 }});
+  }}
+}}
+
+function updateHourFilter() {{
+  hMin = parseInt(document.getElementById('hour-min').value, 10);
+  hMax = parseInt(document.getElementById('hour-max').value, 10);
+  if (hMin > hMax) {{
+    var t = hMin; hMin = hMax; hMax = t;
+    document.getElementById('hour-min').value = hMin;
+    document.getElementById('hour-max').value = hMax;
+  }}
+  document.getElementById('hour-label').textContent =
+    hMin + ':00 – ' + hMax + ':59';
+  applyHourFilter();
+}}
+
+function applyHourFilter() {{
+  cluster.clearLayers();
+  if (routeLine) {{ map.removeLayer(routeLine); routeLine = null; }}
+
+  var coords = [];
+  var visible = 0;
+
+  dayMarkers.forEach(function(m) {{
+    var h = m._rd.hour;
+    if (h >= hMin && h <= hMax) {{
+      cluster.addLayer(m);
+      coords.push([m._rd.lat, m._rd.lon]);
+      visible++;
+    }}
+  }});
+
+  if (document.getElementById('show-route').checked && coords.length > 1) {{
+    routeLine = L.polyline(coords, {{
+      color: '#d62728', weight: 2.5, opacity: 0.7,
+      dashArray: '8, 6'
+    }}).addTo(map);
+  }}
+
+  updateSummary(visible);
+}}
+
+function updateSummary(visible) {{
+  var day = R.days[curDay];
+  if (!day) return;
+  var txt = day.label + '  \\u2014  ' +
+    day.count + ' conexiones totales  \\u2014  Mostrando: ' + visible;
+  if (hMin > 0 || hMax < 23)
+    txt += ' (filtro: ' + hMin + 'h \\u2013 ' + hMax + 'h)';
+  document.getElementById('summary-text').textContent = txt;
+}}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>"""
