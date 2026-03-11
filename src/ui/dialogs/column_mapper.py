@@ -27,8 +27,9 @@ class ColumnMapperDialog(tk.Toplevel):
     def __init__(self, parent: tk.Misc, available_columns: list[str]) -> None:
         super().__init__(parent)
         self.title("Mapeo de Columnas")
-        self.geometry("560x560")
-        self.resizable(False, False)
+        self.geometry("580x620")
+        self.minsize(560, 520)
+        self.resizable(True, True)
         self.transient(parent)
         self.grab_set()
 
@@ -42,14 +43,17 @@ class ColumnMapperDialog(tk.Toplevel):
     # ── Construcción de UI ────────────────────────────────────────────────────
 
     def _build_ui(self) -> None:
-        ttk.Label(
-            self,
-            text="Configuración de Columnas",
-            font=("Arial", 11, "bold"),
-        ).pack(pady=10)
+        root = ttk.Frame(self, padding=(16, 12, 16, 12))
+        root.pack(fill="both", expand=True)
 
         ttk.Label(
-            self,
+            root,
+            text="Configuración de Columnas",
+            font=("Arial", 11, "bold"),
+        ).pack(pady=(0, 10))
+
+        ttk.Label(
+            root,
             text=(
                 "Relaciona las columnas de tu archivo Excel/CSV con los\n"
                 "datos que necesita el sistema.\n"
@@ -57,10 +61,30 @@ class ColumnMapperDialog(tk.Toplevel):
             ),
             wraplength=520,
             justify="left",
-        ).pack(pady=(0, 10), padx=20, anchor="w")
+        ).pack(pady=(0, 10), anchor="w")
 
-        form = ttk.Frame(self, padding=10)
-        form.pack(fill="both", expand=True)
+        content = ttk.Frame(root)
+        content.pack(fill="both", expand=True)
+
+        canvas = tk.Canvas(content, borderwidth=0, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(content, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        form = ttk.Frame(canvas, padding=10)
+        form_window = canvas.create_window((0, 0), window=form, anchor="nw")
+
+        form.bind(
+            "<Configure>",
+            lambda _event: canvas.configure(scrollregion=canvas.bbox("all")),
+        )
+        canvas.bind(
+            "<Configure>",
+            lambda event: canvas.itemconfigure(form_window, width=event.width),
+        )
+
         form.grid_columnconfigure(1, weight=1)
 
         for row_idx, (internal, label) in enumerate(COLUMN_MAPPING_FIELDS.items()):
@@ -81,11 +105,11 @@ class ColumnMapperDialog(tk.Toplevel):
             row=len(COLUMN_MAPPING_FIELDS), column=0, columnspan=2, sticky="w", padx=5
         )
 
-        btn_frame = ttk.Frame(self)
-        btn_frame.pack(fill="x", pady=15, padx=20)
+        btn_frame = ttk.Frame(root)
+        btn_frame.pack(fill="x", pady=(10, 0))
         ttk.Button(
             btn_frame, text="Confirmar y Cargar", command=self._on_confirm
-        ).pack(ipadx=20, ipady=5)
+        ).pack(side="right", ipadx=20, ipady=5)
 
     # ── Auto-selección ────────────────────────────────────────────────────────
 
