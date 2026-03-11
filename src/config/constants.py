@@ -107,4 +107,3 @@ TOP_N_CHART: Final[int] = 10
 CHART_DPI: Final[int] = 100
 MAP_HEATMAP_RADIUS: Final[int] = 15
 MAP_HEATMAP_BLUR: Final[int] = 20
-ROUTE_MAP_FRAME_DURATION_MS: Final[int] = 800

@@ -1,0 +1,637 @@
+15:25:24 - INFO - Aplicación lista. Versión 3.0.0
+15:26:07 - INFO - Cargando: SábanaEJ_01.xlsx
+15:26:14 - INFO - Ejecutando limpieza y normalización...
+15:26:14 - INFO - Normalizando números telefónicos...
+15:26:14 - INFO - Procesando fechas...
+15:26:15 - INFO - Calidad de datos perfecta: 0 descartes.
+15:26:15 - INFO - Datos procesados. Total registros limpios: 1178
+15:26:16 - INFO - Carga finalizada. 1178 registros.
+15:26:21 - INFO - Generando informe: Informe_Llamadas
+15:26:21 - INFO - Llamadas: 1178 | Datos internet: 0
+15:26:21 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas\maps\mapa_agrupado.html
+15:26:23 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas\maps\mapa_calor.html
+15:26:23 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:26:23 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:26:24 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:26:24 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:26:26 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas\reports\informe_llamadas.html
+15:31:15 - INFO - Aplicación lista. Versión 3.0.0
+15:31:29 - INFO - Cargando: SábanaEJ_01.xlsx
+15:31:34 - INFO - Ejecutando limpieza y normalización...
+15:31:34 - INFO - Normalizando números telefónicos...
+15:31:34 - INFO - Procesando fechas...
+15:31:35 - INFO - Calidad de datos perfecta: 0 descartes.
+15:31:35 - INFO - Datos procesados. Total registros limpios: 1178
+15:31:35 - INFO - Carga finalizada. 1178 registros.
+15:31:43 - INFO - Generando informe: basdiuhaiousd
+15:31:43 - INFO - Llamadas: 1178 | Datos internet: 0
+15:31:43 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\basdiuhaiousd\maps\mapa_agrupado.html
+15:31:45 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\basdiuhaiousd\maps\mapa_calor.html
+15:31:45 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:31:45 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:31:46 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:31:46 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:31:49 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\basdiuhaiousd\reports\informe_llamadas.html
+15:33:12 - INFO - Cargando: CBS ANDERSON ZAPATA (2).xlsx
+15:35:22 - INFO - Ejecutando limpieza y normalización...
+15:35:22 - INFO - Normalizando números telefónicos...
+15:35:22 - INFO - Procesando fechas...
+15:35:31 - WARNING - Filas descartadas (fecha inválida): 531
+15:35:31 - INFO - Datos procesados. Total registros limpios: 104080
+15:35:35 - INFO - Usuario aceptó inferencia por municipio.
+15:35:35 - INFO - Infiriendo ubicación por nombre de municipio...
+15:35:35 - ERROR - Error: 'Pandas' object has no attribute '_muni_norm'
+15:38:11 - INFO - Aplicación lista. Versión 3.0.0
+15:38:16 - INFO - Cargando: CBS ANDERSON ZAPATA (2).xlsx
+15:38:36 - INFO - Ejecutando limpieza y normalización...
+15:38:36 - INFO - Normalizando números telefónicos...
+15:38:37 - INFO - Procesando fechas...
+15:38:45 - WARNING - Filas descartadas (fecha inválida): 531
+15:38:45 - INFO - Datos procesados. Total registros limpios: 104080
+15:38:53 - INFO - Usuario aceptó inferencia por municipio.
+15:38:53 - INFO - Infiriendo ubicación por nombre de municipio...
+15:42:14 - INFO - Inferencia por municipio: 0 registros recuperados.
+15:42:14 - INFO - Carga finalizada. 104080 registros.
+15:42:28 - INFO - Generando informe: dfdsfdfsf
+15:42:29 - INFO - Llamadas: 504 | Datos internet: 103576
+15:42:29 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\dfdsfdfsf\maps\mapa_agrupado.html
+15:42:30 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\dfdsfdfsf\maps\mapa_calor.html
+15:42:30 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\dfdsfdfsf\maps\mapa_rutas.html
+15:42:30 - WARNING - Sin datos suficientes para mapa de recorrido.
+15:42:30 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:42:30 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:42:30 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:42:30 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:42:32 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\dfdsfdfsf\reports\informe_llamadas.html
+15:43:01 - INFO - Aplicación lista. Versión 3.0.0
+15:43:11 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+15:43:24 - INFO - Ejecutando limpieza y normalización...
+15:43:24 - INFO - Normalizando números telefónicos...
+15:43:24 - INFO - Procesando fechas...
+15:43:29 - WARNING - Filas descartadas (fecha inválida): 529
+15:43:29 - INFO - Datos procesados. Total registros limpios: 52040
+15:43:30 - INFO - Usuario aceptó inferencia por municipio.
+15:43:30 - INFO - Infiriendo ubicación por nombre de municipio...
+15:45:23 - INFO - Inferencia por municipio: 0 registros recuperados.
+15:45:23 - INFO - Carga finalizada. 52040 registros.
+15:45:31 - INFO - Generando informe: werweerwqerwerw
+15:45:31 - INFO - Llamadas: 252 | Datos internet: 51788
+15:45:31 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\werweerwqerwerw\maps\mapa_agrupado.html
+15:45:31 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\werweerwqerwerw\maps\mapa_calor.html
+15:45:31 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\werweerwqerwerw\maps\mapa_rutas.html
+15:45:31 - WARNING - Sin datos suficientes para mapa de recorrido.
+15:45:31 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:45:31 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:45:32 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:45:32 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:45:33 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\werweerwqerwerw\reports\informe_llamadas.html
+16:09:16 - INFO - Aplicación lista. Versión 3.0.0
+16:09:40 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+16:09:52 - INFO - Ejecutando limpieza y normalización...
+16:09:52 - INFO - Normalizando números telefónicos...
+16:09:53 - INFO - Procesando fechas...
+16:09:57 - WARNING - Filas descartadas (fecha inválida): 529
+16:09:57 - INFO - Datos procesados. Total registros limpios: 52040
+16:09:58 - INFO - Usuario aceptó inferencia por municipio.
+16:09:58 - INFO - Infiriendo ubicación por nombre de municipio...
+16:11:06 - INFO - Inferencia por municipio: 0 registros recuperados.
+16:11:06 - INFO - Carga finalizada. 52040 registros.
+16:13:48 - INFO - Generando informe: fafasa
+16:13:48 - INFO - Llamadas: 252 | Datos internet: 51788
+16:13:48 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\fafasa\maps\mapa_agrupado.html
+16:13:49 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\fafasa\maps\mapa_calor.html
+16:13:49 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:13:49 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:13:49 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:13:49 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:13:50 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\fafasa\reports\informe_llamadas.html
+16:23:16 - INFO - Aplicación lista. Versión 3.0.0
+16:23:22 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+16:24:03 - INFO - Ejecutando limpieza y normalización...
+16:24:03 - INFO - Normalizando números telefónicos...
+16:24:03 - INFO - Procesando fechas...
+16:24:07 - WARNING - Filas descartadas (fecha inválida): 529
+16:24:07 - INFO - Datos procesados. Total registros limpios: 52040
+16:24:12 - INFO - Usuario aceptó inferencia por municipio.
+16:24:12 - INFO - Infiriendo ubicación por nombre de municipio...
+16:25:20 - INFO - Inferencia por municipio: 0 registros recuperados.
+16:25:20 - INFO - Carga finalizada. 52040 registros.
+16:25:25 - INFO - Generando informe: qwerghgfsd
+16:25:25 - INFO - Llamadas: 252 | Datos internet: 51788
+16:25:25 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\qwerghgfsd\maps\mapa_agrupado.html
+16:25:26 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\qwerghgfsd\maps\mapa_calor.html
+16:25:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:25:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:25:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:25:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:25:27 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\qwerghgfsd\reports\informe_llamadas.html
+16:26:06 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+16:26:15 - INFO - Ejecutando limpieza y normalización...
+16:26:15 - INFO - Normalizando números telefónicos...
+16:26:15 - INFO - Procesando fechas...
+16:26:19 - INFO - Calidad de datos perfecta: 0 descartes.
+16:26:19 - INFO - Datos procesados. Total registros limpios: 52040
+16:26:21 - INFO - Usuario aceptó inferencia por municipio.
+16:26:21 - INFO - Infiriendo ubicación por nombre de municipio...
+16:27:25 - INFO - Inferencia por municipio: 0 registros recuperados.
+16:27:25 - INFO - Carga finalizada. 52040 registros.
+16:27:31 - INFO - Generando informe: qhvt5ygfs6y
+16:27:32 - INFO - Llamadas: 252 | Datos internet: 51788
+16:27:32 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\qhvt5ygfs6y\maps\mapa_agrupado.html
+16:27:32 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\qhvt5ygfs6y\maps\mapa_calor.html
+16:27:32 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:27:32 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:27:33 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:27:33 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:27:34 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\qhvt5ygfs6y\reports\informe_llamadas.html
+16:55:48 - INFO - Aplicación lista. Versión 3.0.0
+16:55:56 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+16:56:06 - INFO - Ejecutando limpieza y normalización...
+16:56:06 - INFO - Normalizando números telefónicos...
+16:56:07 - INFO - Procesando fechas...
+16:56:11 - INFO - Calidad de datos perfecta: 0 descartes.
+16:56:11 - INFO - Datos procesados. Total registros limpios: 52040
+16:56:14 - INFO - Usuario aceptó inferencia por municipio.
+16:56:14 - INFO - Infiriendo ubicación por nombre de municipio...
+16:56:15 - INFO - Inferencia por municipio: 0 registros recuperados.
+16:56:15 - INFO - Carga finalizada. 52040 registros.
+16:56:18 - INFO - Generando informe: valentinaepeo
+16:56:18 - INFO - Llamadas: 252 | Datos internet: 51788
+16:56:18 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\valentinaepeo\maps\mapa_agrupado.html
+16:56:18 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\valentinaepeo\maps\mapa_calor.html
+16:56:18 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\valentinaepeo\maps\mapa_rutas.html
+16:59:21 - INFO - Mapa de recorrido generado.
+16:59:21 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:59:22 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:59:22 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:59:22 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+16:59:24 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\valentinaepeo\reports\informe_llamadas.html
+17:07:18 - INFO - Aplicación lista. Versión 3.0.0
+17:07:26 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+17:07:42 - INFO - Ejecutando limpieza y normalización...
+17:07:42 - INFO - Normalizando números telefónicos...
+17:07:43 - INFO - Procesando fechas...
+17:07:51 - INFO - Calidad de datos perfecta: 0 descartes.
+17:07:51 - INFO - Datos procesados. Total registros limpios: 52040
+17:07:53 - INFO - Usuario aceptó inferencia por municipio.
+17:07:53 - INFO - Infiriendo ubicación por nombre de municipio...
+17:07:56 - INFO - Inferencia por municipio: 0 registros recuperados.
+17:07:57 - INFO - Carga finalizada. 52040 registros.
+17:08:07 - INFO - Generando informe: 234567890
+17:08:07 - INFO - Llamadas: 252 | Datos internet: 51788
+17:08:07 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\234567890\maps\mapa_agrupado.html
+17:08:08 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\234567890\maps\mapa_calor.html
+17:08:08 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\234567890\maps\mapa_rutas.html
+17:08:09 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+17:08:10 - INFO - Mapa de recorrido generado.
+17:08:10 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:08:10 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:08:11 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:08:11 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:08:13 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\234567890\reports\informe_llamadas.html
+17:36:33 - INFO - Aplicación lista. Versión 3.0.0
+17:36:47 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+17:37:02 - INFO - Ejecutando limpieza y normalización...
+17:37:02 - INFO - Normalizando números telefónicos...
+17:37:03 - INFO - Procesando fechas...
+17:37:11 - INFO - Calidad de datos perfecta: 0 descartes.
+17:37:11 - INFO - Datos procesados. Total registros limpios: 52040
+17:37:12 - INFO - Usuario aceptó inferencia por municipio.
+17:37:12 - INFO - Infiriendo ubicación por nombre de municipio...
+17:37:15 - INFO - Inferencia por municipio: 0 registros recuperados.
+17:37:15 - INFO - Carga finalizada. 52040 registros.
+17:37:21 - INFO - Generando informe: amoresamor
+17:37:21 - INFO - Llamadas: 252 | Datos internet: 51788
+17:37:21 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\amoresamor\maps\mapa_agrupado.html
+17:37:22 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\amoresamor\maps\mapa_calor.html
+17:37:22 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\amoresamor\maps\mapa_rutas.html
+17:37:23 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+17:37:25 - INFO - Mapa de recorrido generado.
+17:37:25 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:37:25 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:37:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:37:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:37:28 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\amoresamor\reports\informe_llamadas.html
+17:40:41 - INFO - Aplicación lista. Versión 3.0.0
+17:40:47 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+17:41:22 - INFO - Ejecutando limpieza y normalización...
+17:41:22 - INFO - Normalizando números telefónicos...
+17:41:23 - INFO - Procesando fechas...
+17:41:31 - INFO - Calidad de datos perfecta: 0 descartes.
+17:41:31 - INFO - Datos procesados. Total registros limpios: 52040
+17:41:34 - INFO - Usuario aceptó inferencia por municipio.
+17:41:34 - INFO - Infiriendo ubicación por nombre de municipio...
+17:41:37 - INFO - Inferencia por municipio: 0 registros recuperados.
+17:41:37 - INFO - Carga finalizada. 52040 registros.
+17:42:00 - INFO - Generando informe: Informe_Llamadas12345ty
+17:42:00 - INFO - Llamadas: 252 | Datos internet: 51788
+17:42:00 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas12345ty\maps\mapa_agrupado.html
+17:42:01 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas12345ty\maps\mapa_calor.html
+17:42:01 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas12345ty\maps\mapa_rutas.html
+17:42:02 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+17:42:04 - INFO - Mapa de recorrido generado.
+17:42:04 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:42:04 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:42:05 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:42:05 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:42:07 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas12345ty\reports\informe_llamadas.html
+17:47:02 - INFO - Aplicación lista. Versión 3.0.0
+17:47:11 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+17:47:22 - INFO - Ejecutando limpieza y normalización...
+17:47:22 - INFO - Normalizando números telefónicos...
+17:47:22 - INFO - Procesando fechas...
+17:47:26 - INFO - Calidad de datos perfecta: 0 descartes.
+17:47:26 - INFO - Datos procesados. Total registros limpios: 52040
+17:47:33 - INFO - Usuario aceptó inferencia por municipio.
+17:47:33 - INFO - Infiriendo ubicación por nombre de municipio...
+17:47:35 - INFO - Inferencia por municipio: 0 registros recuperados.
+17:47:35 - INFO - Carga finalizada. 52040 registros.
+17:47:40 - INFO - Generando informe: csvdvdfbgfngfnn
+17:47:40 - INFO - Llamadas: 252 | Datos internet: 51788
+17:47:41 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\csvdvdfbgfngfnn\maps\mapa_agrupado.html
+17:47:41 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\csvdvdfbgfngfnn\maps\mapa_calor.html
+17:47:41 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\csvdvdfbgfngfnn\maps\mapa_rutas.html
+17:47:42 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+17:47:43 - INFO - Mapa de recorrido generado.
+17:47:43 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:47:43 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:47:43 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:47:43 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:47:44 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\csvdvdfbgfngfnn\reports\informe_llamadas.html
+17:54:32 - INFO - Aplicación lista. Versión 3.0.0
+17:57:00 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+17:57:10 - INFO - Ejecutando limpieza y normalización...
+17:57:10 - INFO - Normalizando números telefónicos...
+17:57:10 - INFO - Procesando fechas...
+17:57:14 - INFO - Calidad de datos perfecta: 0 descartes.
+17:57:14 - INFO - Datos procesados. Total registros limpios: 52040
+17:57:27 - INFO - Usuario aceptó inferencia por municipio.
+17:57:27 - INFO - Infiriendo ubicación por nombre de municipio...
+17:57:29 - INFO - Inferencia por municipio: 0 registros recuperados.
+17:57:29 - INFO - Carga finalizada. 52040 registros.
+17:57:49 - INFO - Generando informe: purpuras
+17:57:49 - INFO - Llamadas: 252 | Datos internet: 51788
+17:57:49 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\purpuras\maps\mapa_agrupado.html
+17:57:50 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\purpuras\maps\mapa_calor.html
+17:57:50 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\purpuras\maps\mapa_rutas.html
+17:57:50 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+17:57:51 - INFO - Mapa de recorrido generado.
+17:57:51 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:57:51 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:57:52 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:57:52 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+17:57:53 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\purpuras\reports\informe_llamadas.html
+18:02:45 - INFO - Aplicación lista. Versión 3.0.0
+18:02:55 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+18:03:06 - INFO - Ejecutando limpieza y normalización...
+18:03:06 - INFO - Normalizando números telefónicos...
+18:03:06 - INFO - Procesando fechas...
+18:03:10 - INFO - Calidad de datos perfecta: 0 descartes.
+18:03:10 - INFO - Datos procesados. Total registros limpios: 52040
+18:03:15 - INFO - Usuario aceptó inferencia por municipio.
+18:03:15 - INFO - Infiriendo ubicación por nombre de municipio...
+18:03:17 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:03:17 - INFO - Carga finalizada. 52040 registros.
+18:03:19 - INFO - Generando informe: suyafbasdf
+18:03:19 - INFO - Llamadas: 252 | Datos internet: 51788
+18:03:20 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\suyafbasdf\maps\mapa_agrupado.html
+18:03:20 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\suyafbasdf\maps\mapa_calor.html
+18:03:20 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\suyafbasdf\maps\mapa_rutas.html
+18:03:21 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+18:03:22 - INFO - Mapa de recorrido generado.
+18:03:22 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:03:22 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:03:22 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:03:22 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:03:23 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\suyafbasdf\reports\informe_llamadas.html
+18:39:02 - INFO - Aplicación lista. Versión 3.0.0
+18:39:13 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+18:39:34 - INFO - Ejecutando limpieza y normalización...
+18:39:34 - INFO - Normalizando números telefónicos...
+18:39:35 - INFO - Procesando fechas...
+18:39:39 - INFO - Calidad de datos perfecta: 0 descartes.
+18:39:39 - INFO - Datos procesados. Total registros limpios: 52040
+18:39:41 - INFO - Usuario aceptó inferencia por municipio.
+18:39:41 - INFO - Infiriendo ubicación por nombre de municipio...
+18:39:43 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:39:43 - INFO - Carga finalizada. 52040 registros.
+18:39:45 - INFO - Generando informe: misoadasdasa
+18:39:46 - INFO - Llamadas: 252 | Datos internet: 51788
+18:39:46 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\misoadasdasa\maps\mapa_agrupado.html
+18:39:46 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\misoadasdasa\maps\mapa_calor.html
+18:39:46 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\misoadasdasa\maps\mapa_rutas.html
+18:39:47 - INFO - Recorrido: 51749 registros crudos → 16169 puntos únicos (2118 franjas horarias).
+18:40:01 - INFO - Mapa de recorrido generado.
+18:40:01 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:40:01 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:40:01 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:40:01 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:40:04 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\misoadasdasa\reports\informe_llamadas.html
+18:43:13 - INFO - Aplicación lista. Versión 3.0.0
+18:43:18 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+18:43:29 - INFO - Ejecutando limpieza y normalización...
+18:43:29 - INFO - Normalizando números telefónicos...
+18:43:29 - INFO - Procesando fechas...
+18:43:35 - INFO - Calidad de datos perfecta: 0 descartes.
+18:43:35 - INFO - Datos procesados. Total registros limpios: 52040
+18:43:36 - INFO - Usuario aceptó inferencia por municipio.
+18:43:36 - INFO - Infiriendo ubicación por nombre de municipio...
+18:43:38 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:43:38 - INFO - Carga finalizada. 52040 registros.
+18:44:21 - INFO - Generando informe: aloaloaloalo
+18:44:21 - INFO - Llamadas: 252 | Datos internet: 51788
+18:44:21 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\aloaloaloalo\maps\mapa_agrupado.html
+18:44:22 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\aloaloaloalo\maps\mapa_calor.html
+18:44:22 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\aloaloaloalo\maps\mapa_rutas.html
+18:44:22 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+18:44:23 - INFO - Mapa de recorrido generado.
+18:44:23 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:44:23 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:44:24 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:44:24 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:44:25 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\aloaloaloalo\reports\informe_llamadas.html
+18:48:52 - INFO - Aplicación lista. Versión 3.0.0
+18:48:58 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+18:49:14 - INFO - Ejecutando limpieza y normalización...
+18:49:14 - INFO - Normalizando números telefónicos...
+18:49:14 - INFO - Procesando fechas...
+18:49:19 - INFO - Calidad de datos perfecta: 0 descartes.
+18:49:19 - INFO - Datos procesados. Total registros limpios: 52040
+18:49:20 - INFO - Usuario aceptó inferencia por municipio.
+18:49:20 - INFO - Infiriendo ubicación por nombre de municipio...
+18:49:22 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:49:22 - INFO - Carga finalizada. 52040 registros.
+18:49:26 - INFO - Generando informe: asdadsdasdasd
+18:49:26 - INFO - Llamadas: 252 | Datos internet: 51788
+18:49:26 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\asdadsdasdasd\maps\mapa_agrupado.html
+18:49:27 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\asdadsdasdasd\maps\mapa_calor.html
+18:49:27 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\asdadsdasdasd\maps\mapa_rutas.html
+18:49:28 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+18:49:29 - INFO - Mapa de recorrido generado.
+18:49:29 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:49:29 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:49:29 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:49:29 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:49:30 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\asdadsdasdasd\reports\informe_llamadas.html
+19:26:04 - INFO - Aplicación lista. Versión 3.0.0
+19:26:10 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+19:26:20 - INFO - Ejecutando limpieza y normalización...
+19:26:20 - INFO - Normalizando números telefónicos...
+19:26:21 - INFO - Procesando fechas...
+19:26:26 - INFO - Calidad de datos perfecta: 0 descartes.
+19:26:26 - INFO - Datos procesados. Total registros limpios: 52040
+19:26:27 - INFO - Usuario aceptó inferencia por municipio.
+19:26:27 - INFO - Infiriendo ubicación por nombre de municipio...
+19:26:30 - INFO - Inferencia por municipio: 0 registros recuperados.
+19:26:30 - INFO - Carga finalizada. 52040 registros.
+19:26:32 - INFO - Generando informe: waaaaaaa
+19:26:32 - INFO - Llamadas: 252 | Datos internet: 51788
+19:26:32 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\waaaaaaa\maps\mapa_agrupado.html
+19:26:33 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\waaaaaaa\maps\mapa_calor.html
+19:26:33 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\waaaaaaa\maps\mapa_rutas.html
+19:26:34 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+19:26:35 - INFO - Mapa de recorrido generado.
+19:26:35 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+19:26:35 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+19:26:35 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+19:26:35 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+19:26:36 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\waaaaaaa\reports\informe_llamadas.html
+19:27:42 - INFO - Aplicación lista. Versión 3.0.0
+19:27:49 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+19:27:59 - INFO - Ejecutando limpieza y normalización...
+19:28:00 - INFO - Normalizando números telefónicos...
+19:28:00 - INFO - Procesando fechas...
+19:28:05 - INFO - Calidad de datos perfecta: 0 descartes.
+19:28:05 - INFO - Datos procesados. Total registros limpios: 52040
+19:28:12 - INFO - Usuario aceptó inferencia por municipio.
+19:28:12 - INFO - Infiriendo ubicación por nombre de municipio...
+19:28:14 - INFO - Inferencia por municipio: 0 registros recuperados.
+19:28:14 - INFO - Carga finalizada. 52040 registros.
+19:28:18 - INFO - Generando informe: weeee
+19:28:18 - INFO - Llamadas: 252 | Datos internet: 51788
+19:28:19 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\weeee\maps\mapa_agrupado.html
+19:28:19 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\weeee\maps\mapa_calor.html
+19:28:19 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\weeee\maps\mapa_rutas.html
+19:28:20 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+19:28:21 - INFO - Mapa de recorrido generado.
+19:28:21 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+19:28:21 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+19:28:21 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+19:28:21 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+19:28:23 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\weeee\reports\informe_llamadas.html
+23:20:12 - INFO - Aplicación lista. Versión 3.0.0
+23:20:25 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+23:20:59 - INFO - Ejecutando limpieza y normalización...
+23:20:59 - INFO - Normalizando números telefónicos...
+23:21:00 - INFO - Procesando fechas...
+23:21:16 - INFO - Calidad de datos perfecta: 0 descartes.
+23:21:16 - INFO - Datos procesados. Total registros limpios: 52040
+23:32:23 - INFO - Usuario aceptó inferencia por municipio.
+23:32:23 - INFO - Infiriendo ubicación por nombre de municipio...
+23:32:26 - INFO - Inferencia por municipio: 0 registros recuperados.
+23:32:26 - INFO - Carga finalizada. 52040 registros.
+23:58:48 - INFO - Generando informe: nbhkbhkbjnjlnkjas
+23:58:48 - INFO - Llamadas: 252 | Datos internet: 51788
+23:58:48 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\nbhkbhkbjnjlnkjas\maps\mapa_agrupado.html
+23:58:49 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\nbhkbhkbjnjlnkjas\maps\mapa_calor.html
+23:58:50 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\nbhkbhkbjnjlnkjas\maps\mapa_rutas.html
+23:58:51 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+23:58:53 - INFO - Mapa de recorrido generado.
+23:58:53 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+23:58:53 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+23:58:54 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+23:58:54 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+23:58:56 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\nbhkbhkbjnjlnkjas\reports\informe_llamadas.html
+00:47:54 - INFO - Aplicación lista. Versión 3.0.0
+00:48:13 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+00:48:33 - INFO - Ejecutando limpieza y normalización...
+00:48:33 - INFO - Normalizando números telefónicos...
+00:48:34 - INFO - Procesando fechas...
+00:48:36 - INFO - Calidad de datos perfecta: 0 descartes.
+00:48:36 - INFO - Datos procesados. Total registros limpios: 52040
+00:48:38 - INFO - Usuario aceptó inferencia por municipio.
+00:48:38 - INFO - Infiriendo ubicación por nombre de municipio...
+00:48:39 - INFO - Inferencia por municipio: 0 registros recuperados.
+00:48:39 - INFO - Carga finalizada. 52040 registros.
+00:49:23 - INFO - Generando informe: oqiufhdjush
+00:49:23 - INFO - Llamadas: 252 | Datos internet: 51788
+00:49:23 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\oqiufhdjush\maps\mapa_agrupado.html
+00:49:23 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\oqiufhdjush\maps\mapa_calor.html
+00:49:23 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\oqiufhdjush\maps\mapa_rutas.html
+00:49:24 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+00:49:24 - INFO - Mapa de recorrido generado.
+00:49:24 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+00:49:24 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+00:49:24 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+00:49:24 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+00:49:25 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\oqiufhdjush\reports\informe_llamadas.html
+00:52:10 - INFO - Aplicación lista. Versión 3.0.0
+00:52:13 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+00:52:18 - INFO - Ejecutando limpieza y normalización...
+00:52:19 - INFO - Normalizando números telefónicos...
+00:52:19 - INFO - Procesando fechas...
+00:52:21 - INFO - Calidad de datos perfecta: 0 descartes.
+00:52:21 - INFO - Datos procesados. Total registros limpios: 52040
+00:52:23 - INFO - Usuario aceptó inferencia por municipio.
+00:52:23 - INFO - Infiriendo ubicación por nombre de municipio...
+00:52:24 - INFO - Inferencia por municipio: 0 registros recuperados.
+00:52:24 - INFO - Carga finalizada. 52040 registros.
+00:52:28 - INFO - Generando informe: fwfefwfewf
+00:52:28 - INFO - Llamadas: 252 | Datos internet: 51788
+00:52:28 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\fwfefwfewf\maps\mapa_agrupado.html
+00:52:28 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\fwfefwfewf\maps\mapa_calor.html
+00:52:28 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\fwfefwfewf\maps\mapa_rutas.html
+00:52:28 - INFO - Recorrido: 51749 registros crudos → 4379 puntos únicos (98 días).
+00:52:29 - INFO - Mapa de recorrido generado.
+00:52:29 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+00:52:29 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+00:52:29 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+00:52:29 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+00:52:30 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\fwfefwfewf\reports\informe_llamadas.html
+01:00:48 - INFO - Cargando: 0053830_DATOS_POR_MIN_2094774_0.xlsx
+01:00:59 - INFO - Ejecutando limpieza y normalización...
+01:00:59 - INFO - Normalizando números telefónicos...
+01:01:00 - INFO - Procesando fechas...
+01:01:04 - INFO - Calidad de datos perfecta: 0 descartes.
+01:01:04 - INFO - Datos procesados. Total registros limpios: 78698
+01:01:04 - INFO - Geolocalizando con base de datos de celdas...
+01:01:04 - INFO - Geocodificación por celdas: 46719 registros ubicados.
+01:01:10 - INFO - Usuario aceptó inferencia por municipio.
+01:01:10 - INFO - Infiriendo ubicación por nombre de municipio...
+01:01:47 - INFO - Inferencia por municipio: 8467 registros recuperados.
+01:01:47 - INFO - Carga finalizada. 78698 registros.
+01:01:51 - INFO - Generando informe: fwfefwfewf
+01:01:51 - INFO - Llamadas: 155 | Datos internet: 78543
+01:01:51 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\fwfefwfewf\maps\mapa_agrupado.html
+01:01:52 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\fwfefwfewf\maps\mapa_calor.html
+01:01:52 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\fwfefwfewf\maps\mapa_rutas.html
+01:01:52 - INFO - Recorrido: 55095 registros crudos → 9823 puntos únicos (154 días).
+01:01:53 - INFO - Mapa de recorrido generado.
+01:01:53 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:01:53 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:01:53 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:01:53 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:01:54 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\fwfefwfewf\reports\informe_llamadas.html
+01:14:01 - INFO - Datos del caso actualizados.
+01:14:43 - INFO - Generando informe: Caso070320264
+01:14:43 - INFO - Llamadas: 155 | Datos internet: 78543
+01:14:43 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso070320264\maps\mapa_agrupado.html
+01:14:43 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso070320264\maps\mapa_calor.html
+01:14:43 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso070320264\maps\mapa_rutas.html
+01:14:43 - INFO - Recorrido: 55095 registros crudos → 9823 puntos únicos (154 días).
+01:14:44 - INFO - Mapa de recorrido generado.
+01:14:44 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:14:44 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:14:44 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:14:44 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:14:45 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso070320264\reports\informe_llamadas.html
+01:47:07 - INFO - Aplicación lista. Versión 3.0.0
+01:47:34 - INFO - Cargando: 0053830_DATOS_POR_MIN_2094774_0.xlsx
+01:47:50 - INFO - Ejecutando limpieza y normalización...
+01:47:50 - INFO - Normalizando números telefónicos...
+01:47:51 - INFO - Procesando fechas...
+01:47:54 - INFO - Calidad de datos perfecta: 0 descartes.
+01:47:54 - INFO - Datos procesados. Total registros limpios: 78698
+01:47:54 - INFO - Geolocalizando con base de datos de celdas...
+01:47:54 - INFO - Geocodificación por celdas: 46719 registros ubicados.
+01:47:59 - INFO - Usuario aceptó inferencia por municipio.
+01:47:59 - INFO - Infiriendo ubicación por nombre de municipio...
+01:48:22 - INFO - Inferencia por municipio: 8467 registros recuperados.
+01:48:22 - INFO - Carga finalizada. 78698 registros.
+01:48:40 - INFO - Generando informe: UltimaPruebaOscarMeSacoLaRabia
+01:48:40 - INFO - Llamadas: 155 | Datos internet: 78543
+01:48:40 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\UltimaPruebaOscarMeSacoLaRabia\maps\mapa_agrupado.html
+01:48:41 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\UltimaPruebaOscarMeSacoLaRabia\maps\mapa_calor.html
+01:48:41 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\UltimaPruebaOscarMeSacoLaRabia\maps\mapa_rutas.html
+01:48:41 - INFO - Recorrido: 55095 registros crudos → 9823 puntos únicos (154 días).
+01:48:42 - INFO - Mapa de recorrido generado.
+01:48:42 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:48:42 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:48:42 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:48:42 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:48:43 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\UltimaPruebaOscarMeSacoLaRabia\reports\informe_llamadas.html
+01:48:44 - INFO - Conectado al FTP con TLS: plcoyprot.com
+01:49:03 - INFO - Subida completada: https://plcoyprot.com/UltimaPruebaOscarMeSacoLaRabia/reports/informe_llamadas.html
+09:35:46 - INFO - Aplicación lista. Versión 3.0.0
+09:35:57 - INFO - Cargando: 0053830_DATOS_POR_MIN_2094774_0.xlsx
+09:36:04 - INFO - Ejecutando limpieza y normalización...
+09:36:04 - INFO - Normalizando números telefónicos...
+09:36:05 - INFO - Procesando fechas...
+09:36:10 - INFO - Calidad de datos perfecta: 0 descartes.
+09:36:10 - INFO - Datos procesados. Total registros limpios: 78698
+09:36:10 - INFO - Geolocalizando con base de datos de celdas...
+09:36:10 - INFO - Geocodificación por celdas: 46719 registros ubicados.
+09:36:12 - INFO - Usuario aceptó inferencia por municipio.
+09:36:12 - INFO - Infiriendo ubicación por nombre de municipio...
+09:36:51 - INFO - Inferencia por municipio: 8467 registros recuperados.
+09:36:51 - INFO - Carga finalizada. 78698 registros.
+09:37:15 - INFO - Generando informe: jknmij
+09:37:15 - INFO - Llamadas: 155 | Datos internet: 78543
+09:37:15 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\jknmij\maps\mapa_agrupado.html
+09:37:16 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\jknmij\maps\mapa_calor.html
+09:37:16 - INFO - Generando mapa de recorrido (Plotly): C:\GitHub\Python\coyprot_analisis_sabanas\output\jknmij\maps\mapa_rutas.html
+09:37:16 - INFO - Recorrido: 55095 registros crudos → 9823 puntos únicos (154 días).
+09:37:18 - INFO - Mapa de recorrido generado.
+09:37:18 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+09:37:18 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+09:37:18 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+09:37:18 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+09:37:19 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\jknmij\reports\informe_llamadas.html
+15:44:39 - INFO - Aplicación lista. Versión 3.0.0
+15:45:02 - INFO - Cargando: 0053830_DATOS_POR_MIN_2094774_0.xlsx
+15:49:33 - WARNING - Carga cancelada por el usuario.
+15:49:44 - INFO - Aplicación lista. Versión 3.0.0
+15:49:50 - INFO - Cargando: 0053830_DATOS_POR_MIN_2094774_0.xlsx
+16:51:22 - WARNING - Carga cancelada por el usuario.
+22:33:24 - INFO - Aplicación lista. Versión 3.0.0
+22:33:32 - INFO - Cargando: 0053830_DATOS_POR_MIN_2094774_0.xlsx
+22:33:41 - WARNING - Carga cancelada por el usuario.
+01:11:15 - INFO - Aplicación lista. Versión 3.0.0
+01:11:24 - INFO - Cargando: 0053830_DATOS_POR_MIN_2094774_0.xlsx
+01:11:31 - INFO - Ejecutando limpieza y normalización...
+01:11:31 - INFO - Normalizando números telefónicos...
+01:11:32 - INFO - Procesando fechas...
+01:11:35 - INFO - Calidad de datos perfecta: 0 descartes.
+01:11:35 - INFO - Datos procesados. Total registros limpios: 78698
+01:11:35 - INFO - Geolocalizando con base de datos de celdas...
+01:11:36 - INFO - Geocodificación por celdas: 46719 registros ubicados.
+01:11:38 - INFO - Usuario aceptó inferencia por municipio.
+01:11:38 - INFO - Infiriendo ubicación por nombre de municipio...
+01:12:25 - INFO - Inferencia por municipio: 8467 registros recuperados.
+01:12:26 - INFO - Carga finalizada. 78698 registros.
+01:12:41 - INFO - Generando informe: 123456789
+01:12:41 - INFO - Llamadas: 155 | Datos internet: 78543
+01:12:41 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\123456789\maps\mapa_agrupado.html
+01:12:41 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\123456789\maps\mapa_calor.html
+01:12:41 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\123456789\maps\mapa_rutas.html
+01:12:41 - ERROR - Error generando mapas: 'Pandas' object has no attribute '_time'
+01:12:41 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:12:41 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:12:42 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:12:42 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:12:42 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\123456789\reports\informe_llamadas.html
+01:17:04 - INFO - Aplicación lista. Versión 3.0.0
+01:17:10 - INFO - Cargando: 0053830_DATOS_POR_MIN_2094774_0.xlsx
+01:17:24 - INFO - Ejecutando limpieza y normalización...
+01:17:24 - INFO - Normalizando números telefónicos...
+01:17:24 - INFO - Procesando fechas...
+01:17:29 - INFO - Calidad de datos perfecta: 0 descartes.
+01:17:29 - INFO - Datos procesados. Total registros limpios: 78698
+01:17:29 - INFO - Geolocalizando con base de datos de celdas...
+01:17:30 - INFO - Geocodificación por celdas: 46719 registros ubicados.
+01:17:37 - INFO - Usuario aceptó inferencia por municipio.
+01:17:37 - INFO - Infiriendo ubicación por nombre de municipio...
+01:18:16 - INFO - Inferencia por municipio: 8467 registros recuperados.
+01:18:17 - INFO - Carga finalizada. 78698 registros.
+01:18:25 - INFO - Generando informe: Informe_Llamadas1
+01:18:25 - INFO - Llamadas: 155 | Datos internet: 78543
+01:18:25 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas1\maps\mapa_agrupado.html
+01:18:25 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas1\maps\mapa_calor.html
+01:18:25 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas1\maps\mapa_rutas.html
+01:18:26 - INFO - Recorrido Leaflet: 55095 registros, 154 dias, ~6.9 MB JSON.
+01:18:26 - INFO - Mapa de recorrido Leaflet generado.
+01:18:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:18:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:18:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:18:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+01:18:27 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas1\reports\informe_llamadas.html
