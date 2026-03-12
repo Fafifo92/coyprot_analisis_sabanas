@@ -635,3 +635,53 @@
 01:18:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
 01:18:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
 01:18:27 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas1\reports\informe_llamadas.html
+02:36:49 - INFO - Aplicación lista. Versión 3.0.0
+02:38:05 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+02:38:12 - INFO - Ejecutando limpieza y normalización...
+02:38:12 - INFO - Normalizando números telefónicos...
+02:38:13 - INFO - Procesando fechas...
+02:38:16 - INFO - Calidad de datos perfecta: 0 descartes.
+02:38:16 - INFO - Datos procesados. Total registros limpios: 52040
+02:38:21 - INFO - Usuario aceptó inferencia por municipio.
+02:38:21 - INFO - Infiriendo ubicación por nombre de municipio...
+02:38:22 - INFO - Inferencia por municipio: 0 registros recuperados.
+02:38:22 - INFO - Carga finalizada. 52040 registros.
+02:38:25 - INFO - Generando informe: Informe_Llamadas3455
+02:38:25 - INFO - Llamadas: 252 | Datos internet: 51788
+02:38:25 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas3455\maps\mapa_agrupado.html
+02:38:25 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas3455\maps\mapa_calor.html
+02:38:25 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas3455\maps\mapa_rutas.html
+02:38:26 - INFO - Recorrido Leaflet: 51749 registros, 98 dias, ~6.4 MB JSON.
+02:38:26 - INFO - Mapa de recorrido Leaflet generado.
+02:38:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+02:38:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+02:38:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+02:38:26 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+02:38:28 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas3455\reports\informe_llamadas.html
+14:57:59 - INFO - Aplicación lista. Versión 3.0.0
+14:59:06 - INFO - Cargando: 0053830_DATOS_POR_MIN_2094774_0.xlsx
+14:59:17 - INFO - Ejecutando limpieza y normalización...
+14:59:17 - INFO - Normalizando números telefónicos...
+14:59:17 - INFO - Procesando fechas...
+14:59:29 - INFO - Calidad de datos perfecta: 0 descartes.
+14:59:29 - INFO - Datos procesados. Total registros limpios: 78698
+14:59:29 - INFO - Geolocalizando con base de datos de celdas...
+14:59:29 - INFO - Geocodificación por celdas: 46719 registros ubicados.
+15:00:28 - INFO - Usuario aceptó inferencia por municipio.
+15:00:28 - INFO - Infiriendo ubicación por nombre de municipio...
+15:01:56 - INFO - Inferencia por municipio: 8467 registros recuperados.
+15:01:56 - INFO - Carga finalizada. 78698 registros.
+15:02:03 - INFO - Generando informe: adasdasda1234567
+15:02:03 - INFO - Llamadas: 155 | Datos internet: 78543
+15:02:03 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\adasdasda1234567\maps\mapa_agrupado.html
+15:02:04 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\adasdasda1234567\maps\mapa_calor.html
+15:02:04 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\adasdasda1234567\maps\mapa_rutas.html
+15:02:05 - INFO - Recorrido Leaflet: 55095 registros, 154 dias, ~6.9 MB JSON.
+15:02:05 - INFO - Mapa de recorrido Leaflet generado.
+15:02:05 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:02:05 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:02:06 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:02:06 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+15:02:07 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\adasdasda1234567\reports\informe_llamadas.html
+15:02:09 - INFO - Conectado al FTP con TLS: plcoyprot.com
+15:02:31 - INFO - Subida completada: https://plcoyprot.com/adasdasda1234567/reports/informe_llamadas.html
