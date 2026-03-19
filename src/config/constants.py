@@ -117,7 +117,7 @@ EXCEL_SERIAL_DATE_MAX: Final[float] = 51138.0
 # ── GUI ───────────────────────────────────────────────────────────────────────
 GUI_THEME: Final[str] = "adapta"
 GUI_GEOMETRY: Final[str] = "1000x800"
-GUI_MIN_SIZE: Final[tuple[int, int]] = (900, 700)
+GUI_MIN_SIZE: Final[tuple[int, int]] = (750, 500)
 GUI_LOG_FONT: Final[tuple[str, int]] = ("Consolas", 9)
 QUEUE_POLL_MS: Final[int] = 100
 

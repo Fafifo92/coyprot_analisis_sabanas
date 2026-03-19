@@ -8448,3 +8448,69 @@
 01:53:44 - INFO - PDF generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\12132r3fe23e\reports\informe_llamadas.pdf
 01:53:51 - INFO - Archivo subido: informe_llamadas.pdf
 01:53:54 - INFO - Archivo subido: informe_llamadas.pdf.sha256
+09:49:31 - INFO - Aplicación lista. Versión 3.0.0
+09:49:49 - INFO - Cargando: 3244308975.xlsx
+09:50:06 - INFO - Procesando 2 hojas con mapeo individual...
+09:50:06 - INFO - Procesando hoja 'Datos 8975' como Datos (341 filas).
+09:50:06 - INFO - Procesando hoja 'Salientes 8975' como Salientes (25 filas).
+09:50:06 - INFO - Normalizando números telefónicos...
+09:50:06 - INFO - Procesando fechas...
+09:50:06 - INFO - Calidad de datos perfecta: 0 descartes.
+09:50:06 - INFO - Datos procesados. Total registros limpios: 366
+09:50:06 - INFO - Archivo '3244308975.xlsx' agregado: 366 registros (Salientes, Datos).
+09:50:09 - INFO - Geolocalizando con base de datos de celdas...
+09:50:09 - INFO - Geocodificación por celdas: 341 registros ubicados.
+09:50:11 - INFO - Usuario aceptó inferencia por municipio.
+09:50:11 - INFO - Infiriendo ubicación por nombre de municipio...
+09:50:11 - INFO - Inferencia por municipio: 0 registros recuperados.
+09:50:11 - INFO - Análisis finalizado. 366 registros.
+09:50:20 - INFO - Generando informe: Test12345sdwf
+09:50:20 - INFO - Llamadas: 25 | Datos internet: 341
+09:50:20 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Test12345sdwf\maps\mapa_rutas.html
+09:50:21 - INFO - Recorrido Leaflet: 341 registros, 2 dias, ~0.0 MB JSON.
+09:50:21 - INFO - Mapa de recorrido Leaflet generado.
+09:50:21 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+09:50:21 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+09:50:22 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Test12345sdwf\reports\informe_llamadas.html
+09:50:24 - INFO - Conectado al FTP con TLS: plcoyprot.com
+09:50:40 - INFO - Subida completada: https://plcoyprot.com/Test12345sdwf/reports/informe_llamadas.html
+09:54:35 - WARNING - Sin coordenadas para mapa de ubicaciones.
+09:54:37 - INFO - Chromium init'ed with kwargs {}
+09:54:37 - INFO - Found chromium path: C:\Program Files\Google\Chrome\Application\chrome.exe
+09:54:37 - INFO - Temp directory created: C:\Users\franc\AppData\Local\Temp\tmpg0666y4m.
+09:54:37 - INFO - Opening browser.
+09:54:37 - INFO - Temp directory created: C:\Users\franc\AppData\Local\Temp\tmp3hzkwwsh.
+09:54:37 - INFO - Temporary directory at: C:\Users\franc\AppData\Local\Temp\tmp3hzkwwsh
+09:54:37 - INFO - Conforming 1 to file:///C:/Users/franc/AppData/Local/Temp/tmpg0666y4m/index.html
+09:54:37 - INFO - Waiting on all navigates
+09:54:39 - INFO - All navigates done, putting them all in queue.
+09:54:39 - INFO - Getting tab from queue (has 1)
+09:54:39 - INFO - Got 2C50
+09:54:39 - INFO - Processing Recorrido_Consolidado_de_Datos__Bogot_Bogot_Distrito_Capital.png
+09:54:39 - INFO - Sending big command for Recorrido_Consolidado_de_Datos__Bogot_Bogot_Distrito_Capital.png.
+09:54:43 - INFO - Sent big command for Recorrido_Consolidado_de_Datos__Bogot_Bogot_Distrito_Capital.png.
+09:54:43 - INFO - Reloading tab 2C50 before return.
+09:54:43 - INFO - Putting tab 2C50 back (queue size: 0).
+09:54:43 - INFO - Waiting for all cleanups to finish.
+09:54:43 - INFO - Exiting Kaleido
+09:54:43 - INFO - Closing browser.
+09:54:43 - INFO - Closing browser.
+09:54:43 - INFO - TemporaryDirectory.cleanup() worked.
+09:54:43 - INFO - shutil.rmtree worked.
+09:54:43 - INFO - Cancelling tasks.
+09:54:43 - INFO - Exiting Kaleido/Choreo
+09:54:44 - INFO - TemporaryDirectory.cleanup() worked.
+09:54:44 - INFO - shutil.rmtree worked.
+09:54:44 - INFO - TemporaryDirectory.cleanup() worked.
+09:54:44 - INFO - shutil.rmtree worked.
+09:54:44 - INFO - Cancelling tasks.
+09:54:44 - INFO - Exiting Kaleido/Choreo
+09:54:44 - INFO - Ruta consolidada generada: ruta_consolidada.png
+09:54:44 - INFO - TemporaryDirectory.cleanup() worked.
+09:54:44 - INFO - shutil.rmtree worked.
+09:54:45 - INFO - PDF generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Test12345sdwf\reports\informe_llamadas.pdf
+09:54:45 - INFO - SHA-256 de informe_llamadas.pdf: b78a9ca75e93d627...
+09:54:45 - INFO - PDF generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Test12345sdwf\reports\informe_llamadas.pdf
+09:54:53 - INFO - Archivo subido: informe_llamadas.pdf
+09:54:56 - INFO - Archivo subido: informe_llamadas.pdf.sha256
+13:07:24 - INFO - Aplicación lista. Versión 3.0.0
