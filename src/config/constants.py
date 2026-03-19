@@ -49,6 +49,28 @@ DEFAULT_CASE_FIELDS: Final[tuple[str, ...]] = (
     "Periodo",
 )
 
+# ── Tipos de hoja ─────────────────────────────────────────────────────────────
+SHEET_TYPE_INCOMING: Final[str] = "Entrantes"
+SHEET_TYPE_OUTGOING: Final[str] = "Salientes"
+SHEET_TYPE_DATA: Final[str] = "Datos"
+SHEET_TYPE_GENERIC: Final[str] = "Genérica"
+SHEET_TYPE_SKIP: Final[str] = "Ignorar"
+
+SHEET_TYPES: Final[tuple[str, ...]] = (
+    SHEET_TYPE_INCOMING,
+    SHEET_TYPE_OUTGOING,
+    SHEET_TYPE_DATA,
+    SHEET_TYPE_GENERIC,
+    SHEET_TYPE_SKIP,
+)
+
+# Palabras clave para auto-detección de tipo de hoja
+SHEET_DETECT_KEYWORDS: Final[dict[str, tuple[str, ...]]] = {
+    SHEET_TYPE_DATA: ("dato",),
+    SHEET_TYPE_INCOMING: ("entrant", "incoming"),
+    SHEET_TYPE_OUTGOING: ("salient", "outgoing"),
+}
+
 # ── Campos de mapeo de columnas ──────────────────────────────────────────────
 # Nombre interno -> etiqueta legible para el usuario
 COLUMN_MAPPING_FIELDS: Final[dict[str, str]] = {
@@ -61,9 +83,14 @@ COLUMN_MAPPING_FIELDS: Final[dict[str, str]] = {
     COL_LONGITUDE: "Longitud (Decimal - Opcional)",
 }
 
-# Campos obligatorios en el mapeo de columnas
+# Campos obligatorios en el mapeo de columnas (por tipo de hoja)
 REQUIRED_MAPPING_FIELDS: Final[frozenset[str]] = frozenset(
     {COL_ORIGINATOR, COL_RECEIVER, COL_DATETIME}
+)
+
+# Para hojas de DATOS, receptor no es obligatorio (se auto-rellena)
+REQUIRED_MAPPING_FIELDS_DATA: Final[frozenset[str]] = frozenset(
+    {COL_ORIGINATOR, COL_DATETIME}
 )
 
 # ── Geocodificador ────────────────────────────────────────────────────────────

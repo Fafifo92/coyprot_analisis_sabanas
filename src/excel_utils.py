@@ -114,11 +114,13 @@ def cargar_excel_crudo(file_path):
                     print(f"⚠️ Error leyendo hoja de datos {real_name}: {e}")
 
             # --- 2. Hojas de Entrantes ---
-            elif "entrant" in key or "incoming" in key: 
+            elif "entrant" in key or "incoming" in key:
                 try:
                     temp = pd.read_excel(file_path, sheet_name=real_name, dtype=str)
-                    temp.dropna(how='all', inplace=True) 
+                    temp.dropna(how='all', inplace=True)
                     temp.columns = temp.columns.str.lower().str.strip()
+                    if "fecha_hora_inicio_llamada" in temp.columns and "fecha_hora" not in temp.columns:
+                        temp.rename(columns={"fecha_hora_inicio_llamada": "fecha_hora"}, inplace=True)
                     temp["tipo_llamada"] = "entrante"
                     df_list.append(temp)
                     found_sheets = True
@@ -126,11 +128,13 @@ def cargar_excel_crudo(file_path):
                     print(f"⚠️ Error leyendo hoja {real_name}: {e}")
 
             # --- 3. Hojas de Salientes ---
-            elif "salient" in key or "outgoing" in key: 
+            elif "salient" in key or "outgoing" in key:
                 try:
                     temp = pd.read_excel(file_path, sheet_name=real_name, dtype=str)
-                    temp.dropna(how='all', inplace=True) 
+                    temp.dropna(how='all', inplace=True)
                     temp.columns = temp.columns.str.lower().str.strip()
+                    if "fecha_hora_inicio_llamada" in temp.columns and "fecha_hora" not in temp.columns:
+                        temp.rename(columns={"fecha_hora_inicio_llamada": "fecha_hora"}, inplace=True)
                     temp["tipo_llamada"] = "saliente"
                     df_list.append(temp)
                     found_sheets = True

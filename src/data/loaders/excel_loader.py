@@ -58,6 +58,7 @@ _CALL_SHEET_COLUMN_MAP: dict[str, str] = {
     "nombre_celda_inicio": COL_CELL_NAME, # → "nombre_celda"
     "celda_inicio_llamada": COL_CELL_ID,  # → "cell_identity_decimal"
     "lac_inicio_llamada": COL_LAC,        # → "lac"
+    "fecha_hora_inicio_llamada": "fecha_hora",
 }
 
 
@@ -86,6 +87,47 @@ class ExcelLoader:
             if path.suffix.lower() == ".csv":
                 return self._load_csv(path)
             return self._load_excel(path)
+        except Exception as exc:
+            logger.exception("Error inesperado al cargar %s", path)
+            return None, str(exc)
+
+    def load_sheets_raw(
+        self, path: Path
+    ) -> tuple[Optional[dict[str, pd.DataFrame]], Optional[str]]:
+        """
+        Carga todas las hojas del Excel sin procesamiento automático.
+
+        Devuelve un dict {nombre_hoja: DataFrame_crudo} para que el usuario
+        pueda asignar tipo y mapear columnas por hoja.
+
+        Returns:
+            (dict, None) en caso de éxito, o (None, mensaje_error) si falla.
+        """
+        if not path.exists():
+            return None, f"El archivo no existe: {path}"
+
+        try:
+            if path.suffix.lower() == ".csv":
+                df, err = self._load_csv(path)
+                if df is None:
+                    return None, err
+                return {"CSV": df}, None
+
+            xl = pd.ExcelFile(path)
+            sheets: dict[str, pd.DataFrame] = {}
+            for name in xl.sheet_names:
+                try:
+                    df = pd.read_excel(path, sheet_name=name, dtype=str)
+                    df.dropna(how="all", inplace=True)
+                    if not df.empty:
+                        sheets[name] = df
+                except Exception as exc:
+                    logger.warning("Error leyendo hoja '%s': %s", name, exc)
+
+            if not sheets:
+                return None, "No se encontraron hojas con datos en el archivo."
+
+            return sheets, None
         except Exception as exc:
             logger.exception("Error inesperado al cargar %s", path)
             return None, str(exc)
