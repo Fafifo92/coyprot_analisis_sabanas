@@ -80,6 +80,49 @@ class UploadService:
         except Exception as exc:
             raise FtpConnectionError(f"Error en la conexión FTP: {exc}") from exc
 
+    def upload_file(self, local_file: Path, remote_folder: str) -> str:
+        """
+        Sube un archivo individual al servidor FTP en la carpeta remota indicada.
+
+        Args:
+            local_file: Ruta al archivo local.
+            remote_folder: Ruta de carpeta en public_html (ej. "Informe/reports").
+
+        Returns:
+            URL pública del archivo subido.
+
+        Raises:
+            FtpCredentialsError: si las credenciales no están configuradas.
+            FtpConnectionError: si no se puede conectar al servidor.
+        """
+        if not all([self._host, self._user, self._password]):
+            raise FtpCredentialsError(
+                "Credenciales FTP no configuradas. "
+                "Defina FTP_HOST, FTP_USER y FTP_PASS en el archivo .env"
+            )
+
+        try:
+            ftp = FTP_TLS()
+            ftp.connect(self._host, 21)
+            ftp.login(self._user, self._password)
+            ftp.prot_p()
+
+            ftp.cwd(self._public_html)
+            self._ensure_remote_path(ftp, remote_folder)
+
+            with open(local_file, "rb") as fh:
+                ftp.storbinary(f"STOR {local_file.name}", fh)
+            logger.info("Archivo subido: %s", local_file.name)
+
+            ftp.quit()
+            url = f"https://{self._host}/{remote_folder}/{local_file.name}"
+            return url
+
+        except FtpCredentialsError:
+            raise
+        except Exception as exc:
+            raise FtpConnectionError(f"Error en la conexión FTP: {exc}") from exc
+
     # ── Helpers privados ──────────────────────────────────────────────────────
 
     @staticmethod

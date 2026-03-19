@@ -134,3 +134,12 @@ TOP_N_CHART: Final[int] = 10
 CHART_DPI: Final[int] = 100
 MAP_HEATMAP_RADIUS: Final[int] = 15
 MAP_HEATMAP_BLUR: Final[int] = 20
+
+# ── PDF Report ───────────────────────────────────────────────────────────────
+PDF_FONT_FAMILY: Final[str] = "Helvetica"
+PDF_FONT_SIZE_BODY: Final[int] = 9
+PDF_BRAND_COLOR_HEX: Final[str] = "#2c3e50"
+PDF_ACCENT_COLOR_HEX: Final[str] = "#0d6efd"
+PDF_STATIC_MAP_WIDTH: Final[int] = 1200
+PDF_STATIC_MAP_HEIGHT: Final[int] = 800
+PDF_MAP_DIR_NAME: Final[str] = "static_maps"

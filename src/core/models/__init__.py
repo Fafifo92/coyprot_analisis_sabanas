@@ -6,8 +6,26 @@ Dataclasses inmutables que representan las entidades del negocio.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Optional
+
+
+class RouteMapMode(str, Enum):
+    """Modo de generación de mapas de ruta para PDF."""
+
+    DAILY = "daily"
+    CONSOLIDATED = "consolidated"
+
+
+@dataclass
+class PdfExportConfig:
+    """Configuración específica para la exportación PDF."""
+
+    route_map_mode: RouteMapMode = RouteMapMode.CONSOLIDATED
+    include_route_maps: bool = True
+    include_location_maps: bool = True
+    ftp_url: str = ""
 
 
 @dataclass(frozen=True)
