@@ -112,6 +112,11 @@ class _Sty:
                 "PCellB", parent=base["Normal"],
                 fontSize=8, fontName="Helvetica-Bold", leading=10,
             ),
+            "cell_header": ParagraphStyle(
+                "PCellH", parent=base["Normal"],
+                fontSize=8, fontName="Helvetica-Bold", leading=10,
+                textColor=colors.white,
+            ),
             "link": ParagraphStyle(
                 "PLink", parent=base["Normal"],
                 fontSize=7, fontName="Helvetica",
@@ -431,9 +436,9 @@ class PdfReportBuilder:
 
     def _small_ranking_table(self, items: list[tuple[str, int]]) -> Table:
         header = [
-            Paragraph("<b>#</b>", self._s["cell_bold"]),
-            Paragraph("<b>Numero / Alias</b>", self._s["cell_bold"]),
-            Paragraph("<b>Frecuencia</b>", self._s["cell_bold"]),
+            Paragraph("<b>#</b>", self._s["cell_header"]),
+            Paragraph("<b>Numero / Alias</b>", self._s["cell_header"]),
+            Paragraph("<b>Frecuencia</b>", self._s["cell_header"]),
         ]
         rows = [header]
         for i, (name, freq) in enumerate(items, 1):
@@ -519,12 +524,12 @@ class PdfReportBuilder:
             ))
 
             header = [
-                Paragraph("<b>#</b>", self._s["cell_bold"]),
-                Paragraph("<b>Fecha/Hora</b>", self._s["cell_bold"]),
-                Paragraph("<b>Dur.(s)</b>", self._s["cell_bold"]),
-                Paragraph("<b>Departamento</b>", self._s["cell_bold"]),
-                Paragraph("<b>Municipio</b>", self._s["cell_bold"]),
-                Paragraph("<b>Coordenadas</b>", self._s["cell_bold"]),
+                Paragraph("<b>#</b>", self._s["cell_header"]),
+                Paragraph("<b>Fecha/Hora</b>", self._s["cell_header"]),
+                Paragraph("<b>Dur.(s)</b>", self._s["cell_header"]),
+                Paragraph("<b>Departamento</b>", self._s["cell_header"]),
+                Paragraph("<b>Municipio</b>", self._s["cell_header"]),
+                Paragraph("<b>Coordenadas</b>", self._s["cell_header"]),
             ]
 
             col_widths = [
@@ -703,8 +708,8 @@ class PdfReportBuilder:
             if valid:
                 elems.append(Paragraph("Documentos Adjuntos", self._s["h3"]))
                 header = [
-                    Paragraph("<b>Categoria</b>", self._s["cell_bold"]),
-                    Paragraph("<b>Archivo</b>", self._s["cell_bold"]),
+                    Paragraph("<b>Categoria</b>", self._s["cell_header"]),
+                    Paragraph("<b>Archivo</b>", self._s["cell_header"]),
                 ]
                 rows = [header]
                 for att in valid:

@@ -154,16 +154,45 @@ class CallAnalyzerApp(ThemedTk):
     # ── Construcción de widgets ───────────────────────────────────────────────
 
     def _create_widgets(self) -> None:
-        main = ttk.Frame(self, padding="15")
-        main.pack(expand=True, fill=tk.BOTH)
+        outer = ttk.Frame(self, padding="15")
+        outer.pack(expand=True, fill=tk.BOTH)
+        outer.grid_rowconfigure(0, weight=1)
+        outer.grid_columnconfigure(0, weight=1)
+
+        # Canvas scrollable para todo el contenido
+        self._canvas = tk.Canvas(outer, highlightthickness=0)
+        v_scroll = ttk.Scrollbar(outer, orient="vertical", command=self._canvas.yview)
+        self._canvas.configure(yscrollcommand=v_scroll.set)
+        self._canvas.grid(row=0, column=0, sticky="nsew")
+        v_scroll.grid(row=0, column=1, sticky="ns")
+
+        main = ttk.Frame(self._canvas)
+        self._canvas_window = self._canvas.create_window(
+            (0, 0), window=main, anchor="nw"
+        )
         main.grid_columnconfigure(0, weight=1)
         main.grid_columnconfigure(1, weight=1)
-        main.grid_rowconfigure(4, weight=1)
 
         self._build_file_section(main)
         self._build_attachments_section(main)
         self._build_options_and_export(main)
         self._build_log_section(main)
+
+        # Ajustar scrollregion y ancho del frame interno
+        def _on_frame_configure(event):
+            self._canvas.configure(scrollregion=self._canvas.bbox("all"))
+
+        def _on_canvas_configure(event):
+            self._canvas.itemconfig(self._canvas_window, width=event.width)
+
+        main.bind("<Configure>", _on_frame_configure)
+        self._canvas.bind("<Configure>", _on_canvas_configure)
+
+        # Scroll con rueda del mouse
+        def _on_mousewheel(event):
+            self._canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        self._canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
     def _build_file_section(self, parent: ttk.Frame) -> None:
         top = ttk.Frame(parent)
@@ -277,7 +306,7 @@ class CallAnalyzerApp(ThemedTk):
         f_adj.grid_columnconfigure(0, weight=1)
 
         self._tree_adj = ttk.Treeview(
-            f_adj, columns=("cat", "arch"), show="headings", height=4
+            f_adj, columns=("cat", "arch"), show="headings", height=3
         )
         self._tree_adj.heading("cat", text="Categoría")
         self._tree_adj.column("cat", width=150, anchor="center")
@@ -416,14 +445,14 @@ class CallAnalyzerApp(ThemedTk):
         f_log = ttk.LabelFrame(
             parent, text="Registro de Actividad y Diagnóstico", padding="10"
         )
-        f_log.grid(row=4, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+        f_log.grid(row=4, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         f_log.grid_rowconfigure(0, weight=1)
         f_log.grid_columnconfigure(0, weight=1)
 
         self._log_widget = scrolledtext.ScrolledText(
             f_log,
             wrap=tk.WORD,
-            height=10,
+            height=8,
             state="disabled",
             font=GUI_LOG_FONT,
         )

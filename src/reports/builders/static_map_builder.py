@@ -171,7 +171,7 @@ class StaticLocationMapBuilder:
                 title=loc_title,
             )
             fig.update_layout(
-                map_style="open-street-map",
+                map_style="carto-positron",
                 margin=dict(l=10, r=10, t=40, b=10),
                 legend_title_text="Tipo",
                 font=dict(family="Helvetica, Arial, sans-serif"),
@@ -309,7 +309,7 @@ class StaticRouteMapBuilder:
                 con_title += f" — {location}"
 
             fig.update_layout(
-                map_style="open-street-map",
+                map_style="carto-positron",
                 map_center=dict(lat=center_lat, lon=center_lon),
                 map_zoom=zoom,
                 margin=dict(l=10, r=10, t=40, b=10),
@@ -373,7 +373,7 @@ def _build_route_figure(group: pd.DataFrame, title: str) -> go.Figure:
         full_title += f" — {location}"
 
     fig.update_layout(
-        map_style="open-street-map",
+        map_style="carto-positron",
         map_center=dict(lat=center_lat, lon=center_lon),
         map_zoom=zoom,
         margin=dict(l=10, r=10, t=40, b=10),
