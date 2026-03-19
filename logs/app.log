@@ -685,3 +685,670 @@
 15:02:07 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\adasdasda1234567\reports\informe_llamadas.html
 15:02:09 - INFO - Conectado al FTP con TLS: plcoyprot.com
 15:02:31 - INFO - Subida completada: https://plcoyprot.com/adasdasda1234567/reports/informe_llamadas.html
+12:35:51 - INFO - Aplicación lista. Versión 3.0.0
+12:37:34 - INFO - Cargando: 3244308975.xlsx
+12:38:16 - INFO - Ejecutando limpieza y normalización...
+12:38:16 - INFO - Normalizando números telefónicos...
+12:38:16 - INFO - Procesando fechas...
+12:38:16 - WARNING - Filas descartadas (fecha inválida): 1
+12:38:16 - INFO - Datos procesados. Total registros limpios: 366
+12:38:16 - INFO - Geolocalizando con base de datos de celdas...
+12:38:16 - INFO - Geocodificación por celdas: 366 registros ubicados.
+12:38:16 - INFO - Carga finalizada. 366 registros.
+12:42:56 - INFO - Datos del caso actualizados.
+12:46:23 - INFO - Datos del caso actualizados.
+12:47:42 - INFO - Generando informe: Caso573244308975
+12:47:42 - INFO - Llamadas: 25 | Datos internet: 341
+12:47:42 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso573244308975\maps\mapa_agrupado.html
+12:47:42 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso573244308975\maps\mapa_calor.html
+12:47:42 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso573244308975\maps\mapa_rutas.html
+12:47:42 - INFO - Recorrido Leaflet: 341 registros, 2 dias, ~0.0 MB JSON.
+12:47:42 - INFO - Mapa de recorrido Leaflet generado.
+12:47:42 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+12:47:42 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+12:47:42 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso573244308975\reports\informe_llamadas.html
+12:47:47 - INFO - Conectado al FTP con TLS: plcoyprot.com
+12:48:16 - INFO - Subida completada: https://plcoyprot.com/Caso573244308975/reports/informe_llamadas.html
+12:52:39 - INFO - Generando informe: Caso573244308975
+12:52:39 - INFO - Llamadas: 25 | Datos internet: 341
+12:52:39 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso573244308975\maps\mapa_agrupado.html
+12:52:39 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso573244308975\maps\mapa_calor.html
+12:52:39 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso573244308975\maps\mapa_rutas.html
+12:52:39 - INFO - Recorrido Leaflet: 341 registros, 2 dias, ~0.0 MB JSON.
+12:52:40 - INFO - Mapa de recorrido Leaflet generado.
+12:52:40 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+12:52:40 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+12:52:40 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Caso573244308975\reports\informe_llamadas.html
+12:52:41 - INFO - Conectado al FTP con TLS: plcoyprot.com
+12:53:11 - INFO - Subida completada: https://plcoyprot.com/Caso573244308975/reports/informe_llamadas.html
+12:53:31 - INFO - Generando informe: Casosin573244308975
+12:53:31 - INFO - Llamadas: 25 | Datos internet: 341
+12:53:31 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\maps\mapa_agrupado.html
+12:53:31 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\maps\mapa_calor.html
+12:53:31 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\maps\mapa_rutas.html
+12:53:31 - INFO - Recorrido Leaflet: 341 registros, 2 dias, ~0.0 MB JSON.
+12:53:32 - INFO - Mapa de recorrido Leaflet generado.
+12:53:32 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+12:53:32 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+12:53:32 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\reports\informe_llamadas.html
+12:53:33 - INFO - Conectado al FTP con TLS: plcoyprot.com
+12:54:03 - INFO - Subida completada: https://plcoyprot.com/Casosin573244308975/reports/informe_llamadas.html
+12:56:56 - INFO - Generando informe: Casosin573244308975
+12:56:56 - INFO - Llamadas: 25 | Datos internet: 341
+12:56:57 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\maps\mapa_agrupado.html
+12:56:57 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\maps\mapa_calor.html
+12:56:57 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\maps\mapa_rutas.html
+12:56:57 - INFO - Recorrido Leaflet: 341 registros, 2 dias, ~0.0 MB JSON.
+12:56:57 - INFO - Mapa de recorrido Leaflet generado.
+12:56:57 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+12:56:57 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+12:56:57 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\reports\informe_llamadas.html
+12:56:58 - INFO - Conectado al FTP con TLS: plcoyprot.com
+12:57:28 - INFO - Subida completada: https://plcoyprot.com/Casosin573244308975/reports/informe_llamadas.html
+16:39:25 - INFO - Adjuntado: Datos Generales -Cristhian izquierdo.pdf (Vehículos)
+16:51:35 - INFO - Alias actualizados: 20.
+16:54:53 - INFO - Datos del caso actualizados.
+16:57:33 - INFO - Datos del caso actualizados.
+16:57:39 - INFO - Generando informe: CasoC573244308975
+16:57:39 - INFO - Llamadas: 25 | Datos internet: 341
+16:57:39 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\CasoC573244308975\maps\mapa_agrupado.html
+16:57:39 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\CasoC573244308975\maps\mapa_calor.html
+16:57:40 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\CasoC573244308975\maps\mapa_rutas.html
+16:57:40 - INFO - Recorrido Leaflet: 341 registros, 2 dias, ~0.0 MB JSON.
+16:57:40 - INFO - Mapa de recorrido Leaflet generado.
+16:57:41 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\CasoC573244308975\reports\informe_llamadas.html
+16:57:42 - INFO - Conectado al FTP con TLS: plcoyprot.com
+16:57:59 - INFO - Subida completada: https://plcoyprot.com/CasoC573244308975/reports/informe_llamadas.html
+17:42:41 - INFO - Generando informe: Casosin573244308975
+17:42:41 - INFO - Llamadas: 25 | Datos internet: 341
+17:42:41 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\maps\mapa_agrupado.html
+17:42:41 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\maps\mapa_calor.html
+17:42:42 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\maps\mapa_rutas.html
+17:42:42 - INFO - Recorrido Leaflet: 341 registros, 2 dias, ~0.0 MB JSON.
+17:42:42 - INFO - Mapa de recorrido Leaflet generado.
+17:42:43 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975\reports\informe_llamadas.html
+17:42:44 - INFO - Conectado al FTP con TLS: plcoyprot.com
+17:43:01 - INFO - Subida completada: https://plcoyprot.com/Casosin573244308975/reports/informe_llamadas.html
+22:29:35 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+22:29:57 - WARNING - Carga cancelada por el usuario.
+22:30:04 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+22:30:15 - INFO - Ejecutando limpieza y normalización...
+22:30:15 - INFO - Normalizando números telefónicos...
+22:30:15 - INFO - Procesando fechas...
+22:30:21 - INFO - Calidad de datos perfecta: 0 descartes.
+22:30:24 - INFO - Datos procesados. Total registros limpios: 52040
+22:30:38 - INFO - Usuario aceptó inferencia por municipio.
+22:30:38 - INFO - Infiriendo ubicación por nombre de municipio...
+22:30:40 - INFO - Inferencia por municipio: 0 registros recuperados.
+22:30:40 - INFO - Carga finalizada. 52040 registros.
+22:31:04 - INFO - Generando informe: Casosin573244308975hjhjo
+22:31:05 - INFO - Llamadas: 252 | Datos internet: 51788
+22:31:05 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975hjhjo\maps\mapa_agrupado.html
+22:31:06 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975hjhjo\maps\mapa_calor.html
+22:31:06 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975hjhjo\maps\mapa_rutas.html
+22:31:07 - INFO - Recorrido Leaflet: 51749 registros, 98 dias, ~6.4 MB JSON.
+22:31:07 - INFO - Mapa de recorrido Leaflet generado.
+22:31:07 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+22:31:07 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+22:31:08 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+22:31:08 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+22:31:10 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Casosin573244308975hjhjo\reports\informe_llamadas.html
+22:36:07 - INFO - Aplicación lista. Versión 3.0.0
+22:36:20 - INFO - Cargando: CBS ANDERSON ZAPATA - copia.xlsx
+22:36:31 - INFO - Ejecutando limpieza y normalización...
+22:36:31 - INFO - Normalizando números telefónicos...
+22:36:31 - INFO - Procesando fechas...
+22:36:37 - INFO - Calidad de datos perfecta: 0 descartes.
+22:36:37 - INFO - Datos procesados. Total registros limpios: 52040
+22:36:39 - INFO - Usuario aceptó inferencia por municipio.
+22:36:39 - INFO - Infiriendo ubicación por nombre de municipio...
+22:36:41 - INFO - Inferencia por municipio: 0 registros recuperados.
+22:36:41 - INFO - Carga finalizada. 52040 registros.
+22:36:46 - INFO - Generando informe: Informe_Llamadasghbuyhbnh
+22:36:46 - INFO - Llamadas: 252 | Datos internet: 51788
+22:36:46 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadasghbuyhbnh\maps\mapa_agrupado.html
+22:36:47 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadasghbuyhbnh\maps\mapa_calor.html
+22:36:47 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadasghbuyhbnh\maps\mapa_rutas.html
+22:36:48 - INFO - Recorrido Leaflet: 51749 registros, 98 dias, ~6.4 MB JSON.
+22:36:48 - INFO - Mapa de recorrido Leaflet generado.
+22:36:48 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+22:36:48 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+22:36:49 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+22:36:49 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+22:36:50 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadasghbuyhbnh\reports\informe_llamadas.html
+09:44:49 - INFO - Cargando: 3168736553.xlsx
+09:44:55 - INFO - Ejecutando limpieza y normalización...
+09:44:55 - INFO - Normalizando números telefónicos...
+09:44:55 - INFO - Procesando fechas...
+09:44:57 - WARNING - Filas descartadas (fecha inválida): 84
+09:44:57 - INFO - Datos procesados. Total registros limpios: 2688
+09:45:07 - INFO - Usuario aceptó inferencia por municipio.
+09:45:07 - INFO - Infiriendo ubicación por nombre de municipio...
+09:45:08 - INFO - Inferencia por municipio: 0 registros recuperados.
+09:45:08 - INFO - Carga finalizada. 2688 registros.
+09:46:37 - INFO - Aplicación lista. Versión 3.0.0
+09:47:27 - INFO - Cargando: 3168736553.xlsx
+09:47:32 - INFO - Ejecutando limpieza y normalización...
+09:47:32 - INFO - Normalizando números telefónicos...
+09:47:32 - INFO - Procesando fechas...
+09:47:34 - WARNING - Filas descartadas (fecha inválida): 84
+09:47:34 - INFO - Datos procesados. Total registros limpios: 2688
+09:47:35 - INFO - Usuario aceptó inferencia por municipio.
+09:47:35 - INFO - Infiriendo ubicación por nombre de municipio...
+09:47:36 - INFO - Inferencia por municipio: 0 registros recuperados.
+09:47:36 - INFO - Carga finalizada. 2688 registros.
+09:47:51 - INFO - Generando informe: Informe_Llamadas
+09:47:51 - INFO - Llamadas: 0 | Datos internet: 2688
+09:47:51 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas\maps\mapa_rutas.html
+09:47:52 - INFO - Recorrido Leaflet: 2222 registros, 99 dias, ~0.2 MB JSON.
+09:47:52 - INFO - Mapa de recorrido Leaflet generado.
+09:47:52 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadas\reports\informe_llamadas.html
+09:54:06 - INFO - Aplicación lista. Versión 3.0.0
+09:54:43 - INFO - Cargando: 3168736553.xlsx
+09:54:46 - INFO - Ejecutando limpieza y normalización...
+09:54:46 - INFO - Normalizando números telefónicos...
+09:54:46 - INFO - Procesando fechas...
+09:54:48 - WARNING - Filas descartadas (fecha inválida): 84
+09:54:48 - INFO - Datos procesados. Total registros limpios: 2688
+09:54:49 - INFO - Usuario aceptó inferencia por municipio.
+09:54:49 - INFO - Infiriendo ubicación por nombre de municipio...
+09:54:50 - INFO - Inferencia por municipio: 0 registros recuperados.
+09:54:50 - INFO - Carga finalizada. 2688 registros.
+09:55:18 - INFO - Aplicación lista. Versión 3.0.0
+09:55:37 - INFO - Cargando: 3168736553.xlsx
+09:55:40 - INFO - Ejecutando limpieza y normalización...
+09:55:40 - INFO - Normalizando números telefónicos...
+09:55:40 - INFO - Procesando fechas...
+09:55:40 - WARNING - Filas descartadas (fecha inválida): 2688
+09:55:40 - INFO - Datos procesados. Total registros limpios: 84
+09:55:42 - INFO - Usuario aceptó inferencia por municipio.
+09:55:43 - INFO - Infiriendo ubicación por nombre de municipio...
+09:55:43 - INFO - Inferencia por municipio: 0 registros recuperados.
+09:55:43 - INFO - Carga finalizada. 84 registros.
+09:56:43 - INFO - Aplicación lista. Versión 3.0.0
+09:56:50 - INFO - Cargando: 3168736553.xlsx
+09:56:54 - INFO - Ejecutando limpieza y normalización...
+09:56:54 - INFO - Normalizando números telefónicos...
+09:56:54 - INFO - Procesando fechas...
+09:56:54 - WARNING - Filas descartadas (fecha inválida): 2688
+09:56:54 - INFO - Datos procesados. Total registros limpios: 84
+09:56:56 - INFO - Usuario aceptó inferencia por municipio.
+09:56:56 - INFO - Infiriendo ubicación por nombre de municipio...
+09:56:56 - INFO - Inferencia por municipio: 0 registros recuperados.
+09:56:57 - INFO - Carga finalizada. 84 registros.
+09:57:31 - INFO - Aplicación lista. Versión 3.0.0
+09:57:39 - INFO - Cargando: 3168736553.xlsx
+09:57:41 - INFO - Ejecutando limpieza y normalización...
+09:57:41 - INFO - Normalizando números telefónicos...
+09:57:41 - INFO - Procesando fechas...
+09:57:43 - WARNING - Filas descartadas (fecha inválida): 84
+09:57:43 - INFO - Datos procesados. Total registros limpios: 2688
+09:57:45 - INFO - Usuario aceptó inferencia por municipio.
+09:57:45 - INFO - Infiriendo ubicación por nombre de municipio...
+09:57:46 - INFO - Inferencia por municipio: 0 registros recuperados.
+09:57:46 - INFO - Carga finalizada. 2688 registros.
+09:59:23 - INFO - Aplicación lista. Versión 3.0.0
+09:59:31 - INFO - Cargando: 3168736553.xlsx
+09:59:33 - INFO - Ejecutando limpieza y normalización...
+09:59:33 - INFO - Normalizando números telefónicos...
+09:59:33 - INFO - Procesando fechas...
+09:59:33 - WARNING - Filas descartadas (fecha inválida): 2688
+09:59:34 - INFO - Datos procesados. Total registros limpios: 84
+09:59:35 - INFO - Usuario aceptó inferencia por municipio.
+09:59:35 - INFO - Infiriendo ubicación por nombre de municipio...
+09:59:35 - INFO - Inferencia por municipio: 0 registros recuperados.
+09:59:35 - INFO - Carga finalizada. 84 registros.
+10:01:00 - INFO - Aplicación lista. Versión 3.0.0
+10:01:06 - INFO - Cargando: 3168736553.xlsx
+10:01:08 - INFO - Ejecutando limpieza y normalización...
+10:01:08 - INFO - Normalizando números telefónicos...
+10:01:08 - INFO - Procesando fechas...
+10:01:09 - WARNING - Filas descartadas (fecha inválida): 2688
+10:01:09 - INFO - Datos procesados. Total registros limpios: 84
+10:01:11 - INFO - Usuario aceptó inferencia por municipio.
+10:01:11 - INFO - Infiriendo ubicación por nombre de municipio...
+10:01:11 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:01:11 - INFO - Carga finalizada. 84 registros.
+10:14:37 - INFO - Aplicación lista. Versión 3.0.0
+10:15:27 - INFO - Cargando: 3168736553.xlsx
+10:15:31 - INFO - Ejecutando limpieza y normalización...
+10:15:31 - INFO - Normalizando números telefónicos...
+10:15:31 - INFO - Procesando fechas...
+10:15:32 - WARNING - Filas descartadas (fecha inválida): 2688
+10:15:32 - INFO - Datos procesados. Total registros limpios: 84
+10:15:39 - INFO - Usuario aceptó inferencia por municipio.
+10:15:39 - INFO - Infiriendo ubicación por nombre de municipio...
+10:15:39 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:15:40 - INFO - Carga finalizada. 84 registros.
+10:17:38 - INFO - Aplicación lista. Versión 3.0.0
+10:17:46 - INFO - Cargando: 3168736553.xlsx
+10:17:48 - INFO - Ejecutando limpieza y normalización...
+10:17:48 - INFO - Normalizando números telefónicos...
+10:17:48 - INFO - Procesando fechas...
+10:17:48 - WARNING - Filas descartadas (fecha inválida): 2688
+10:17:48 - INFO - Datos procesados. Total registros limpios: 84
+10:17:54 - INFO - Usuario aceptó inferencia por municipio.
+10:17:54 - INFO - Infiriendo ubicación por nombre de municipio...
+10:17:54 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:17:54 - INFO - Carga finalizada. 84 registros.
+10:21:05 - INFO - Aplicación lista. Versión 3.0.0
+10:21:20 - INFO - Cargando: 3168736553.xlsx
+10:21:23 - INFO - Ejecutando limpieza y normalización...
+10:21:23 - INFO - Normalizando números telefónicos...
+10:21:23 - INFO - Procesando fechas...
+10:21:23 - WARNING - Filas descartadas (fecha inválida): 2688
+10:21:23 - INFO - Datos procesados. Total registros limpios: 84
+10:21:25 - INFO - Usuario aceptó inferencia por municipio.
+10:21:25 - INFO - Infiriendo ubicación por nombre de municipio...
+10:21:25 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:21:26 - INFO - Carga finalizada. 84 registros.
+10:23:50 - INFO - Aplicación lista. Versión 3.0.0
+10:24:00 - INFO - Cargando: 3168736553.xlsx
+10:24:03 - INFO - Ejecutando limpieza y normalización...
+10:24:03 - INFO - Normalizando números telefónicos...
+10:24:03 - INFO - Procesando fechas...
+10:24:03 - WARNING - Filas descartadas (fecha inválida): 2688
+10:24:03 - INFO - Datos procesados. Total registros limpios: 84
+10:24:05 - INFO - Usuario aceptó inferencia por municipio.
+10:24:05 - INFO - Infiriendo ubicación por nombre de municipio...
+10:24:05 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:24:05 - INFO - Carga finalizada. 84 registros.
+10:27:51 - INFO - Aplicación lista. Versión 3.0.0
+10:28:03 - INFO - Cargando: 3168736553.xlsx
+10:28:05 - INFO - Ejecutando limpieza y normalización...
+10:28:05 - INFO - Normalizando números telefónicos...
+10:28:05 - INFO - Procesando fechas...
+10:28:05 - WARNING - Filas descartadas (fecha inválida): 2688
+10:28:05 - INFO - Datos procesados. Total registros limpios: 84
+10:28:07 - INFO - Usuario aceptó inferencia por municipio.
+10:28:07 - INFO - Infiriendo ubicación por nombre de municipio...
+10:28:07 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:28:07 - INFO - Carga finalizada. 84 registros.
+10:28:29 - INFO - Aplicación lista. Versión 3.0.0
+10:28:46 - INFO - Cargando: 3168736553.xlsx
+10:28:49 - INFO - Ejecutando limpieza y normalización...
+10:28:49 - INFO - Normalizando números telefónicos...
+10:28:49 - INFO - Procesando fechas...
+10:28:51 - WARNING - Filas descartadas (fecha inválida): 84
+10:28:51 - INFO - Datos procesados. Total registros limpios: 2688
+10:28:55 - INFO - Usuario aceptó inferencia por municipio.
+10:28:55 - INFO - Infiriendo ubicación por nombre de municipio...
+10:28:56 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:28:56 - INFO - Carga finalizada. 2688 registros.
+10:32:53 - INFO - Aplicación lista. Versión 3.0.0
+10:33:12 - INFO - Cargando: 3168736553.xlsx
+10:33:14 - INFO - Ejecutando limpieza y normalización...
+10:33:14 - INFO - Normalizando números telefónicos...
+10:33:14 - INFO - Procesando fechas...
+10:33:15 - WARNING - Filas descartadas (fecha inválida): 2688
+10:33:15 - INFO - Datos procesados. Total registros limpios: 84
+10:33:17 - INFO - Usuario aceptó inferencia por municipio.
+10:33:17 - INFO - Infiriendo ubicación por nombre de municipio...
+10:33:17 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:33:18 - INFO - Carga finalizada. 84 registros.
+10:36:33 - INFO - Aplicación lista. Versión 3.0.0
+10:36:39 - INFO - Cargando: 3168736553.xlsx
+10:36:41 - INFO - Ejecutando limpieza y normalización...
+10:36:41 - INFO - Normalizando números telefónicos...
+10:36:41 - INFO - Procesando fechas...
+10:36:41 - WARNING - Filas descartadas (fecha inválida): 2688
+10:36:41 - INFO - Datos procesados. Total registros limpios: 84
+10:36:43 - INFO - Usuario aceptó inferencia por municipio.
+10:36:43 - INFO - Infiriendo ubicación por nombre de municipio...
+10:36:43 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:36:43 - INFO - Carga finalizada. 84 registros.
+10:38:01 - INFO - Aplicación lista. Versión 3.0.0
+10:38:07 - INFO - Cargando: 3168736553.xlsx
+10:38:11 - INFO - Ejecutando limpieza y normalización...
+10:38:11 - INFO - Normalizando números telefónicos...
+10:38:11 - INFO - Procesando fechas...
+10:38:11 - WARNING - Filas descartadas (fecha inválida): 2688
+10:38:11 - INFO - Datos procesados. Total registros limpios: 84
+10:38:12 - INFO - Usuario aceptó inferencia por municipio.
+10:38:12 - INFO - Infiriendo ubicación por nombre de municipio...
+10:38:13 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:38:13 - INFO - Carga finalizada. 84 registros.
+10:39:19 - INFO - Aplicación lista. Versión 3.0.0
+10:39:25 - INFO - Cargando: 3168736553.xlsx
+10:39:27 - INFO - Ejecutando limpieza y normalización...
+10:39:27 - INFO - Normalizando números telefónicos...
+10:39:27 - INFO - Procesando fechas...
+10:39:27 - WARNING - Filas descartadas (fecha inválida): 2688
+10:39:27 - INFO - Datos procesados. Total registros limpios: 84
+10:39:29 - INFO - Usuario aceptó inferencia por municipio.
+10:39:29 - INFO - Infiriendo ubicación por nombre de municipio...
+10:39:29 - INFO - Inferencia por municipio: 0 registros recuperados.
+10:39:29 - INFO - Carga finalizada. 84 registros.
+14:50:04 - INFO - Aplicación lista. Versión 3.0.0
+14:50:15 - INFO - Cargando: 3168736553.xlsx
+14:50:17 - INFO - Ejecutando limpieza y normalización...
+14:50:17 - INFO - Normalizando números telefónicos...
+14:50:17 - INFO - Procesando fechas...
+14:50:18 - WARNING - Filas descartadas (fecha inválida): 2688
+14:50:18 - INFO - Datos procesados. Total registros limpios: 84
+14:50:20 - INFO - Usuario aceptó inferencia por municipio.
+14:50:20 - INFO - Infiriendo ubicación por nombre de municipio...
+14:50:20 - INFO - Inferencia por municipio: 0 registros recuperados.
+14:50:20 - INFO - Carga finalizada. 84 registros.
+14:53:07 - INFO - Aplicación lista. Versión 3.0.0
+14:53:43 - INFO - Cargando: 3168736553.xlsx
+14:53:45 - INFO - Ejecutando limpieza y normalización...
+14:53:45 - INFO - Normalizando números telefónicos...
+14:53:45 - INFO - Procesando fechas...
+14:53:45 - WARNING - Filas descartadas (fecha inválida): 2688
+14:53:45 - INFO - Datos procesados. Total registros limpios: 84
+14:53:48 - INFO - Usuario aceptó inferencia por municipio.
+14:53:48 - INFO - Infiriendo ubicación por nombre de municipio...
+14:53:48 - INFO - Inferencia por municipio: 0 registros recuperados.
+14:53:48 - INFO - Carga finalizada. 84 registros.
+14:54:18 - INFO - Cargando: 3168736553.xlsx
+14:54:29 - INFO - Ejecutando limpieza y normalización...
+14:54:29 - INFO - Normalizando números telefónicos...
+14:54:29 - INFO - Procesando fechas...
+14:54:29 - WARNING - Filas descartadas (fecha inválida): 2688
+14:54:29 - INFO - Datos procesados. Total registros limpios: 84
+14:54:32 - INFO - Usuario aceptó inferencia por municipio.
+14:54:32 - INFO - Infiriendo ubicación por nombre de municipio...
+14:54:32 - INFO - Inferencia por municipio: 0 registros recuperados.
+14:54:32 - INFO - Carga finalizada. 84 registros.
+14:55:03 - INFO - Aplicación lista. Versión 3.0.0
+14:55:11 - INFO - Cargando: 3168736553.xlsx
+14:55:13 - INFO - Ejecutando limpieza y normalización...
+14:55:13 - INFO - Normalizando números telefónicos...
+14:55:13 - INFO - Procesando fechas...
+14:55:14 - WARNING - Filas descartadas (fecha inválida): 2688
+14:55:14 - INFO - Datos procesados. Total registros limpios: 84
+14:55:16 - INFO - Usuario aceptó inferencia por municipio.
+14:55:16 - INFO - Infiriendo ubicación por nombre de municipio...
+14:55:16 - INFO - Inferencia por municipio: 0 registros recuperados.
+14:55:16 - INFO - Carga finalizada. 84 registros.
+16:32:14 - INFO - Aplicación lista. Versión 3.0.0
+16:32:22 - INFO - Cargando: 3168736553.xlsx
+16:32:25 - INFO - Ejecutando limpieza y normalización...
+16:32:25 - INFO - Normalizando números telefónicos...
+16:32:25 - INFO - Procesando fechas...
+16:32:25 - WARNING - Filas descartadas (fecha inválida): 2688
+16:32:25 - INFO - Datos procesados. Total registros limpios: 84
+16:32:28 - INFO - Usuario aceptó inferencia por municipio.
+16:32:28 - INFO - Infiriendo ubicación por nombre de municipio...
+16:32:28 - INFO - Inferencia por municipio: 0 registros recuperados.
+16:32:29 - INFO - Carga finalizada. 84 registros.
+18:43:14 - INFO - Aplicación lista. Versión 3.0.0
+18:59:27 - INFO - Cargando: 3168736553.xlsx
+18:59:30 - INFO - Ejecutando limpieza y normalización...
+18:59:30 - INFO - Normalizando números telefónicos...
+18:59:30 - INFO - Procesando fechas...
+18:59:32 - INFO - Calidad de datos perfecta: 0 descartes.
+18:59:33 - INFO - Datos procesados. Total registros limpios: 2772
+18:59:35 - INFO - Usuario aceptó inferencia por municipio.
+18:59:35 - INFO - Infiriendo ubicación por nombre de municipio...
+18:59:36 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:59:37 - INFO - Carga finalizada. 2772 registros.
+18:59:44 - INFO - Generando informe: wer78
+18:59:44 - INFO - Llamadas: 84 | Datos internet: 2688
+18:59:44 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\wer78\maps\mapa_agrupado.html
+18:59:44 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\wer78\maps\mapa_calor.html
+18:59:44 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\wer78\maps\mapa_rutas.html
+18:59:45 - INFO - Recorrido Leaflet: 2222 registros, 99 dias, ~0.3 MB JSON.
+18:59:45 - INFO - Mapa de recorrido Leaflet generado.
+18:59:45 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:59:45 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:59:45 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:59:45 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:59:46 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\wer78\reports\informe_llamadas.html
+16:36:56 - INFO - Aplicación lista. Versión 3.0.0
+16:38:23 - INFO - Cargando: 3002674152.xlsx
+16:38:26 - INFO - Ejecutando limpieza y normalización...
+16:38:26 - INFO - Normalizando números telefónicos...
+16:38:26 - INFO - Procesando fechas...
+16:38:27 - WARNING - Filas descartadas (fecha inválida): 463
+16:38:27 - INFO - Datos procesados. Total registros limpios: 2875
+16:38:28 - INFO - Carga finalizada. 2875 registros.
+16:38:36 - INFO - Cargando: 3168736553.xlsx
+16:38:38 - INFO - Ejecutando limpieza y normalización...
+16:38:38 - INFO - Normalizando números telefónicos...
+16:38:38 - INFO - Procesando fechas...
+16:38:40 - INFO - Calidad de datos perfecta: 0 descartes.
+16:38:40 - INFO - Datos procesados. Total registros limpios: 2772
+16:38:41 - INFO - Usuario aceptó inferencia por municipio.
+16:38:41 - INFO - Infiriendo ubicación por nombre de municipio...
+16:38:43 - INFO - Inferencia por municipio: 0 registros recuperados.
+16:38:43 - INFO - Carga finalizada. 2772 registros.
+16:55:22 - INFO - Cargando: 3168736553.xlsx
+16:55:27 - WARNING - Carga cancelada por el usuario.
+17:03:34 - INFO - Aplicación lista. Versión 3.0.0
+17:17:59 - INFO - Cargando: 3002674152.xlsx
+17:18:01 - INFO - Ejecutando limpieza y normalización...
+17:18:01 - INFO - Normalizando números telefónicos...
+17:18:01 - INFO - Procesando fechas...
+17:18:01 - WARNING - Filas descartadas (fecha inválida): 2875
+17:18:01 - INFO - Datos procesados. Total registros limpios: 463
+17:18:04 - INFO - Usuario aceptó inferencia por municipio.
+17:18:04 - INFO - Infiriendo ubicación por nombre de municipio...
+17:18:04 - INFO - Inferencia por municipio: 0 registros recuperados.
+17:18:04 - INFO - Carga finalizada. 463 registros.
+17:40:39 - INFO - Aplicación lista. Versión 3.0.0
+17:40:46 - INFO - Cargando: 3002674152.xlsx
+17:40:51 - INFO - Ejecutando limpieza y normalización...
+17:40:51 - INFO - Normalizando números telefónicos...
+17:40:51 - INFO - Procesando fechas...
+17:40:52 - WARNING - Filas descartadas (fecha inválida): 2875
+17:40:52 - INFO - Datos procesados. Total registros limpios: 463
+17:40:54 - INFO - Usuario aceptó inferencia por municipio.
+17:40:54 - INFO - Infiriendo ubicación por nombre de municipio...
+17:40:55 - INFO - Inferencia por municipio: 0 registros recuperados.
+17:40:55 - INFO - Carga finalizada. 463 registros.
+17:55:16 - INFO - Aplicación lista. Versión 3.0.0
+17:55:55 - INFO - Cargando: 3002674152.xlsx
+17:56:09 - INFO - Procesando 3 hojas con mapeo individual...
+17:56:09 - INFO - Procesando hoja 'ENTRANTES' como Entrantes (185 filas).
+17:56:09 - INFO - Procesando hoja 'SALIENTES' como Salientes (278 filas).
+17:56:09 - INFO - Procesando hoja 'DATOS' como Datos (2875 filas).
+17:56:09 - INFO - Normalizando números telefónicos...
+17:56:09 - INFO - Procesando fechas...
+17:56:11 - INFO - Calidad de datos perfecta: 0 descartes.
+17:56:11 - INFO - Datos procesados. Total registros limpios: 3338
+17:56:13 - INFO - Usuario aceptó inferencia por municipio.
+17:56:13 - INFO - Infiriendo ubicación por nombre de municipio...
+17:56:15 - INFO - Inferencia por municipio: 0 registros recuperados.
+17:56:15 - INFO - Carga finalizada. 3338 registros.
+17:56:22 - INFO - Cargando: 3168736553.xlsx
+17:56:35 - INFO - Procesando 3 hojas con mapeo individual...
+17:56:35 - INFO - Procesando hoja 'SALIENTES ' como Salientes (73 filas).
+17:56:36 - INFO - Procesando hoja 'ENTRANTES ' como Entrantes (11 filas).
+17:56:36 - INFO - Procesando hoja 'DATOS ' como Datos (2688 filas).
+17:56:36 - INFO - Normalizando números telefónicos...
+17:56:36 - INFO - Procesando fechas...
+17:56:38 - INFO - Calidad de datos perfecta: 0 descartes.
+17:56:38 - INFO - Datos procesados. Total registros limpios: 2772
+17:56:40 - INFO - Usuario aceptó inferencia por municipio.
+17:56:40 - INFO - Infiriendo ubicación por nombre de municipio...
+17:56:41 - INFO - Inferencia por municipio: 0 registros recuperados.
+17:56:41 - INFO - Carga finalizada. 2772 registros.
+18:04:47 - INFO - Aplicación lista. Versión 3.0.0
+18:14:01 - INFO - Aplicación lista. Versión 3.0.0
+18:14:15 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_datos.xlsx
+18:14:39 - WARNING - Carga cancelada por el usuario.
+18:15:00 - INFO - Cargando: 3002674152.xlsx
+18:15:07 - INFO - Procesando 3 hojas con mapeo individual...
+18:15:07 - INFO - Procesando hoja 'DATOS' como Datos (2875 filas).
+18:15:08 - INFO - Procesando hoja 'ENTRANTES' como Entrantes (185 filas).
+18:15:08 - INFO - Procesando hoja 'SALIENTES' como Salientes (278 filas).
+18:15:08 - INFO - Normalizando números telefónicos...
+18:15:08 - INFO - Procesando fechas...
+18:15:10 - INFO - Calidad de datos perfecta: 0 descartes.
+18:15:10 - INFO - Datos procesados. Total registros limpios: 3338
+18:15:10 - INFO - Archivo '3002674152.xlsx' agregado: 3338 registros (Entrantes, Salientes, Datos).
+18:15:26 - INFO - Usuario aceptó inferencia por municipio.
+18:15:26 - INFO - Infiriendo ubicación por nombre de municipio...
+18:15:28 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:15:28 - INFO - Carga finalizada. 3338 registros.
+18:15:39 - INFO - Cargando: 3168736553.xlsx
+18:15:47 - INFO - Procesando 3 hojas con mapeo individual...
+18:15:47 - INFO - Procesando hoja 'SALIENTES ' como Salientes (73 filas).
+18:15:47 - INFO - Procesando hoja 'ENTRANTES ' como Entrantes (11 filas).
+18:15:47 - INFO - Procesando hoja 'DATOS ' como Datos (2688 filas).
+18:15:48 - INFO - Normalizando números telefónicos...
+18:15:48 - INFO - Procesando fechas...
+18:15:49 - INFO - Calidad de datos perfecta: 0 descartes.
+18:15:49 - INFO - Datos procesados. Total registros limpios: 2772
+18:15:49 - INFO - Archivo '3168736553.xlsx' agregado: 2772 registros (Entrantes, Salientes, Datos).
+18:15:55 - INFO - Usuario aceptó inferencia por municipio.
+18:15:55 - INFO - Infiriendo ubicación por nombre de municipio...
+18:15:58 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:15:58 - INFO - Carga finalizada. 6110 registros.
+18:16:19 - INFO - Usuario aceptó inferencia por municipio.
+18:16:19 - INFO - Infiriendo ubicación por nombre de municipio...
+18:16:21 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:16:21 - INFO - Carga finalizada. 6110 registros.
+18:16:24 - INFO - Datos limpiados. Listo para nueva carga.
+18:21:27 - INFO - Aplicación lista. Versión 3.0.0
+18:21:35 - INFO - Cargando: 3002674152.xlsx
+18:21:43 - INFO - Procesando 3 hojas con mapeo individual...
+18:21:43 - INFO - Procesando hoja 'ENTRANTES' como Entrantes (185 filas).
+18:21:43 - INFO - Procesando hoja 'SALIENTES' como Salientes (278 filas).
+18:21:43 - INFO - Procesando hoja 'DATOS' como Datos (2875 filas).
+18:21:44 - INFO - Normalizando números telefónicos...
+18:21:44 - INFO - Procesando fechas...
+18:21:46 - INFO - Calidad de datos perfecta: 0 descartes.
+18:21:46 - INFO - Datos procesados. Total registros limpios: 3338
+18:21:46 - INFO - Archivo '3002674152.xlsx' agregado: 3338 registros (Entrantes, Salientes, Datos).
+18:21:51 - INFO - Usuario aceptó inferencia por municipio.
+18:21:51 - INFO - Infiriendo ubicación por nombre de municipio...
+18:21:52 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:21:52 - INFO - Carga finalizada. 3338 registros.
+18:21:56 - INFO - Datos limpiados. Listo para nueva carga.
+18:22:03 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_datos.xlsx
+18:22:19 - INFO - Procesando 1 hojas con mapeo individual...
+18:22:20 - INFO - Procesando hoja 'Sheet1' como Datos (2875 filas).
+18:22:20 - INFO - Normalizando números telefónicos...
+18:22:20 - INFO - Procesando fechas...
+18:22:21 - INFO - Calidad de datos perfecta: 0 descartes.
+18:22:22 - INFO - Datos procesados. Total registros limpios: 2875
+18:22:22 - INFO - Archivo 'CUN4433261003813533_3002674152_20260312181043_datos.xlsx' agregado: 2875 registros (Datos).
+18:22:29 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_vozm_entrante.xlsx
+18:22:50 - WARNING - Carga cancelada por el usuario.
+18:22:58 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_vozm_entrante.xlsx
+18:23:28 - WARNING - Carga cancelada por el usuario.
+18:24:23 - INFO - Aplicación lista. Versión 3.0.0
+18:24:32 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_datos.xlsx
+18:24:36 - INFO - Procesando 1 hojas con mapeo individual...
+18:24:36 - INFO - Procesando hoja 'Sheet1' como Datos (2875 filas).
+18:24:36 - INFO - Normalizando números telefónicos...
+18:24:36 - INFO - Procesando fechas...
+18:24:38 - INFO - Calidad de datos perfecta: 0 descartes.
+18:24:38 - INFO - Datos procesados. Total registros limpios: 2875
+18:24:38 - INFO - Archivo 'CUN4433261003813533_3002674152_20260312181043_datos.xlsx' agregado: 2875 registros (Datos).
+18:24:43 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_vozm_entrante.xlsx
+18:25:30 - INFO - Procesando 1 hojas con mapeo individual...
+18:25:30 - INFO - Procesando hoja 'Sheet1' como Entrantes (185 filas).
+18:25:30 - INFO - Normalizando números telefónicos...
+18:25:30 - INFO - Procesando fechas...
+18:25:30 - INFO - Calidad de datos perfecta: 0 descartes.
+18:25:30 - INFO - Datos procesados. Total registros limpios: 185
+18:25:30 - INFO - Archivo 'CUN4433261003813533_3002674152_20260312181043_vozm_entrante.xlsx' agregado: 185 registros (Entrantes).
+18:25:40 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_vozm_saliente.xlsx
+18:26:58 - INFO - Procesando 1 hojas con mapeo individual...
+18:26:58 - INFO - Procesando hoja 'Sheet1' como Salientes (278 filas).
+18:26:58 - INFO - Normalizando números telefónicos...
+18:26:58 - INFO - Procesando fechas...
+18:26:58 - INFO - Calidad de datos perfecta: 0 descartes.
+18:26:58 - INFO - Datos procesados. Total registros limpios: 278
+18:26:58 - INFO - Archivo 'CUN4433261003813533_3002674152_20260312181043_vozm_saliente.xlsx' agregado: 278 registros (Salientes).
+18:27:04 - INFO - Usuario aceptó inferencia por municipio.
+18:27:04 - INFO - Infiriendo ubicación por nombre de municipio...
+18:27:05 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:27:05 - INFO - Carga finalizada. 3338 registros.
+18:27:12 - INFO - Generando informe: 2389hfbiurjoevi
+18:27:12 - INFO - Llamadas: 463 | Datos internet: 2875
+18:27:12 - INFO - Generando mapa agrupado: C:\GitHub\Python\coyprot_analisis_sabanas\output\2389hfbiurjoevi\maps\mapa_agrupado.html
+18:27:13 - INFO - Generando mapa de calor: C:\GitHub\Python\coyprot_analisis_sabanas\output\2389hfbiurjoevi\maps\mapa_calor.html
+18:27:13 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\2389hfbiurjoevi\maps\mapa_rutas.html
+18:27:13 - INFO - Recorrido Leaflet: 2592 registros, 101 dias, ~0.3 MB JSON.
+18:27:13 - INFO - Mapa de recorrido Leaflet generado.
+18:27:13 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:27:13 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+18:27:15 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\2389hfbiurjoevi\reports\informe_llamadas.html
+18:49:21 - INFO - Aplicación lista. Versión 3.0.0
+18:49:37 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_datos.xlsx
+18:49:42 - INFO - Procesando 1 hojas con mapeo individual...
+18:49:42 - INFO - Procesando hoja 'Sheet1' como Datos (2875 filas).
+18:49:42 - INFO - Normalizando números telefónicos...
+18:49:42 - INFO - Procesando fechas...
+18:49:43 - INFO - Calidad de datos perfecta: 0 descartes.
+18:49:43 - INFO - Datos procesados. Total registros limpios: 2875
+18:49:44 - INFO - Archivo 'CUN4433261003813533_3002674152_20260312181043_datos.xlsx' agregado: 2875 registros (Datos).
+18:49:51 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_vozm_entrante.xlsx
+18:50:06 - INFO - Procesando 1 hojas con mapeo individual...
+18:50:06 - INFO - Procesando hoja 'Sheet1' como Entrantes (185 filas).
+18:50:06 - INFO - Normalizando números telefónicos...
+18:50:06 - INFO - Procesando fechas...
+18:50:06 - INFO - Calidad de datos perfecta: 0 descartes.
+18:50:06 - INFO - Datos procesados. Total registros limpios: 185
+18:50:07 - INFO - Archivo 'CUN4433261003813533_3002674152_20260312181043_vozm_entrante.xlsx' agregado: 185 registros (Entrantes).
+18:50:11 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_vozm_saliente.xlsx
+18:50:28 - INFO - Procesando 1 hojas con mapeo individual...
+18:50:28 - INFO - Procesando hoja 'Sheet1' como Salientes (278 filas).
+18:50:28 - INFO - Normalizando números telefónicos...
+18:50:28 - INFO - Procesando fechas...
+18:50:29 - INFO - Calidad de datos perfecta: 0 descartes.
+18:50:29 - INFO - Datos procesados. Total registros limpios: 278
+18:50:29 - INFO - Archivo 'CUN4433261003813533_3002674152_20260312181043_vozm_saliente.xlsx' agregado: 278 registros (Salientes).
+18:50:33 - INFO - Usuario aceptó inferencia por municipio.
+18:50:33 - INFO - Infiriendo ubicación por nombre de municipio...
+18:50:34 - INFO - Inferencia por municipio: 0 registros recuperados.
+18:50:34 - INFO - Análisis finalizado. 3338 registros.
+18:50:49 - INFO - Cargando: 3002674152.xlsx
+18:51:20 - INFO - Procesando 3 hojas con mapeo individual...
+18:51:20 - INFO - Procesando hoja 'DATOS' como Datos (2875 filas).
+18:51:20 - INFO - Procesando hoja 'ENTRANTES' como Entrantes (185 filas).
+18:51:20 - INFO - Procesando hoja 'SALIENTES' como Salientes (278 filas).
+18:51:20 - INFO - Normalizando números telefónicos...
+18:51:20 - INFO - Procesando fechas...
+18:51:23 - INFO - Calidad de datos perfecta: 0 descartes.
+18:51:23 - INFO - Datos procesados. Total registros limpios: 3338
+18:51:23 - INFO - Archivo '3002674152.xlsx' agregado: 3338 registros (Entrantes, Salientes, Datos).
+18:51:28 - INFO - Análisis finalizado. 6676 registros.
+18:51:32 - INFO - Datos limpiados. Listo para nueva carga.
+18:52:13 - INFO - Aplicación lista. Versión 3.0.0
+18:55:32 - INFO - Aplicación lista. Versión 3.0.0
+19:01:04 - INFO - Aplicación lista. Versión 3.0.0
+19:02:31 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_datos.xlsx
+19:02:38 - INFO - Procesando 1 hojas con mapeo individual...
+19:02:38 - INFO - Procesando hoja 'Sheet1' como Datos (2875 filas).
+19:02:38 - INFO - Normalizando números telefónicos...
+19:02:38 - INFO - Procesando fechas...
+19:02:40 - INFO - Calidad de datos perfecta: 0 descartes.
+19:02:40 - INFO - Datos procesados. Total registros limpios: 2875
+19:02:40 - INFO - Archivo 'CUN4433261003813533_3002674152_20260312181043_datos.xlsx' agregado: 2875 registros (Datos).
+19:02:46 - INFO - Usuario aceptó inferencia por municipio.
+19:02:46 - INFO - Infiriendo ubicación por nombre de municipio...
+19:02:46 - INFO - Inferencia por municipio: 0 registros recuperados.
+19:02:46 - INFO - Análisis finalizado. 2875 registros.
+19:02:53 - INFO - Generando informe: Informe_Llamadasdatos
+19:02:53 - INFO - Llamadas: 0 | Datos internet: 2875
+19:02:53 - INFO - Generando mapa de recorrido (Leaflet): C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadasdatos\maps\mapa_rutas.html
+19:02:54 - INFO - Recorrido Leaflet: 2592 registros, 101 dias, ~0.3 MB JSON.
+19:02:54 - INFO - Mapa de recorrido Leaflet generado.
+19:02:54 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadasdatos\reports\informe_llamadas.html
+20:06:10 - INFO - Datos limpiados. Listo para nueva carga.
+20:06:15 - INFO - Cargando: CUN4433261003813533_3002674152_20260312181043_vozm_entrante.xlsx
+20:06:38 - INFO - Procesando 1 hojas con mapeo individual...
+20:06:38 - INFO - Procesando hoja 'Sheet1' como Entrantes (185 filas).
+20:06:38 - INFO - Normalizando números telefónicos...
+20:06:38 - INFO - Procesando fechas...
+20:06:38 - INFO - Calidad de datos perfecta: 0 descartes.
+20:06:38 - INFO - Datos procesados. Total registros limpios: 185
+20:06:38 - INFO - Archivo 'CUN4433261003813533_3002674152_20260312181043_vozm_entrante.xlsx' agregado: 185 registros (Entrantes).
+20:06:40 - INFO - Geolocalizando con base de datos de celdas...
+20:06:41 - INFO - Geocodificación por celdas: 0 registros ubicados.
+20:06:42 - INFO - Usuario aceptó inferencia por municipio.
+20:06:42 - INFO - Infiriendo ubicación por nombre de municipio...
+20:06:43 - INFO - Inferencia por municipio: 0 registros recuperados.
+20:06:43 - INFO - Análisis finalizado. 185 registros.
+20:06:50 - INFO - Generando informe: Informe_Llamadasenyracvbnh
+20:06:50 - INFO - Llamadas: 185 | Datos internet: 0
+20:06:50 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+20:06:50 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+20:06:51 - INFO - Informe generado: C:\GitHub\Python\coyprot_analisis_sabanas\output\Informe_Llamadasenyracvbnh\reports\informe_llamadas.html
+20:07:36 - INFO - Datos limpiados. Listo para nueva carga.

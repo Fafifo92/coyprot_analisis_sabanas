@@ -20,7 +20,7 @@ import pandas as pd
 from ttkthemes import ThemedTk
 
 from config.constants import (
-    DEFAULT_CASE_FIELDS,
+    COL_CALL_TYPE,
     GUI_GEOMETRY,
     GUI_LOG_FONT,
     GUI_MIN_SIZE,
@@ -35,6 +35,7 @@ from services.data_processing_service import DataProcessingService
 from services.geocoding_service import GeocodingService
 from services.upload_service import UploadService
 from ui.dialogs.column_mapper import ColumnMapperDialog
+from ui.dialogs.sheet_mapper import SheetColumnMapperDialog
 from ui.widgets import TextWidgetHandler
 
 logger = logging.getLogger(__name__)
@@ -83,8 +84,16 @@ class CallAnalyzerApp(ThemedTk):
         # ── Estado de la aplicación ───────────────────────────────────────────
         self._df: Optional[pd.DataFrame] = None
         self._raw_df: Optional[pd.DataFrame] = None
+        self._raw_sheets: Optional[dict[str, pd.DataFrame]] = None
         self._work_queue: queue.Queue = queue.Queue()
         self._is_busy = False
+
+        # ── Estado multi-archivo ──────────────────────────────────────────────
+        # Cada entrada: {name, path, types, rows, raw_sheets, sheet_configs, processed_df}
+        self._loaded_files: list[dict] = []
+        self._accumulated_df: Optional[pd.DataFrame] = None
+        self._file_counter: int = 0  # IDs únicos para treeview
+        self._analysis_dirty: bool = False  # True cuando hay datos sin analizar
 
         # ── Variables Tkinter ─────────────────────────────────────────────────
         self._file_path = tk.StringVar()
@@ -150,35 +159,105 @@ class CallAnalyzerApp(ThemedTk):
         top.grid_columnconfigure(0, weight=3)
         top.grid_columnconfigure(1, weight=1)
 
-        # Carga de archivo
-        f_load = ttk.LabelFrame(top, text="Archivo Principal", padding="15")
-        f_load.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
-        f_load.grid_columnconfigure(1, weight=1)
-
-        ttk.Label(f_load, text="Excel/CSV:").grid(row=0, column=0, padx=5, sticky="w")
-        ttk.Entry(
-            f_load, textvariable=self._file_path, width=50, state="readonly"
-        ).grid(row=0, column=1, padx=10, sticky="ew")
-        self._btn_load = ttk.Button(
-            f_load, text="Seleccionar Archivo", command=self._on_load_file
+        # ── Panel de archivos cargados ────────────────────────────────────────
+        f_load = ttk.LabelFrame(
+            top, text="Archivos Excel / CSV", padding="10"
         )
-        self._btn_load.grid(row=0, column=2, padx=5)
+        f_load.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        f_load.grid_columnconfigure(0, weight=1)
 
-        # Semáforo de estado
+        # Treeview con archivos cargados
+        self._tree_files = ttk.Treeview(
+            f_load,
+            columns=("archivo", "tipos", "filas"),
+            show="headings",
+            height=3,
+        )
+        self._tree_files.heading("archivo", text="Archivo")
+        self._tree_files.column("archivo", width=180, anchor="w")
+        self._tree_files.heading("tipos", text="Datos Detectados")
+        self._tree_files.column("tipos", width=160, anchor="w")
+        self._tree_files.heading("filas", text="Registros")
+        self._tree_files.column("filas", width=70, anchor="center")
+        self._tree_files.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+
+        scrol_files = ttk.Scrollbar(
+            f_load, orient="vertical", command=self._tree_files.yview
+        )
+        self._tree_files.configure(yscrollcommand=scrol_files.set)
+        scrol_files.grid(row=0, column=1, sticky="ns")
+
+        # Botones
+        btn_frame = ttk.Frame(f_load)
+        btn_frame.grid(row=0, column=2, sticky="n", padx=(5, 0))
+
+        self._btn_load = ttk.Button(
+            btn_frame, text="Agregar Archivo", command=self._on_load_file
+        )
+        self._btn_load.pack(fill="x", pady=2)
+
+        self._btn_edit_file = ttk.Button(
+            btn_frame, text="Editar Columnas", command=self._on_edit_file,
+            state=tk.DISABLED,
+        )
+        self._btn_edit_file.pack(fill="x", pady=2)
+
+        self._btn_remove_file = ttk.Button(
+            btn_frame, text="Eliminar Archivo", command=self._on_remove_file,
+            state=tk.DISABLED,
+        )
+        self._btn_remove_file.pack(fill="x", pady=2)
+
+        self._btn_clear_files = ttk.Button(
+            btn_frame, text="Limpiar Todo", command=self._on_clear_files
+        )
+        self._btn_clear_files.pack(fill="x", pady=2)
+
+        self._btn_analyze = ttk.Button(
+            btn_frame,
+            text="Realizar Análisis",
+            command=self._on_run_analysis,
+            state=tk.DISABLED,
+        )
+        self._btn_analyze.pack(fill="x", pady=(8, 2))
+
+        # ── Panel de estado de datos ──────────────────────────────────────────
         f_status = ttk.LabelFrame(top, text="Estado de Datos", padding="10")
         f_status.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
 
-        self._canvas_status = tk.Canvas(
-            f_status, width=30, height=30, highlightthickness=0
+        # Indicadores por tipo de dato
+        self._status_indicators: dict[str, dict] = {}
+        for idx, (tipo, label) in enumerate(
+            [("entrante", "Entrantes"), ("saliente", "Salientes"), ("datos", "Datos")]
+        ):
+            row_f = ttk.Frame(f_status)
+            row_f.pack(fill="x", pady=2)
+
+            canvas = tk.Canvas(row_f, width=14, height=14, highlightthickness=0)
+            canvas.pack(side="left", padx=(0, 6))
+            light = canvas.create_oval(2, 2, 12, 12, fill="#6c757d", outline="#6c757d")
+
+            lbl = ttk.Label(row_f, text=f"{label}: 0", font=("Arial", 9))
+            lbl.pack(side="left")
+
+            self._status_indicators[tipo] = {
+                "canvas": canvas,
+                "light": light,
+                "label": lbl,
+                "count": 0,
+            }
+
+        ttk.Separator(f_status, orient="horizontal").pack(fill="x", pady=6)
+
+        self._lbl_total = ttk.Label(
+            f_status, text="Total: 0 registros", font=("Arial", 9, "bold")
         )
-        self._canvas_status.pack(side="left", padx=5)
-        self._status_light = self._canvas_status.create_oval(
-            5, 5, 25, 25, fill="gray", outline="gray"
+        self._lbl_total.pack(anchor="w")
+
+        self._lbl_files_count = ttk.Label(
+            f_status, text="Archivos: 0", font=("Arial", 9)
         )
-        self._lbl_status = ttk.Label(
-            f_status, text="Esperando...", font=("Arial", 9, "bold")
-        )
-        self._lbl_status.pack(side="left", padx=5)
+        self._lbl_files_count.pack(anchor="w")
 
     def _build_attachments_section(self, parent: ttk.Frame) -> None:
         f_adj = ttk.LabelFrame(parent, text="Adjuntos (PDF)", padding="10")
@@ -287,9 +366,8 @@ class CallAnalyzerApp(ThemedTk):
     # ── Semáforo ──────────────────────────────────────────────────────────────
 
     def _set_status(self, color: str, text: str) -> None:
-        fill = _SEMAPHORE_COLORS.get(color, "#6c757d")
-        self._canvas_status.itemconfig(self._status_light, fill=fill, outline=fill)
-        self._lbl_status.config(text=text)
+        # Actualizar el label de total como indicador general
+        self._lbl_total.config(text=text)
 
     # ── Adjuntos PDF ──────────────────────────────────────────────────────────
 
@@ -366,8 +444,306 @@ class CallAnalyzerApp(ThemedTk):
             daemon=True,
         ).start()
 
+    def _on_remove_file(self) -> None:
+        """Elimina el archivo seleccionado del listado."""
+        if self._is_busy:
+            return
+        selected = self._tree_files.selection()
+        if not selected:
+            messagebox.showinfo(
+                "Seleccionar",
+                "Selecciona un archivo de la lista para eliminarlo.",
+            )
+            return
+
+        iid = selected[0]
+        entry = next(
+            (e for e in self._loaded_files if e.get("iid") == iid), None
+        )
+        if entry is None:
+            return
+
+        confirm = messagebox.askyesno(
+            "Confirmar Eliminación",
+            f"¿Eliminar el archivo '{entry['name']}' de la lista?",
+        )
+        if not confirm:
+            return
+
+        self._loaded_files.remove(entry)
+        self._tree_files.delete(iid)
+
+        self._rebuild_accumulated()
+        self._update_status_indicators()
+        self._analysis_dirty = True
+        self._df = None
+
+        if not self._loaded_files:
+            self._btn_analyze.config(state=tk.DISABLED)
+            self._btn_edit_file.config(state=tk.DISABLED)
+            self._btn_remove_file.config(state=tk.DISABLED)
+            self._btn_aliases.config(state=tk.DISABLED)
+            self._btn_case_data.config(state=tk.DISABLED)
+            self._btn_export.config(state=tk.DISABLED)
+            self._set_status("gray", "Total: 0 registros")
+        else:
+            self._btn_export.config(state=tk.DISABLED)
+
+        logger.info("Archivo '%s' eliminado de la lista.", entry["name"])
+
+    def _on_clear_files(self) -> None:
+        """Limpia todos los archivos cargados y reinicia el estado."""
+        if self._is_busy:
+            return
+        self._loaded_files.clear()
+        self._accumulated_df = None
+        self._df = None
+        self._raw_df = None
+        self._raw_sheets = None
+        self._aliases.clear()
+        self._file_counter = 0
+        self._analysis_dirty = False
+
+        # Limpiar treeview de archivos
+        for item in self._tree_files.get_children():
+            self._tree_files.delete(item)
+
+        # Resetear indicadores
+        self._update_status_indicators()
+        self._btn_analyze.config(state=tk.DISABLED)
+        self._btn_edit_file.config(state=tk.DISABLED)
+        self._btn_remove_file.config(state=tk.DISABLED)
+        self._btn_aliases.config(state=tk.DISABLED)
+        self._btn_case_data.config(state=tk.DISABLED)
+        self._btn_export.config(state=tk.DISABLED)
+        self._set_status("gray", "Total: 0 registros")
+        logger.info("Datos limpiados. Listo para nueva carga.")
+
+    def _on_run_analysis(self) -> None:
+        """Ejecuta el análisis (geocodificación) sobre los datos acumulados."""
+        if self._is_busy or self._accumulated_df is None:
+            return
+
+        self._set_busy(True)
+        self._set_status("yellow", "Analizando y geocodificando...")
+        threading.Thread(
+            target=self._thread_run_analysis,
+            daemon=True,
+        ).start()
+
+    def _thread_run_analysis(self) -> None:
+        """Geocodifica los datos acumulados y prepara para exportar."""
+        try:
+            df = self._accumulated_df.copy()
+            df = self._geo_svc.geocode_by_cell_db(df)
+
+            missing = self._geo_svc.count_missing_coords(df)
+            if missing > 0 and "nombre_celda" in df.columns:
+                self._work_queue.put(("ask_inference", (df, missing)))
+                return
+
+            self._df = df
+            self._analysis_dirty = False
+            stats = self._data_svc.compute_stats(df)
+            self._work_queue.put(("load_ok", stats))
+        except Exception as exc:
+            self._work_queue.put(("error", str(exc)))
+
+    def _on_edit_file(self) -> None:
+        """Re-abre el mapper para un archivo ya cargado."""
+        selected = self._tree_files.selection()
+        if not selected:
+            messagebox.showinfo(
+                "Seleccionar",
+                "Selecciona un archivo de la lista para editar sus columnas.",
+            )
+            return
+
+        iid = selected[0]
+        entry = next(
+            (e for e in self._loaded_files if e.get("iid") == iid), None
+        )
+        if entry is None or entry.get("raw_sheets") is None:
+            messagebox.showwarning(
+                "No disponible",
+                "No se puede editar este archivo. Intenta eliminarlo y cargarlo de nuevo.",
+            )
+            return
+
+        raw_sheets = entry["raw_sheets"]
+        sheets_columns = {
+            name: list(df.columns) for name, df in raw_sheets.items()
+        }
+
+        loaded_status = self._get_loaded_status_excluding(entry)
+
+        dialog = SheetColumnMapperDialog(
+            self, sheets_columns, loaded_status=loaded_status
+        )
+        self.wait_window(dialog)
+
+        if not dialog.result:
+            return
+
+        # Re-procesar con nuevo mapeo
+        self._set_busy(True)
+        self._set_status("yellow", "Re-procesando...")
+        threading.Thread(
+            target=self._thread_reprocess_file,
+            args=(entry, raw_sheets, dialog.result),
+            daemon=True,
+        ).start()
+
+    def _get_loaded_status_excluding(self, exclude_entry: dict) -> dict[str, int]:
+        """Calcula el estado de datos cargados excluyendo un archivo específico."""
+        counts: dict[str, int] = {"Entrantes": 0, "Salientes": 0, "Datos": 0}
+        for entry in self._loaded_files:
+            if entry is exclude_entry:
+                continue
+            df = entry.get("processed_df")
+            if df is None or COL_CALL_TYPE not in df.columns:
+                continue
+            upper = df[COL_CALL_TYPE].astype(str).str.upper()
+            counts["Entrantes"] += int(upper.str.contains("ENTRANTE").sum())
+            counts["Salientes"] += int(upper.str.contains("SALIENTE").sum())
+            counts["Datos"] += int(upper.str.contains("DATO").sum())
+        return counts
+
+    def _thread_reprocess_file(
+        self,
+        entry: dict,
+        sheets: dict[str, pd.DataFrame],
+        sheet_configs: list[dict],
+    ) -> None:
+        """Re-procesa un archivo con nuevo mapeo."""
+        try:
+            df = self._data_svc.process_sheets(sheets, sheet_configs)
+            types_found = self._detect_types_in_df(df)
+            self._work_queue.put(("file_updated", {
+                "entry": entry,
+                "types": types_found,
+                "rows": len(df),
+                "sheet_configs": sheet_configs,
+                "processed_df": df,
+            }))
+        except Exception as exc:
+            self._work_queue.put(("error", str(exc)))
+
+    def _rebuild_accumulated(self) -> None:
+        """Reconstruye el DataFrame acumulado desde todos los archivos cargados."""
+        frames = [
+            e["processed_df"]
+            for e in self._loaded_files
+            if e.get("processed_df") is not None
+        ]
+        if frames:
+            self._accumulated_df = pd.concat(
+                frames, ignore_index=True, sort=False
+            )
+            self._accumulated_df = self._accumulated_df.loc[
+                :, ~self._accumulated_df.columns.duplicated()
+            ]
+        else:
+            self._accumulated_df = None
+
+    def _show_file_loaded_dialog(self, info: dict) -> str:
+        """
+        Muestra un diálogo claro tras cargar un archivo.
+
+        Returns: 'add_more' o 'continue'
+        """
+        dialog = tk.Toplevel(self)
+        dialog.title("Archivo Cargado")
+        dialog.geometry("420x200")
+        dialog.transient(self)
+        dialog.grab_set()
+        dialog.resizable(False, False)
+
+        result: list[str] = ["continue"]
+
+        types_str = ", ".join(info["types"])
+        ttk.Label(
+            dialog,
+            text=f"Archivo: {info['name']}",
+            font=("Arial", 10, "bold"),
+        ).pack(pady=(15, 5))
+        ttk.Label(
+            dialog,
+            text=f"Registros cargados: {info['rows']}   |   Tipo: {types_str}",
+        ).pack(pady=(0, 15))
+
+        btn_frame = ttk.Frame(dialog)
+        btn_frame.pack(fill="x", padx=20, pady=5)
+
+        def _add_more() -> None:
+            result[0] = "add_more"
+            dialog.destroy()
+
+        def _continue() -> None:
+            result[0] = "continue"
+            dialog.destroy()
+
+        ttk.Button(
+            btn_frame,
+            text="Subir Otro Archivo",
+            command=_add_more,
+        ).pack(side="left", expand=True, fill="x", padx=(0, 5), ipady=5)
+
+        ttk.Button(
+            btn_frame,
+            text="Continuar al Análisis",
+            command=_continue,
+        ).pack(side="right", expand=True, fill="x", padx=(5, 0), ipady=5)
+
+        dialog.protocol("WM_DELETE_WINDOW", _continue)
+        self.wait_window(dialog)
+        return result[0]
+
+    def _update_status_indicators(self) -> None:
+        """Actualiza los indicadores visuales de tipos de datos cargados."""
+        counts = {"entrante": 0, "saliente": 0, "datos": 0}
+
+        if self._accumulated_df is not None and COL_CALL_TYPE in self._accumulated_df.columns:
+            type_col = self._accumulated_df[COL_CALL_TYPE].astype(str).str.upper()
+            counts["entrante"] = int(type_col.str.contains("ENTRANTE").sum())
+            counts["saliente"] = int(type_col.str.contains("SALIENTE").sum())
+            counts["datos"] = int(type_col.str.contains("DATO").sum())
+
+        total = sum(counts.values())
+        labels_map = {"entrante": "Entrantes", "saliente": "Salientes", "datos": "Datos"}
+
+        for tipo, info in self._status_indicators.items():
+            count = counts.get(tipo, 0)
+            color = "#28a745" if count > 0 else "#6c757d"
+            info["canvas"].itemconfig(info["light"], fill=color, outline=color)
+            info["label"].config(text=f"{labels_map[tipo]}: {count}")
+            info["count"] = count
+
+        self._lbl_total.config(text=f"Total: {total} registros")
+        self._lbl_files_count.config(text=f"Archivos: {len(self._loaded_files)}")
+
+    def _add_file_to_list(self, filename: str, types: list[str], rows: int) -> str:
+        """Agrega un archivo al treeview de archivos cargados. Devuelve el iid."""
+        self._file_counter += 1
+        iid = f"file_{self._file_counter}"
+        tipos_str = ", ".join(types) if types else "Genérica"
+        self._tree_files.insert(
+            "", "end", iid=iid, values=(filename, tipos_str, rows)
+        )
+        return iid
+
     def _thread_load(self, path: Path) -> None:
         try:
+            # Intentar carga multi-hoja primero
+            sheets, error = self._data_svc.load_sheets_raw(path)
+            if sheets is not None and len(sheets) >= 1:
+                # Siempre usar el flujo por hoja (incluso con 1 sola hoja)
+                # para que el usuario elija el tipo (Entrantes/Salientes/Datos)
+                self._raw_sheets = sheets
+                self._work_queue.put(("ask_sheet_mapping", sheets))
+                return
+
+            # Fallback: carga clásica (CSV u otros)
             df_raw, error = self._data_svc.load_raw(path)
             if df_raw is None:
                 self._work_queue.put(("error", error or "Error desconocido"))
@@ -394,26 +770,108 @@ class CallAnalyzerApp(ThemedTk):
             daemon=True,
         ).start()
 
+    def _continue_with_sheet_mapping(
+        self, sheets: dict[str, pd.DataFrame]
+    ) -> None:
+        """Abre el diálogo de mapeo por hoja y procesa el resultado."""
+        sheets_columns = {
+            name: list(df.columns) for name, df in sheets.items()
+        }
+
+        # Pasar estado de datos ya cargados al diálogo
+        loaded_status: dict[str, int] = {}
+        if self._accumulated_df is not None and COL_CALL_TYPE in self._accumulated_df.columns:
+            upper = self._accumulated_df[COL_CALL_TYPE].astype(str).str.upper()
+            loaded_status["Entrantes"] = int(upper.str.contains("ENTRANTE").sum())
+            loaded_status["Salientes"] = int(upper.str.contains("SALIENTE").sum())
+            loaded_status["Datos"] = int(upper.str.contains("DATO").sum())
+
+        dialog = SheetColumnMapperDialog(
+            self, sheets_columns, loaded_status=loaded_status
+        )
+        self.wait_window(dialog)
+
+        if not dialog.result:
+            logger.warning("Carga cancelada por el usuario.")
+            self._set_busy(False)
+            self._set_status("gray", "Carga Cancelada")
+            return
+
+        self._set_status("yellow", "Limpiando Datos...")
+        threading.Thread(
+            target=self._thread_process_sheets,
+            args=(sheets, dialog.result),
+            daemon=True,
+        ).start()
+
+    def _thread_process_sheets(
+        self,
+        sheets: dict[str, pd.DataFrame],
+        sheet_configs: list[dict],
+    ) -> None:
+        """Procesa múltiples hojas con mapeos individuales y acumula."""
+        try:
+            logger.info(
+                "Procesando %d hojas con mapeo individual...", len(sheet_configs)
+            )
+            df = self._data_svc.process_sheets(sheets, sheet_configs)
+            types_found = self._detect_types_in_df(df)
+            filename = Path(self._file_path.get()).name
+
+            self._work_queue.put((
+                "file_added",
+                {
+                    "name": filename,
+                    "path": Path(self._file_path.get()),
+                    "types": types_found,
+                    "rows": len(df),
+                    "raw_sheets": sheets,
+                    "sheet_configs": sheet_configs,
+                    "processed_df": df,
+                },
+            ))
+        except Exception as exc:
+            self._work_queue.put(("error", str(exc)))
+
     def _thread_process(
         self, df_raw: pd.DataFrame, mapping: dict[str, str]
     ) -> None:
+        """Procesa un archivo con mapeo simple y acumula."""
         try:
             logger.info("Ejecutando limpieza y normalización...")
             df = self._data_svc.process(df_raw, mapping)
+            types_found = self._detect_types_in_df(df)
+            filename = Path(self._file_path.get()).name
 
-            # Geocodificación por DB de celdas
-            df = self._geo_svc.geocode_by_cell_db(df)
-
-            missing = self._geo_svc.count_missing_coords(df)
-            if missing > 0 and "nombre_celda" in df.columns:
-                self._work_queue.put(("ask_inference", (df, missing)))
-                return
-
-            self._df = df
-            stats = self._data_svc.compute_stats(df)
-            self._work_queue.put(("load_ok", stats))
+            self._work_queue.put((
+                "file_added",
+                {
+                    "name": filename,
+                    "path": Path(self._file_path.get()),
+                    "types": types_found,
+                    "rows": len(df),
+                    "raw_sheets": {filename: df_raw},
+                    "sheet_configs": [{"mapping": mapping}],
+                    "processed_df": df,
+                },
+            ))
         except Exception as exc:
             self._work_queue.put(("error", str(exc)))
+
+    @staticmethod
+    def _detect_types_in_df(df: pd.DataFrame) -> list[str]:
+        """Detecta qué tipos de datos contiene un DataFrame procesado."""
+        types: list[str] = []
+        if COL_CALL_TYPE not in df.columns:
+            return ["Genérica"]
+        upper = df[COL_CALL_TYPE].astype(str).str.upper()
+        if upper.str.contains("ENTRANTE").any():
+            types.append("Entrantes")
+        if upper.str.contains("SALIENTE").any():
+            types.append("Salientes")
+        if upper.str.contains("DATO").any():
+            types.append("Datos")
+        return types or ["Genérica"]
 
     def _run_inference(self, df: pd.DataFrame) -> None:
         threading.Thread(
@@ -537,14 +995,18 @@ class CallAnalyzerApp(ThemedTk):
         sb.pack(side="right", fill="y")
 
         row_widgets: dict[int, tuple[tk.StringVar, tk.StringVar]] = {}
+        _row_counter = [0]  # contador monotónico para IDs únicos
 
         def add_row(key: str = "", val: str = "") -> None:
-            row_id = len(row_widgets) + 1
+            _row_counter[0] += 1
+            row_id = _row_counter[0]
             f_row = ttk.Frame(inner)
             f_row.pack(fill="x", pady=2)
             ttk.Button(
                 f_row, text="X", width=3,
-                command=lambda: [row_widgets.pop(row_id, None), f_row.destroy()],
+                command=lambda rid=row_id, fr=f_row: [
+                    row_widgets.pop(rid, None), fr.destroy()
+                ],
             ).pack(side="left", padx=(0, 5))
             k_var = tk.StringVar(value=key)
             v_var = tk.StringVar(value=val)
@@ -557,12 +1019,11 @@ class CallAnalyzerApp(ThemedTk):
             )
             row_widgets[row_id] = (k_var, v_var)
 
+        # Mostrar solo los campos que el usuario tiene guardados,
+        # respetando su orden y sin forzar los por defecto.
         existing = self._case_metadata.to_dict()
-        for field in DEFAULT_CASE_FIELDS:
-            add_row(field, existing.get(field, ""))
         for k, v in existing.items():
-            if k not in DEFAULT_CASE_FIELDS:
-                add_row(k, v)
+            add_row(k, v)
 
         actions = ttk.Frame(w)
         actions.pack(fill="x", padx=10, pady=5)
@@ -638,6 +1099,69 @@ class CallAnalyzerApp(ThemedTk):
         if msg_type == "ask_mapping":
             self._continue_with_mapping(payload)
 
+        elif msg_type == "ask_sheet_mapping":
+            self._continue_with_sheet_mapping(payload)
+
+        elif msg_type == "file_added":
+            info = payload
+            iid = self._add_file_to_list(
+                info["name"], info["types"], info["rows"]
+            )
+            # Guardar entrada completa con datos crudos para re-edición
+            info["iid"] = iid
+            self._loaded_files.append(info)
+            self._rebuild_accumulated()
+            self._update_status_indicators()
+            self._set_busy(False)
+            self._btn_analyze.config(state=tk.NORMAL)
+            self._btn_edit_file.config(state=tk.NORMAL)
+            self._btn_remove_file.config(state=tk.NORMAL)
+            self._analysis_dirty = True
+            types_str = ", ".join(info["types"])
+            logger.info(
+                "Archivo '%s' agregado: %d registros (%s).",
+                info["name"], info["rows"], types_str,
+            )
+
+            # Diálogo claro con botones descriptivos
+            action = self._show_file_loaded_dialog(info)
+            if action == "add_more":
+                self._on_load_file()
+            else:
+                self._on_run_analysis()
+
+        elif msg_type == "file_updated":
+            info = payload
+            entry = info["entry"]
+            entry["types"] = info["types"]
+            entry["rows"] = info["rows"]
+            entry["sheet_configs"] = info["sheet_configs"]
+            entry["processed_df"] = info["processed_df"]
+
+            # Actualizar treeview
+            iid = entry.get("iid")
+            if iid:
+                tipos_str = ", ".join(info["types"])
+                self._tree_files.item(
+                    iid, values=(entry["name"], tipos_str, info["rows"])
+                )
+
+            self._rebuild_accumulated()
+            self._update_status_indicators()
+            self._set_busy(False)
+            self._analysis_dirty = True
+            self._df = None
+            self._btn_analyze.config(state=tk.NORMAL)
+            self._btn_export.config(state=tk.DISABLED)
+            logger.info(
+                "Archivo '%s' re-mapeado: %d registros.", entry["name"], info["rows"]
+            )
+            messagebox.showinfo(
+                "Archivo Actualizado",
+                f"'{entry['name']}' re-procesado con {info['rows']} registros.\n\n"
+                "Presiona 'Realizar Análisis' para actualizar el informe.",
+            )
+
         elif msg_type == "ask_inference":
             df, missing_count = payload
             answer = messagebox.askyesno(
@@ -656,18 +1180,21 @@ class CallAnalyzerApp(ThemedTk):
 
         elif msg_type == "load_ok":
             stats: CallStats = payload
+            self._analysis_dirty = False
             self._set_busy(False)
             self._set_status("green", "Datos Listos")
+            self._btn_analyze.config(state=tk.DISABLED)
             self._enable_data_buttons()
-            logger.info("Carga finalizada. %d registros.", stats.total)
+            self._update_status_indicators()
+            logger.info("Análisis finalizado. %d registros.", stats.total)
             msg = (
-                f"Datos listos.\n\n"
+                f"Análisis listo.\n\n"
                 f"Total: {stats.total}\n"
                 f"Entrantes: {stats.incoming}\n"
                 f"Salientes: {stats.outgoing}\n"
                 f"Datos Internet: {stats.data_records}"
             )
-            messagebox.showinfo("Carga Exitosa", msg)
+            messagebox.showinfo("Análisis Completado", msg)
 
         elif msg_type == "error":
             logger.error("Error: %s", payload)
@@ -701,8 +1228,21 @@ class CallAnalyzerApp(ThemedTk):
     def _set_busy(self, busy: bool) -> None:
         self._is_busy = busy
         state = tk.DISABLED if busy else tk.NORMAL
-        for btn in (self._btn_load, self._btn_add_pdf, self._btn_del_pdf, self._btn_export):
+        for btn in (
+            self._btn_load,
+            self._btn_add_pdf,
+            self._btn_del_pdf,
+            self._btn_export,
+            self._btn_clear_files,
+            self._btn_edit_file,
+        ):
             btn.config(state=state)
+        if busy:
+            self._btn_analyze.config(state=tk.DISABLED)
+        elif self._accumulated_df is not None and self._analysis_dirty:
+            self._btn_analyze.config(state=tk.NORMAL)
+        if not busy and self._loaded_files:
+            self._btn_edit_file.config(state=tk.NORMAL)
         if not busy and self._df is not None:
             self._enable_data_buttons()
 

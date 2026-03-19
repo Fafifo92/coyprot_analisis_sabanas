@@ -27,6 +27,11 @@ from config.constants import (
     DATE_FORMATS,
     EXCEL_SERIAL_DATE_MAX,
     EXCEL_SERIAL_DATE_MIN,
+    INTERNET_DATA_RECEIVER,
+    SHEET_TYPE_DATA,
+    SHEET_TYPE_GENERIC,
+    SHEET_TYPE_INCOMING,
+    SHEET_TYPE_OUTGOING,
 )
 from core.exceptions import ColumnMappingError, EmptyDataError
 from core.models import CallStats, LoadResult
@@ -70,6 +75,12 @@ class DataProcessingService:
         """Carga el archivo sin procesar."""
         return self._loader.load(path)
 
+    def load_sheets_raw(
+        self, path: Path
+    ) -> tuple[Optional[dict[str, pd.DataFrame]], Optional[str]]:
+        """Carga todas las hojas del Excel sin procesamiento automático."""
+        return self._loader.load_sheets_raw(path)
+
     def apply_mapping(
         self, df: pd.DataFrame, mapping: dict[str, str]
     ) -> pd.DataFrame:
@@ -84,6 +95,81 @@ class DataProcessingService:
         rename = {excel_col: internal for internal, excel_col in mapping.items()
                   if excel_col in df.columns}
         return df.rename(columns=rename)
+
+    def process_sheets(
+        self,
+        sheets: dict[str, pd.DataFrame],
+        sheet_configs: list[dict],
+    ) -> pd.DataFrame:
+        """
+        Procesa múltiples hojas con mapeo individual y las combina.
+
+        Args:
+            sheets: {nombre_hoja: DataFrame_crudo}
+            sheet_configs: lista de dicts con claves:
+                - sheet_name: nombre de la hoja
+                - sheet_type: tipo (Entrantes/Salientes/Datos/Genérica)
+                - mapping: {nombre_interno: columna_excel}
+
+        Returns:
+            DataFrame combinado y procesado.
+
+        Raises:
+            EmptyDataError: si no hay datos resultantes.
+        """
+        frames: list[pd.DataFrame] = []
+
+        for config in sheet_configs:
+            sheet_name = config["sheet_name"]
+            sheet_type = config["sheet_type"]
+            mapping = config["mapping"]
+
+            df = sheets.get(sheet_name)
+            if df is None:
+                logger.warning("Hoja '%s' no encontrada, omitiendo.", sheet_name)
+                continue
+
+            df = df.copy()
+            logger.info(
+                "Procesando hoja '%s' como %s (%d filas).",
+                sheet_name, sheet_type, len(df),
+            )
+
+            # Aplicar mapeo de columnas del usuario
+            if mapping:
+                df = self.apply_mapping(df, mapping)
+                df = df.loc[:, ~df.columns.duplicated()]
+
+            # Normalizar nombres de columnas a minúsculas
+            df.columns = df.columns.str.lower().str.strip()
+
+            # Asignar tipo de llamada según el tipo de hoja
+            if sheet_type == SHEET_TYPE_INCOMING:
+                df[COL_CALL_TYPE] = CALL_TYPE_INCOMING
+            elif sheet_type == SHEET_TYPE_OUTGOING:
+                df[COL_CALL_TYPE] = CALL_TYPE_OUTGOING
+            elif sheet_type == SHEET_TYPE_DATA:
+                if COL_CALL_TYPE not in df.columns:
+                    df[COL_CALL_TYPE] = CALL_TYPE_DATA
+                else:
+                    df[COL_CALL_TYPE] = df[COL_CALL_TYPE].fillna(CALL_TYPE_DATA)
+                # Auto-rellenar receptor para datos
+                if COL_RECEIVER not in df.columns:
+                    df[COL_RECEIVER] = INTERNET_DATA_RECEIVER
+                else:
+                    df[COL_RECEIVER] = df[COL_RECEIVER].fillna(INTERNET_DATA_RECEIVER)
+            # SHEET_TYPE_GENERIC: el tipo_llamada ya viene del mapeo del usuario
+
+            frames.append(df)
+
+        if not frames:
+            raise EmptyDataError("No se encontraron hojas con datos para procesar.")
+
+        combined = pd.concat(frames, ignore_index=True, sort=False)
+        combined = combined.loc[:, ~combined.columns.duplicated()]
+
+        # Ahora procesar normalmente (sin volver a aplicar mapeo)
+        return self.process(combined, mapping=None)
 
     def process(
         self, df: pd.DataFrame, mapping: Optional[dict[str, str]] = None
@@ -178,6 +264,23 @@ class DataProcessingService:
             unique_numbers=n_unique,
             avg_calls_per_number=avg,
         )
+
+    def merge_dataframes(
+        self,
+        existing: Optional[pd.DataFrame],
+        new: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Acumula un nuevo DataFrame al existente.
+
+        Si *existing* es None o está vacío, devuelve *new* sin más.
+        En caso contrario, concatena ambos eliminando columnas duplicadas.
+        """
+        if existing is None or existing.empty:
+            return new
+        combined = pd.concat([existing, new], ignore_index=True, sort=False)
+        combined = combined.loc[:, ~combined.columns.duplicated()]
+        return combined
 
     def split_calls_and_data(
         self, df: pd.DataFrame
