@@ -10,7 +10,7 @@ import json
 import logging
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
@@ -75,7 +75,12 @@ class ReportGenerator:
 
     # ── API pública ───────────────────────────────────────────────────────────
 
-    def generate(self, df: pd.DataFrame, config: ReportConfig) -> Path:
+    def generate(
+        self,
+        df: pd.DataFrame,
+        config: ReportConfig,
+        progress_callback: Optional[Callable[[int, str], None]] = None,
+    ) -> Path:
         """
         Genera el informe completo y devuelve el directorio base de salida.
 
@@ -92,8 +97,13 @@ class ReportGenerator:
         base_dir = settings.output_dir / config.safe_name
         dirs = self._create_directories(base_dir)
 
+        def _emit(pct: int, text: str) -> None:
+            if progress_callback:
+                progress_callback(pct, text)
+
         try:
             # 1. Separar llamadas y datos de internet
+            _emit(5, "Separando llamadas y datos...")
             mask_data = df[COL_CALL_TYPE].astype(str).str.upper().str.contains("DATO")
             df_calls = df[~mask_data].copy()
             df_data = df[mask_data].copy()
@@ -102,29 +112,37 @@ class ReportGenerator:
             )
 
             # 2. Procesar adjuntos PDF
+            _emit(10, "Procesando adjuntos...")
             attachments = self._process_attachments(config, dirs["data"])
 
             # 3. Copiar recursos estáticos
+            _emit(15, "Copiando recursos...")
             self._copy_static_assets(dirs["static"], config)
 
             # 4. Generar mapas
+            _emit(20, "Generando mapas...")
             has_coords, has_route = self._build_maps(df_calls, df_data, dirs["maps"], config)
 
             # 5. Generar gráficas
+            _emit(45, "Generando gráficas...")
             self._build_charts(df_calls, dirs["graphics"], config)
 
             # 6. Generar data JS para gráficos interactivos
+            _emit(60, "Procesando datos...")
             self._write_call_data_js(df, dirs["data"] / "call_data.js", config)
 
             # 7. Preparar contexto del template
+            _emit(75, "Preparando informe...")
             context = self._build_template_context(
                 df_calls, config, has_coords, has_route, attachments
             )
 
             # 8. Renderizar HTML
+            _emit(90, "Renderizando HTML...")
             html_path = dirs["reports"] / "informe_llamadas.html"
             self._render_template(context, html_path)
 
+            _emit(100, "Informe completado")
             logger.info("Informe generado: %s", html_path)
             return base_dir
 

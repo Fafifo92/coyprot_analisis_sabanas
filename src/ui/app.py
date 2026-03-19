@@ -29,7 +29,14 @@ from config.constants import (
     QUEUE_POLL_MS,
 )
 from config.settings import settings
-from core.models import CallStats, CaseMetadata, PdfAttachment, ReportConfig
+from core.models import (
+    CallStats,
+    CaseMetadata,
+    PdfAttachment,
+    PdfExportConfig,
+    ReportConfig,
+    RouteMapMode,
+)
 from reports.report_generator import ReportGenerator
 from services.data_processing_service import DataProcessingService
 from services.geocoding_service import GeocodingService
@@ -104,6 +111,11 @@ class CallAnalyzerApp(ThemedTk):
         self._case_metadata = CaseMetadata.with_defaults()
         self._pdf_list: list[PdfAttachment] = []
 
+        # ── Estado PDF ─────────────────────────────────────────────────────
+        self._report_base_dir: Optional[Path] = None
+        self._last_ftp_url: str = ""
+        self._pdf_route_mode = tk.StringVar(value="consolidated")
+
         # ── Inicializar UI ────────────────────────────────────────────────────
         self._log_widget: Optional[scrolledtext.ScrolledText] = None
         self._create_widgets()
@@ -146,7 +158,7 @@ class CallAnalyzerApp(ThemedTk):
         main.pack(expand=True, fill=tk.BOTH)
         main.grid_columnconfigure(0, weight=1)
         main.grid_columnconfigure(1, weight=1)
-        main.grid_rowconfigure(3, weight=1)
+        main.grid_rowconfigure(4, weight=1)
 
         self._build_file_section(main)
         self._build_attachments_section(main)
@@ -346,11 +358,65 @@ class CallAnalyzerApp(ThemedTk):
         except Exception:
             pass
 
+        # ── Panel PDF ──────────────────────────────────────────────────────
+        f_pdf = ttk.LabelFrame(f_exp, text="Exportar PDF", padding="5")
+        f_pdf.pack(fill="x", pady=(5, 0))
+
+        f_route = ttk.Frame(f_pdf)
+        f_route.pack(fill="x", pady=2)
+        ttk.Label(f_route, text="Mapas de ruta:", font=("Arial", 8)).pack(
+            side="left"
+        )
+        ttk.Radiobutton(
+            f_route, text="Consolidado",
+            variable=self._pdf_route_mode, value="consolidated",
+        ).pack(side="left", padx=5)
+        ttk.Radiobutton(
+            f_route, text="Por dia",
+            variable=self._pdf_route_mode, value="daily",
+        ).pack(side="left", padx=5)
+
+        self._btn_export_pdf = ttk.Button(
+            f_pdf,
+            text="Exportar PDF",
+            command=self._on_export_pdf,
+            state=tk.DISABLED,
+        )
+        self._btn_export_pdf.pack(fill="x", pady=5, ipady=4)
+
     def _build_log_section(self, parent: ttk.Frame) -> None:
+        # ── Barra de progreso (oculta por defecto) ────────────────────────
+        self._progress_frame = ttk.Frame(parent)
+        self._progress_frame.grid(
+            row=3, column=0, columnspan=2, sticky="ew", padx=5, pady=(5, 0),
+        )
+        self._progress_frame.grid_columnconfigure(0, weight=1)
+
+        self._progress_label = ttk.Label(
+            self._progress_frame, text="", font=("Helvetica", 9),
+        )
+        self._progress_label.grid(row=0, column=0, sticky="w", padx=5)
+
+        self._progress_pct = ttk.Label(
+            self._progress_frame, text="0 %", font=("Helvetica", 9, "bold"),
+        )
+        self._progress_pct.grid(row=0, column=1, sticky="e", padx=5)
+
+        self._progress_bar = ttk.Progressbar(
+            self._progress_frame, orient="horizontal",
+            mode="determinate", maximum=100,
+        )
+        self._progress_bar.grid(
+            row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=(2, 4),
+        )
+
+        self._progress_frame.grid_remove()  # oculto por defecto
+
+        # ── Log ───────────────────────────────────────────────────────────
         f_log = ttk.LabelFrame(
             parent, text="Registro de Actividad y Diagnóstico", padding="10"
         )
-        f_log.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+        f_log.grid(row=4, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
         f_log.grid_rowconfigure(0, weight=1)
         f_log.grid_columnconfigure(0, weight=1)
 
@@ -364,6 +430,15 @@ class CallAnalyzerApp(ThemedTk):
         self._log_widget.grid(row=0, column=0, sticky="nsew")
 
     # ── Semáforo ──────────────────────────────────────────────────────────────
+
+    def _show_progress(self) -> None:
+        self._progress_bar["value"] = 0
+        self._progress_label.config(text="Iniciando...")
+        self._progress_pct.config(text="0 %")
+        self._progress_frame.grid()
+
+    def _hide_progress(self) -> None:
+        self._progress_frame.grid_remove()
 
     def _set_status(self, color: str, text: str) -> None:
         # Actualizar el label de total como indicador general
@@ -516,6 +591,9 @@ class CallAnalyzerApp(ThemedTk):
         self._btn_aliases.config(state=tk.DISABLED)
         self._btn_case_data.config(state=tk.DISABLED)
         self._btn_export.config(state=tk.DISABLED)
+        self._btn_export_pdf.config(state=tk.DISABLED)
+        self._report_base_dir = None
+        self._last_ftp_url = ""
         self._set_status("gray", "Total: 0 registros")
         logger.info("Datos limpiados. Listo para nueva carga.")
 
@@ -1064,14 +1142,21 @@ class CallAnalyzerApp(ThemedTk):
         self._set_busy(True)
         self._btn_export.config(text="Trabajando...")
         self._set_status("yellow", "Generando Informe...")
+        self._show_progress()
         threading.Thread(
             target=self._thread_export, args=(config,), daemon=True
         ).start()
 
     def _thread_export(self, config: ReportConfig) -> None:
         try:
+            def _progress_cb(pct: int, text: str) -> None:
+                self._work_queue.put(("progress", (pct, text)))
+
             logger.info("Generando informe: %s", config.safe_name)
-            base_dir = self._report_gen.generate(self._df, config)
+            base_dir = self._report_gen.generate(
+                self._df, config, progress_callback=_progress_cb,
+            )
+            self._report_base_dir = base_dir
 
             if config.upload_ftp:
                 self._work_queue.put(("status", "Subiendo a FTP..."))
@@ -1082,6 +1167,165 @@ class CallAnalyzerApp(ThemedTk):
                 self._work_queue.put(("local_ok", str(report_path)))
         except Exception as exc:
             self._work_queue.put(("error", str(exc)))
+
+    # ── Exportar PDF ───────────────────────────────────────────────────────
+
+    def _on_export_pdf(self) -> None:
+        if self._is_busy or self._df is None or self._report_base_dir is None:
+            return
+
+        config = ReportConfig(
+            report_name=self._report_name.get().strip() or "Informe_Llamadas",
+            include_letterhead=self._include_logo.get(),
+            upload_ftp=False,
+            aliases=dict(self._aliases),
+            case_metadata=CaseMetadata(fields=self._case_metadata.to_dict()),
+            pdf_attachments=list(self._pdf_list),
+        )
+        pdf_config = PdfExportConfig(
+            route_map_mode=(
+                RouteMapMode.DAILY
+                if self._pdf_route_mode.get() == "daily"
+                else RouteMapMode.CONSOLIDATED
+            ),
+            ftp_url=self._last_ftp_url,
+        )
+
+        self._set_busy(True)
+        self._btn_export_pdf.config(text="Generando PDF...")
+        self._set_status("yellow", "Generando PDF...")
+        self._show_progress()
+        threading.Thread(
+            target=self._thread_export_pdf,
+            args=(config, pdf_config),
+            daemon=True,
+        ).start()
+
+    def _thread_export_pdf(
+        self, config: ReportConfig, pdf_config: PdfExportConfig,
+    ) -> None:
+        try:
+            from config.constants import (
+                COL_CALL_TYPE as _COL_CT,
+                PDF_MAP_DIR_NAME,
+            )
+            from reports.builders.pdf_builder import PdfReportBuilder
+            from reports.builders.static_map_builder import (
+                StaticLocationMapBuilder,
+                StaticRouteMapBuilder,
+            )
+            from reports.integrity import write_sha256_companion
+
+            def _progress_cb(pct: int, text: str) -> None:
+                self._work_queue.put(("progress", (pct, text)))
+
+            base_dir = self._report_base_dir
+            df = self._df
+
+            # 1. Separar llamadas y datos
+            _progress_cb(5, "Separando datos...")
+            mask_data = df[_COL_CT].astype(str).str.upper().str.contains("DATO")
+            df_calls = df[~mask_data].copy()
+            df_data = df[mask_data].copy()
+
+            # 2. Crear directorio de mapas estáticos
+            _progress_cb(8, "Preparando directorios...")
+            static_maps_dir = base_dir / PDF_MAP_DIR_NAME
+            static_maps_dir.mkdir(parents=True, exist_ok=True)
+
+            # 3. Generar mapas estáticos
+            _progress_cb(15, "Generando mapa de ubicaciones...")
+            self._work_queue.put(("status", "Generando mapas para PDF..."))
+            try:
+                StaticLocationMapBuilder.build(
+                    df_calls, static_maps_dir / "mapa_ubicaciones.png",
+                    aliases=config.aliases,
+                )
+            except Exception as exc:
+                logger.warning("No se pudo generar mapa de ubicaciones: %s", exc)
+
+            try:
+                if pdf_config.route_map_mode == RouteMapMode.DAILY:
+                    def _daily_progress(idx: int, total: int, date: str) -> None:
+                        pct = 20 + int(30 * idx / max(total, 1))
+                        _progress_cb(pct, f"Generando mapa día {idx} de {total}...")
+
+                    StaticRouteMapBuilder.build_daily(
+                        df_data, static_maps_dir, aliases=config.aliases,
+                        progress_callback=_daily_progress,
+                    )
+                else:
+                    _progress_cb(35, "Generando mapa de ruta consolidada...")
+                    StaticRouteMapBuilder.build_consolidated(
+                        df_data, static_maps_dir / "ruta_consolidada.png",
+                        aliases=config.aliases,
+                    )
+            except Exception as exc:
+                logger.warning("No se pudo generar mapa de ruta: %s", exc)
+
+            # 4. Construir PDF
+            self._work_queue.put(("status", "Construyendo PDF..."))
+            pdf_path = base_dir / "reports" / "informe_llamadas.pdf"
+
+            builder = PdfReportBuilder()
+            builder.build(
+                df=df,
+                output_path=pdf_path,
+                report_config=config,
+                pdf_config=pdf_config,
+                base_dir=base_dir,
+                geocoding_service=self._geo_svc,
+                progress_callback=_progress_cb,
+            )
+
+            # 5. SHA-256
+            _progress_cb(95, "Calculando SHA-256...")
+            self._work_queue.put(("status", "Calculando SHA-256..."))
+            write_sha256_companion(pdf_path)
+
+            _progress_cb(100, "PDF completado")
+            logger.info("PDF generado: %s", pdf_path)
+            self._work_queue.put(("pdf_ok", str(pdf_path)))
+
+        except Exception as exc:
+            logger.exception("Error generando PDF")
+            self._work_queue.put(("error", f"Error PDF: {exc}"))
+
+    # ── Subir PDF al FTP ───────────────────────────────────────────────────
+
+    def _upload_pdf_to_ftp(self, pdf_path: Path, sha_path: Path) -> None:
+        """Sube el PDF y su hash SHA-256 al FTP en la misma carpeta del informe."""
+        self._set_busy(True)
+        self._set_status("yellow", "Subiendo PDF al FTP...")
+        self._show_progress()
+        threading.Thread(
+            target=self._thread_upload_pdf,
+            args=(pdf_path, sha_path),
+            daemon=True,
+        ).start()
+
+    def _thread_upload_pdf(self, pdf_path: Path, sha_path: Path) -> None:
+        try:
+            # Extraer remote_folder del _last_ftp_url
+            # URL: https://host/<safe_name>/reports/informe_llamadas.html
+            # remote_folder para PDFs: <safe_name>/reports
+            url_parts = self._last_ftp_url.replace("https://", "").split("/")
+            # url_parts = [host, safe_name, "reports", "informe_llamadas.html"]
+            remote_folder = "/".join(url_parts[1:-1])  # safe_name/reports
+
+            self._work_queue.put(("progress", (30, "Subiendo PDF...")))
+            pdf_url = self._upload_svc.upload_file(pdf_path, remote_folder)
+
+            self._work_queue.put(("progress", (70, "Subiendo SHA-256...")))
+            if sha_path.exists():
+                self._upload_svc.upload_file(sha_path, remote_folder)
+
+            self._work_queue.put(("progress", (100, "PDF subido")))
+            self._work_queue.put(("pdf_ftp_ok", pdf_url))
+
+        except Exception as exc:
+            logger.exception("Error subiendo PDF al FTP")
+            self._work_queue.put(("error", f"Error subiendo PDF: {exc}"))
 
     # ── Cola de mensajes (Thread-safe UI updates) ─────────────────────────────
 
@@ -1153,6 +1397,8 @@ class CallAnalyzerApp(ThemedTk):
             self._df = None
             self._btn_analyze.config(state=tk.NORMAL)
             self._btn_export.config(state=tk.DISABLED)
+            self._btn_export_pdf.config(state=tk.DISABLED)
+            self._report_base_dir = None
             logger.info(
                 "Archivo '%s' re-mapeado: %d registros.", entry["name"], info["rows"]
             )
@@ -1201,16 +1447,25 @@ class CallAnalyzerApp(ThemedTk):
             messagebox.showerror("Error", str(payload))
             self._set_busy(False)
             self._set_status("red", "Error")
+            self._hide_progress()
             self._btn_export.config(text="Generar y Exportar Informe")
+            self._btn_export_pdf.config(text="Exportar PDF")
 
         elif msg_type == "status":
-            self._btn_export.config(text=str(payload))
             self._set_status("yellow", str(payload))
+
+        elif msg_type == "progress":
+            pct, text = payload
+            self._progress_bar["value"] = pct
+            self._progress_label.config(text=text)
+            self._progress_pct.config(text=f"{pct} %")
 
         elif msg_type == "local_ok":
             self._set_busy(False)
             self._btn_export.config(text="Generar y Exportar Informe")
             self._set_status("green", "Informe Generado")
+            self._hide_progress()
+            self._btn_export_pdf.config(state=tk.NORMAL)
             if messagebox.askyesno("Éxito", f"Guardado en:\n{payload}\n\n¿Abrir?"):
                 try:
                     os.startfile(str(payload))  # Windows
@@ -1221,7 +1476,53 @@ class CallAnalyzerApp(ThemedTk):
             self._set_busy(False)
             self._btn_export.config(text="Generar y Exportar Informe")
             self._set_status("green", "Subido a Web")
+            self._hide_progress()
+            self._last_ftp_url = str(payload)
+            self._btn_export_pdf.config(state=tk.NORMAL)
             self._show_url(str(payload))
+
+        elif msg_type == "pdf_ok":
+            self._set_busy(False)
+            self._btn_export_pdf.config(text="Exportar PDF")
+            self._set_status("green", "PDF Generado")
+            self._hide_progress()
+            pdf_path = str(payload)
+            sha_path = pdf_path + ".sha256"
+
+            # Ofrecer subir al FTP si ya se subió el informe HTML
+            if self._last_ftp_url:
+                msg = (
+                    f"PDF generado exitosamente:\n{pdf_path}\n\n"
+                    f"Hash SHA-256:\n{sha_path}\n\n"
+                    f"¿Desea subir el PDF al servidor FTP?"
+                )
+                if messagebox.askyesno("PDF Exportado", msg):
+                    self._upload_pdf_to_ftp(Path(pdf_path), Path(sha_path))
+                    return
+                # Si no quiere subir al FTP, ofrecer abrir localmente
+                if messagebox.askyesno("Abrir PDF", "¿Desea abrir el PDF?"):
+                    try:
+                        os.startfile(pdf_path)
+                    except Exception:
+                        pass
+            else:
+                msg = (
+                    f"PDF generado exitosamente:\n{pdf_path}\n\n"
+                    f"Hash SHA-256:\n{sha_path}\n\n"
+                    f"¿Abrir el PDF?"
+                )
+                if messagebox.askyesno("PDF Exportado", msg):
+                    try:
+                        os.startfile(pdf_path)
+                    except Exception:
+                        pass
+
+        elif msg_type == "pdf_ftp_ok":
+            self._set_busy(False)
+            self._set_status("green", "PDF subido al FTP")
+            self._hide_progress()
+            pdf_url = str(payload)
+            self._show_url(pdf_url)
 
     # ── Helpers de estado ─────────────────────────────────────────────────────
 
@@ -1233,6 +1534,7 @@ class CallAnalyzerApp(ThemedTk):
             self._btn_add_pdf,
             self._btn_del_pdf,
             self._btn_export,
+            self._btn_export_pdf,
             self._btn_clear_files,
             self._btn_edit_file,
         ):
@@ -1245,6 +1547,9 @@ class CallAnalyzerApp(ThemedTk):
             self._btn_edit_file.config(state=tk.NORMAL)
         if not busy and self._df is not None:
             self._enable_data_buttons()
+        # El botón PDF solo se habilita si ya se generó el informe HTML
+        if not busy and self._report_base_dir is None:
+            self._btn_export_pdf.config(state=tk.DISABLED)
 
     def _enable_data_buttons(self) -> None:
         self._btn_aliases.config(state=tk.NORMAL)
