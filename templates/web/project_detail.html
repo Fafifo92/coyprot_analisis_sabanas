@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles del Proyecto - Coyprot Analysis</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal" x-data="projectDetail({{ project_id }})">
+
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-900 shadow-xl hidden sm:flex flex-col">
+            <div class="h-16 flex items-center justify-center bg-gray-800 border-b border-gray-700">
+                <span class="text-white text-xl font-bold uppercase tracking-wider">Coyprot SaaS</span>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                <a href="/dashboard" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Volver a Proyectos
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header Móvil -->
+            <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 sm:hidden">
+                <span class="text-lg font-bold text-gray-800">Coyprot SaaS</span>
+                <a href="/dashboard" class="text-sm text-indigo-600 font-medium">Atrás</a>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                <div class="max-w-6xl mx-auto space-y-6">
+
+                    <!-- Top Info Cards -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900" x-text="`Análisis Caso #${project.case_number}`"></h1>
+                            <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                                <span><strong class="text-gray-700">Objetivo:</strong> <span x-text="project.target_phone"></span></span>
+                                <span x-show="project.target_name"><strong class="text-gray-700">Nombre:</strong> <span x-text="project.target_name"></span></span>
+                                <span x-show="project.period"><strong class="text-gray-700">Periodo:</strong> <span x-text="project.period"></span></span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                                  :class="{
+                                      'bg-yellow-100 text-yellow-800': project.status === 'PENDING_FILES' || project.status === 'PENDING_MAPPING',
+                                      'bg-blue-100 text-blue-800': project.status === 'PROCESSING' || project.status === 'QUEUED',
+                                      'bg-green-100 text-green-800': project.status === 'COMPLETED',
+                                      'bg-red-100 text-red-800': project.status === 'FAILED'
+                                  }">
+                                <span x-text="formatStatus(project.status)"></span>
+                            </span>
+
+                            <!-- Botón Iniciar Análisis -->
+                            <button @click="startAnalysis"
+                                    x-show="project.status === 'PENDING_MAPPING' && mappedFilesCount > 0"
+                                    class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+                                <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Iniciar Análisis Geográfico
+                            </button>
+
+                            <!-- Botón Descargar Resultados -->
+                            <button @click="downloadResults"
+                                    x-show="project.status === 'COMPLETED'"
+                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+                                <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Ver Informe PDF/HTML
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upload Section (Solo visible si no está analizando ni completado) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" x-show="project.status === 'PENDING_FILES' || project.status === 'PENDING_MAPPING'">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">Paso 1: Subir Archivo Excel/CSV</h2>
+                        <div class="flex items-center justify-center w-full">
+                            <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 relative"
+                                   :class="{'opacity-50 cursor-not-allowed': uploading}">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                    <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click para subir</span> o arrastra y suelta</p>
+                                    <p class="text-xs text-gray-500">Excel (.xlsx, .xls) o CSV</p>
+                                </div>
+                                <input id="dropzone-file" type="file" class="hidden" @change="uploadFile" :disabled="uploading" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+
+                                <div x-show="uploading" class="absolute inset-0 bg-white/80 rounded-lg flex items-center justify-center">
+                                    <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Archivos Subidos y Mapeo -->
+                    <template x-for="file in files" :key="file.id">
+                        <div class="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden mt-4">
+                            <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center">
+                                <div class="flex items-center">
+                                    <svg class="w-6 h-6 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <h3 class="text-md font-bold text-gray-900" x-text="file.filename"></h3>
+                                </div>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800" x-text="file.status === 'MAPPED' ? 'Configurado' : 'Requiere Mapeo'"></span>
+                            </div>
+
+                            <div class="p-6">
+                                <!-- Tabs for Sheets -->
+                                <div class="border-b border-gray-200">
+                                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                                        <template x-for="(cols, sheetName) in file.detected_sheets" :key="sheetName">
+                                            <button @click="file.activeTab = sheetName"
+                                                    :class="file.activeTab === sheetName ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                                                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                                                    x-text="sheetName">
+                                            </button>
+                                        </template>
+                                    </nav>
+                                </div>
+
+                                <!-- Tab Content -->
+                                <template x-for="(cols, sheetName) in file.detected_sheets" :key="sheetName">
+                                    <div x-show="file.activeTab === sheetName" class="pt-6">
+
+                                        <!-- Selector de Tipo de Hoja -->
+                                        <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                            <label class="block text-sm font-bold text-gray-900 mb-2">1. ¿Qué tipo de información tiene esta hoja?</label>
+                                            <select x-model="file.mappings[sheetName].sheet_type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" :disabled="file.status === 'MAPPED'">
+                                                <option value="Ignorar">Omitir esta hoja</option>
+                                                <option value="Entrantes">Llamadas Entrantes (Recibidas)</option>
+                                                <option value="Salientes">Llamadas Salientes (Realizadas)</option>
+                                                <option value="Datos">Conexiones de Datos (Internet)</option>
+                                                <option value="Genérica">Genérica (Contiene varios tipos en una columna)</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Mapeo de Columnas -->
+                                        <div x-show="file.mappings[sheetName].sheet_type !== 'Ignorar'">
+                                            <label class="block text-sm font-bold text-gray-900 mb-4">2. Asigna las columnas del Excel a los campos del sistema</label>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <template x-for="field in getRequiredFields(file.mappings[sheetName].sheet_type)" :key="field.key">
+                                                    <div class="flex flex-col">
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1" x-text="field.label + ' *'"></label>
+                                                        <select x-model="file.mappings[sheetName].mapping[field.key]" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" :disabled="file.status === 'MAPPED'">
+                                                            <option value="">-- Seleccionar Columna --</option>
+                                                            <template x-for="col in cols" :key="col">
+                                                                <option :value="col" x-text="col"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </template>
+
+                                <!-- Guardar Mapeo -->
+                                <div class="mt-8 flex justify-end" x-show="file.status !== 'MAPPED'">
+                                    <button @click="saveMapping(file)" :disabled="savingMapping" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+                                        <span x-text="savingMapping ? 'Guardando...' : 'Guardar Configuración de este Archivo'"></span>
+                                    </button>
+                                </div>
+                                <div class="mt-8 flex justify-end" x-show="file.status === 'MAPPED'">
+                                    <p class="text-sm text-green-600 font-medium">✔ Configuración guardada exitosamente. Lista para el análisis.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function projectDetail(projectId) {
+            return {
+                projectId: projectId,
+                project: {},
+                files: [], // Cada file = {id, filename, detected_sheets, status, activeTab, mappings}
+                uploading: false,
+                savingMapping: false,
+
+                init() {
+                    const token = localStorage.getItem('access_token');
+                    if (!token) { window.location.href = '/login'; return; }
+                    this.fetchProject();
+
+                    // Opcional: Polling status every 10s if processing
+                    setInterval(() => {
+                        if(this.project.status === 'PROCESSING' || this.project.status === 'QUEUED') {
+                            this.fetchProject();
+                        }
+                    }, 10000);
+                },
+
+                get mappedFilesCount() {
+                    return this.files.filter(f => f.status === 'MAPPED').length;
+                },
+
+                async fetchProject() {
+                    try {
+                        const res = await fetch(`/api/projects/${this.projectId}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                        });
+                        this.project = await res.json();
+
+                        // Fake fetch files if we had an endpoint, but since files are within project logic normally
+                        // For this phase, we populate state from the new uploads.
+                    } catch (e) {
+                        console.error('Error', e);
+                    }
+                },
+
+                async uploadFile(e) {
+                    if (e.target.files.length === 0) return;
+                    const file = e.target.files[0];
+                    this.uploading = true;
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    try {
+                        const res = await fetch(`/api/projects/${this.projectId}/files/upload`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
+                            body: formData
+                        });
+
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.detail || 'Error subiendo archivo');
+
+                        this.project.status = 'PENDING_MAPPING';
+                        this.prepareFileForMapping(data);
+
+                    } catch (err) {
+                        Swal.fire('Error', err.message, 'error');
+                    } finally {
+                        this.uploading = false;
+                        e.target.value = ''; // Reset input
+                    }
+                },
+
+                prepareFileForMapping(apiFile) {
+                    // Inicializamos el objeto reactivo para la UI de mapeo
+                    const fileObj = {
+                        ...apiFile,
+                        activeTab: Object.keys(apiFile.detected_sheets)[0],
+                        mappings: {}
+                    };
+
+                    for (const sheetName of Object.keys(apiFile.detected_sheets)) {
+                        // Intentar autodetectar
+                        let sType = 'Genérica';
+                        const cols = apiFile.detected_sheets[sheetName].map(c => c.toLowerCase());
+                        if (cols.some(c => c.includes('trafico') || c.includes('gprs') || c.includes('bajada'))) sType = 'Datos';
+
+                        fileObj.mappings[sheetName] = {
+                            sheet_type: sType,
+                            mapping: {}
+                        };
+                    }
+
+                    this.files.push(fileObj);
+                },
+
+                getRequiredFields(type) {
+                    const baseFields = [
+                        {key: 'fecha_hora', label: 'Fecha y Hora'},
+                        {key: 'originador', label: 'Número A (Originador)'},
+                        {key: 'celda', label: 'Celda/Antena (Opcional)'},
+                        {key: 'latitud_n', label: 'Latitud (Opcional)'},
+                        {key: 'longitud_w', label: 'Longitud (Opcional)'}
+                    ];
+
+                    if (type === 'Datos') return baseFields;
+
+                    if (type === 'Genérica') return [
+                        ...baseFields,
+                        {key: 'receptor', label: 'Número B (Receptor)'},
+                        {key: 'tipo_llamada', label: 'Tipo (Entrante/Saliente/Dato)'}
+                    ];
+
+                    return [
+                        ...baseFields,
+                        {key: 'receptor', label: 'Número B (Receptor)'}
+                    ];
+                },
+
+                async saveMapping(file) {
+                    this.savingMapping = true;
+
+                    // Validar
+                    let configs = [];
+                    for (const [sheetName, config] of Object.entries(file.mappings)) {
+                        if (config.sheet_type === 'Ignorar') continue;
+
+                        // Basic validation
+                        if (!config.mapping['fecha_hora'] || !config.mapping['originador']) {
+                            Swal.fire('Atención', `La hoja ${sheetName} requiere al menos Fecha y Originador mapeados.`, 'warning');
+                            this.savingMapping = false;
+                            return;
+                        }
+
+                        configs.push({
+                            sheet_name: sheetName,
+                            sheet_type: config.sheet_type,
+                            mapping: config.mapping
+                        });
+                    }
+
+                    try {
+                        const res = await fetch(`/api/projects/${this.projectId}/files/${file.id}/map`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                            },
+                            body: JSON.stringify({ configs: configs })
+                        });
+
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.detail);
+
+                        file.status = 'MAPPED';
+                        Swal.fire('Guardado', 'Mapeo configurado con éxito', 'success');
+                    } catch (e) {
+                        Swal.fire('Error', e.message, 'error');
+                    } finally {
+                        this.savingMapping = false;
+                    }
+                },
+
+                async startAnalysis() {
+                    const result = await Swal.fire({
+                        title: '¿Iniciar Análisis?',
+                        text: "Se combinarán todos los archivos configurados. Este proceso toma tiempo (Geocodificación).",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#16a34a',
+                        confirmButtonText: 'Sí, Iniciar',
+                        cancelButtonText: 'Cancelar'
+                    });
+
+                    if (result.isConfirmed) {
+                        try {
+                            const res = await fetch(`/api/projects/${this.projectId}/analyze`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.detail);
+
+                            Swal.fire('En Progreso', 'El análisis ha comenzado en segundo plano.', 'info');
+                            this.fetchProject(); // Actualizar estado a QUEUED/PROCESSING
+                        } catch(e) {
+                            Swal.fire('Error', e.message, 'error');
+                        }
+                    }
+                },
+
+                downloadResults() {
+                    Swal.fire('¡Fase 2 Completada!', 'El análisis backend está finalizado. La Fase 3 conectará la descarga de PDF/HTML.', 'info');
+                },
+
+                formatStatus(status) {
+                    const map = {
+                        'PENDING_FILES': 'Sin Archivos',
+                        'PENDING_MAPPING': 'Falta Mapeo',
+                        'PROCESSING': 'Procesando (Mucha paciencia...)',
+                        'QUEUED': 'En Cola',
+                        'COMPLETED': 'Completado',
+                        'FAILED': 'Error de Análisis'
+                    };
+                    return map[status] || status;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
