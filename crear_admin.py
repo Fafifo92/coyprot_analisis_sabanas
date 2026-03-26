@@ -10,8 +10,8 @@ async def create_superadmin():
         await conn.run_sync(Base.metadata.create_all)
 
     async with AsyncSessionLocal() as db:
-        admin_username = "superadmin"
-        admin_password = "password123"
+        admin_username = "coyprot-dev-fr020998"
+        admin_password = "P4g2l0o@1Fnm12345"
 
         # Check if already exists
         from sqlalchemy.future import select

@@ -2,12 +2,14 @@ import sys
 import logging
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
 
 from config.api_settings import get_api_settings
 from db.session import engine, Base, get_db
 from api.routers import auth, admin, projects, files, analysis
+from api.routers.web import pages
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Servimos estáticos
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Registramos routers
+app.include_router(pages.router, tags=["Web"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(projects.router, prefix="/api/projects", tags=["Projects"])
