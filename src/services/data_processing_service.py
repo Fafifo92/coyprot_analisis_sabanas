@@ -143,6 +143,9 @@ class DataProcessingService:
             # Normalizar nombres de columnas a minúsculas
             df.columns = df.columns.str.lower().str.strip()
 
+            # Auto-detectar columnas de coordenadas si no fueron mapeadas
+            df = self._auto_rename_coord_columns(df)
+
             # Asignar tipo de llamada según el tipo de hoja
             if sheet_type == SHEET_TYPE_INCOMING:
                 df[COL_CALL_TYPE] = CALL_TYPE_INCOMING
@@ -187,6 +190,9 @@ class DataProcessingService:
         if mapping:
             df = self.apply_mapping(df, mapping)
             df = df.loc[:, ~df.columns.duplicated()]
+
+        # Auto-detectar columnas de coordenadas si no fueron mapeadas
+        df = self._auto_rename_coord_columns(df)
 
         # Asegurar columnas mínimas
         original_rows = len(df)
@@ -335,6 +341,33 @@ class DataProcessingService:
             if kw in upper:
                 return CALL_TYPE_INCOMING      # "entrante"
         return str(value)  # mantener original si no se reconoce
+
+    @staticmethod
+    def _auto_rename_coord_columns(df: pd.DataFrame) -> pd.DataFrame:
+        """Auto-detecta columnas de coordenadas si no fueron mapeadas por el usuario.
+
+        Si latitud_n / longitud_w no existen, busca columnas con nombres comunes
+        (latitud, lat, longitud, lon, etc.) y las renombra al nombre interno.
+        """
+        rename: dict[str, str] = {}
+        cols_lower = {c.lower().strip(): c for c in df.columns}
+
+        if COL_LATITUDE not in df.columns:
+            for candidate in ("latitud", "lat", "latitude"):
+                if candidate in cols_lower:
+                    rename[cols_lower[candidate]] = COL_LATITUDE
+                    break
+
+        if COL_LONGITUDE not in df.columns:
+            for candidate in ("longitud", "lon", "lng", "longitude"):
+                if candidate in cols_lower:
+                    rename[cols_lower[candidate]] = COL_LONGITUDE
+                    break
+
+        if rename:
+            logger.info("Auto-renombrando columnas de coordenadas: %s", rename)
+            df = df.rename(columns=rename)
+        return df
 
     @staticmethod
     def _fix_coordinate(value: object) -> float:

@@ -1,0 +1,39 @@
+# ── Credenciales (NUNCA subir al repositorio) ────────────────────────────────
+.env
+
+# ── Salidas generadas ────────────────────────────────────────────────────────
+output/
+logs/
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]s
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# ── Entornos virtuales ─────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+
+# ── Herramientas ──────────────────────────────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── IDEs ─────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

@@ -230,24 +230,27 @@ class ReportGenerator:
         if not has_coords and not has_data_coords:
             return False, False
 
-        try:
-            if has_coords:
+        if has_coords:
+            try:
                 self._cluster_map.build(
                     df_calls,
                     maps_dir / MAP_FILE_CLUSTER,
                     aliases=config.aliases,
                 )
                 self._heat_map.build(df_calls, maps_dir / MAP_FILE_HEATMAP)
+            except Exception as exc:
+                logger.error("Error generando mapas de llamadas: %s", exc)
 
-            if has_data_coords:
+        if has_data_coords:
+            try:
                 self._route_map.build(
                     df_data,
                     maps_dir / MAP_FILE_ROUTE,
                     aliases=config.aliases,
                 )
                 has_route = True
-        except Exception as exc:
-            logger.error("Error generando mapas: %s", exc)
+            except Exception as exc:
+                logger.error("Error generando mapa de recorrido: %s", exc)
 
         return has_coords, has_route
 
