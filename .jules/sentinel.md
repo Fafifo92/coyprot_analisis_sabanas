@@ -1,0 +1,4 @@
+## 2025-02-09 - Hardcoded Secret Key in API Settings
+**Vulnerability:** A hardcoded `SECRET_KEY` ("super_secret_key_change_in_production") was present in `src/config/api_settings.py`, which could compromise the security of JSON Web Tokens if the codebase is exposed or the application is deployed without overriding the setting.
+**Learning:** Default fallback values for cryptographic secrets in configuration classes often become a security liability. Hardcoded values expose systems when developers forget to replace them in production environments.
+**Prevention:** Instead of using hardcoded fallback strings, generate strong, random fallback keys at runtime (e.g., using `secrets.token_urlsafe(32)`). This ensures any deployments failing to specify a `.env` variable will at least have unique, non-guessable keys (albeit keys that reset on server restart, which encourages properly setting the `.env` variable for persistence).
