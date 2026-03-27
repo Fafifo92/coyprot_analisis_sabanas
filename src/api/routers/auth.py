@@ -32,11 +32,12 @@ async def login_for_access_token(
     db.add(audit)
     await db.commit()
 
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": user.username, "is_admin": user.is_admin})
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "must_change_password": user.must_change_password
+        "must_change_password": user.must_change_password,
+        "is_admin": user.is_admin
     }
 
 @router.post("/change-password")

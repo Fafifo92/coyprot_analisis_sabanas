@@ -112,7 +112,8 @@
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                                <span class="text-indigo-600 font-bold text-lg" x-text="user.tokens_balance"></span>
+                                                <span x-show="user.is_admin" class="text-gray-400 italic text-xs">Uso Ilimitado</span>
+                                                <span x-show="!user.is_admin" class="text-indigo-600 font-bold text-lg" x-text="user.tokens_balance"></span>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                                 <button @click="openEditModal(user)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
@@ -155,15 +156,15 @@
                         </div>
 
                         <div class="flex items-center justify-between gap-4">
-                            <div class="flex-1">
-                                <label class="block text-sm font-medium text-gray-700">Tokens Asignados</label>
-                                <input type="number" min="0" x-model.number="formUser.tokens_balance" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                            </div>
                             <div class="flex-1 pt-6">
                                 <label class="inline-flex items-center">
                                     <input type="checkbox" x-model="formUser.is_admin" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                                     <span class="ml-2 text-sm text-gray-700">Privilegios de Admin</span>
                                 </label>
+                            </div>
+                            <div class="flex-1" x-show="!formUser.is_admin">
+                                <label class="block text-sm font-medium text-gray-700">Tokens Asignados</label>
+                                <input type="number" min="0" x-model.number="formUser.tokens_balance" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                             </div>
                         </div>
 

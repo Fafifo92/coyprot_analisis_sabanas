@@ -29,6 +29,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     must_change_password: bool
+    is_admin: bool # Añadido para que el frontend sepa si es admin inmediatamente
 
 class ChangePasswordRequest(BaseModel):
     old_password: str

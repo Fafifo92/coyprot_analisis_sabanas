@@ -123,12 +123,8 @@
                         // Guardar en localStorage
                         localStorage.setItem('access_token', data.access_token);
 
-                        // Parsear el JWT base64 para sacar el payload
-                        const base64Url = data.access_token.split('.')[1];
-                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                        }).join(''));
+                        // Guardar información útil
+                        localStorage.setItem('is_admin', data.is_admin);
 
                         // Redirigir
                         window.location.href = '/dashboard';
