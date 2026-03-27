@@ -45,6 +45,46 @@ async def update_project_admin(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
+@router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project_admin(
+    project_id: int,
+    refund_token: bool = False,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin)
+):
+    """
+    Permite al Admin eliminar el caso y, opcionalmente, devolver el token gastado.
+    """
+    result = await db.execute(select(Project).filter(Project.id == project_id))
+    project = result.scalars().first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if refund_token:
+        # Devolver token al dueño (si no es admin)
+        owner_result = await db.execute(select(User).filter(User.id == project.owner_id))
+        owner = owner_result.scalars().first()
+        if owner and not owner.is_admin:
+            owner.tokens_balance += 1
+
+    # Eliminar carpetas
+    import shutil
+    from pathlib import Path
+    for p in [Path("output") / str(project.id), Path("uploads") / str(project.id)]:
+        if p.exists():
+            shutil.rmtree(p, ignore_errors=True)
+
+    await db.delete(project)
+
+    audit = AuditLog(
+        user_id=admin.id,
+        action="ADMIN_DELETE_PROJECT",
+        details=f"Admin deleted project {project_id}. Refunded token: {refund_token}"
+    )
+    db.add(audit)
+    await db.commit()
+    return None
+
     update_data = project_in.model_dump(exclude_unset=True)
 
     # Si se cambia el estado a un estado inicial, limpiamos el mensaje de error anterior

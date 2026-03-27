@@ -64,6 +64,44 @@ async def create_project(
 
     return new_project
 
+@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(select(Project).filter(Project.id == project_id))
+    project = result.scalars().first()
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if not current_user.is_admin and project.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this project")
+
+    # Borrar la carpeta física en /output/ si existe
+    import shutil
+    from pathlib import Path
+    output_dir = Path("output") / str(project.id)
+    if output_dir.exists():
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+    upload_dir = Path("uploads") / str(project.id)
+    if upload_dir.exists():
+        shutil.rmtree(upload_dir, ignore_errors=True)
+
+    await db.delete(project)
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="DELETE_PROJECT",
+        details=f"Deleted project case {project.case_number} (ID: {project_id})"
+    )
+    db.add(audit)
+
+    await db.commit()
+    return None
+
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: int,

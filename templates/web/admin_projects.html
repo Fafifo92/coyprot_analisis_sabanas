@@ -101,8 +101,9 @@
                                                 <div x-show="project.error_message" class="text-xs text-red-600 mt-1 max-w-xs break-words" x-text="project.error_message"></div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                                <button @click="openEditModal(project)" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-2 py-1 rounded">Editar Datos</button>
-                                                <button @click="forceRestart(project.id)" class="text-yellow-600 hover:text-yellow-900 bg-yellow-50 px-2 py-1 rounded" title="Devuelve el caso a estado de mapeo">Reiniciar a Mapeo</button>
+                                                <button @click="openEditModal(project)" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-2 py-1 rounded" title="Editar">✏️</button>
+                                                <button @click="forceRestart(project.id)" class="text-yellow-600 hover:text-yellow-900 bg-yellow-50 px-2 py-1 rounded" title="Reiniciar a Mapeo">↻</button>
+                                                <button @click="forceDelete(project.id)" class="text-red-600 hover:text-red-900 bg-red-50 px-2 py-1 rounded" title="Eliminar Permanentemente">🗑️</button>
                                             </td>
                                         </tr>
                                     </template>
@@ -237,6 +238,38 @@
                         Swal.fire('Error', error.message, 'error');
                     } finally {
                         this.saving = false;
+                    }
+                },
+
+                async forceDelete(projectId) {
+                    const result = await Swal.fire({
+                        title: '¿Eliminar para siempre?',
+                        text: 'Esto borrará archivos y todo. ¿Deseas devolverle 1 token de saldo al dueño de este caso?',
+                        icon: 'warning',
+                        showDenyButton: true,
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        denyButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, Eliminar (Sin reembolso)',
+                        denyButtonText: 'Eliminar y Reembolsar Token'
+                    });
+
+                    if (result.isConfirmed || result.isDenied) {
+                        const refund = result.isDenied; // Si eligió la opción azul
+
+                        try {
+                            const response = await fetch(`/api/admin/projects/${projectId}?refund_token=${refund}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                            });
+
+                            if (!response.ok) throw new Error('Error al eliminar');
+
+                            Swal.fire('¡Eliminado!', refund ? 'El proyecto fue borrado y el token devuelto al usuario.' : 'El proyecto fue borrado.', 'success');
+                            this.fetchProjects();
+                        } catch (error) {
+                            Swal.fire('Error', error.message, 'error');
+                        }
                     }
                 },
 
