@@ -51,6 +51,7 @@ class ProjectResponse(ProjectBase):
     error_message: Optional[str] = None
     result_html_path: Optional[str] = None
     result_pdf_path: Optional[str] = None
+    result_ftp_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

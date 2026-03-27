@@ -136,8 +136,11 @@ def analyze_project_task(self, project_id: int):
             project.status = "GENERATING_HTML"
             db.commit()
 
+            import re
+            safe_case_number = re.sub(r'[<>:"/\\|?*]', '_', str(project.case_number))
+
             report_cfg = ReportConfig(
-                report_name=f"Caso_{project.case_number}",
+                report_name=f"Caso_{safe_case_number}",
                 include_letterhead=True,
                 upload_ftp=False,
                 aliases={project.target_phone: project.target_name or "Objetivo Principal"},
@@ -210,8 +213,11 @@ def generate_pdf_task(self, project_id: int):
 
             base_dir = Path(project.result_html_path).parent.parent
 
+            import re
+            safe_case_number = re.sub(r'[<>:"/\\|?*]', '_', str(project.case_number))
+
             report_cfg = ReportConfig(
-                report_name=f"Caso_{project.case_number}",
+                report_name=f"Caso_{safe_case_number}",
                 include_letterhead=True,
                 upload_ftp=False,
                 aliases={project.target_phone: project.target_name or "Objetivo Principal"},

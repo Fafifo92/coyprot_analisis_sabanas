@@ -48,6 +48,7 @@ class Project(Base):
     # Exportables (Links o Paths)
     result_html_path = Column(String, nullable=True)
     result_pdf_path = Column(String, nullable=True)
+    result_ftp_url = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
