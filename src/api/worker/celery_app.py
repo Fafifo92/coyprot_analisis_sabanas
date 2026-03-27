@@ -6,12 +6,17 @@ from pathlib import Path
 _SRC_DIR = Path(__file__).resolve().parent.parent.parent
 os.environ["PYTHONPATH"] = str(_SRC_DIR)
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+# En Windows sin Docker, Redis falla dando "WinError 10061".
+# Para desarrollo local fácil, usaremos la misma base de datos SQLite como broker.
+# En producción, usa REDIS_URL=redis://redis:6379/0 en tu .env o docker-compose.
+SQLITE_BROKER = "sqla+sqlite:///./coyprot_api.db"
+BROKER_URL = os.getenv("CELERY_BROKER_URL", SQLITE_BROKER)
+BACKEND_URL = os.getenv("CELERY_RESULT_BACKEND", "db+sqlite:///./coyprot_api.db")
 
 celery_app = Celery(
     "coyprot_worker",
-    broker=REDIS_URL,
-    backend=REDIS_URL,
+    broker=BROKER_URL,
+    backend=BACKEND_URL,
     include=["api.worker.tasks"]
 )
 
@@ -22,4 +27,6 @@ celery_app.conf.update(
     timezone="America/Bogota",
     enable_utc=True,
     worker_hijack_root_logger=False, # Mantenemos nuestro logger
+    # Aseguramos compatibilidad sqlite para concurrencia
+    broker_connection_retry_on_startup=True,
 )
