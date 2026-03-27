@@ -58,16 +58,16 @@ def generar_mapa_agrupado(df, output_path, nombres_asignados=None):
     # Cluster exclusivo para datos de internet
     cluster_datos = MarkerCluster(name="📡 Datos (Morado)").add_to(mapa)
 
-    for row in df_clean.itertuples(index=False):
+    for _, row in df_clean.iterrows():
         try:
-            lat, lon = row.latitud_n, row.longitud_w
-            tipo = str(getattr(row, "tipo_llamada", "desconocido")).lower()
+            lat, lon = row["latitud_n"], row["longitud_w"]
+            tipo = str(row.get("tipo_llamada", "desconocido")).lower()
             
             # Lógica para diferenciar Datos vs Llamadas
             if "dato" in tipo:
                 # Si es dato, intentamos mostrar la celda o el ID
-                cid = str(getattr(row, "cell_identity_decimal", ""))
-                celda = str(getattr(row, "nombre_celda", ""))
+                cid = str(row.get("cell_identity_decimal", ""))
+                celda = str(row.get("nombre_celda", ""))
                 
                 if cid and cid not in ["nan", "None", ""]: num = f"Celda: {cid}"
                 elif celda and celda not in ["nan", "None", ""]: num = f"Antena: {celda}"
@@ -77,20 +77,20 @@ def generar_mapa_agrupado(df, output_path, nombres_asignados=None):
                 color = "purple"
                 icon = "globe"
             elif tipo == "saliente":
-                num = str(getattr(row, "receptor", "N/A"))
+                num = str(row.get("receptor", "N/A"))
                 grp = cluster_salientes
                 color = "green"
                 icon = "arrow-up"
             else:
-                num = str(getattr(row, "originador", "N/A"))
+                num = str(row.get("originador", "N/A"))
                 grp = cluster_entrantes
                 color = "blue"
                 icon = "arrow-down"
 
-            alias = nombres_asignados.get(str(getattr(row, "originador", "")), "") if nombres_asignados else ""
+            alias = nombres_asignados.get(str(row.get("originador", "")), "") if nombres_asignados else ""
             label = f"{num} ({alias})" if alias else num
             
-            popup = f"<b>{label}</b><br>{row.fecha_hora}<br>{tipo}"
+            popup = f"<b>{label}</b><br>{row['fecha_hora']}<br>{tipo}"
             folium.Marker([lat, lon], popup=popup, icon=folium.Icon(color=color, icon=icon, prefix="fa")).add_to(grp)
         except: continue
 
@@ -279,7 +279,7 @@ def generar_mapa_calor(df, output_path):
     
     mapa = folium.Map(location=center, zoom_start=11, tiles="OpenStreetMap")
     
-    heat_data = [[row.latitud_n, row.longitud_w] for row in df_clean.itertuples(index=False)]
+    heat_data = [[row["latitud_n"], row["longitud_w"]] for _, row in df_clean.iterrows()]
     HeatMap(heat_data, radius=15, blur=20).add_to(mapa)
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     mapa.save(output_path)
