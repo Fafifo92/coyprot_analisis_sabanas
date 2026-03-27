@@ -7,6 +7,7 @@ class FileUploadResponse(BaseModel):
     filename: str
     detected_sheets: Dict[str, List[str]] # { "Hoja1": ["ColA", "ColB"], ... }
     status: str
+    sheet_configs: Optional[List[Dict[str, Any]]] = None # Los mapeos guardados si existen
 
     model_config = ConfigDict(from_attributes=True)
 
