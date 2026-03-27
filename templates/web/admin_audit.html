@@ -41,11 +41,11 @@
             </nav>
 
             <div class="p-4 bg-gray-800 border-t border-gray-700">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold" x-text="username.charAt(0).toUpperCase()"></div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-white" x-text="username"></p>
-                        <button @click="logout" class="text-xs text-gray-400 hover:text-white transition-colors">Cerrar Sesión</button>
+                <div class="flex items-center pt-3 border-t border-gray-700 mt-2">
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold" x-text="username.charAt(0).toUpperCase()"></div>
+                    <div class="ml-3 flex-1 overflow-hidden">
+                        <p class="text-sm font-medium text-white truncate" x-text="username"></p>
+                        <button @click="logout" class="text-xs text-gray-400 hover:text-red-400 transition-colors">Cerrar Sesión</button>
                     </div>
                 </div>
             </div>
