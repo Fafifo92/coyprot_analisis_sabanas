@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 
 from config.api_settings import get_api_settings
 from db.session import engine, Base, get_db
-from api.routers import auth, admin, projects, files, analysis
+from api.routers import auth, admin, projects, files, analysis, downloads
 from api.routers.web import pages
 
 logger = logging.getLogger(__name__)
@@ -56,6 +56,7 @@ app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(projects.router, prefix="/api/projects", tags=["Projects"])
 app.include_router(files.router, prefix="/api/projects", tags=["Files"])
 app.include_router(analysis.router, prefix="/api/projects", tags=["Analysis"])
+app.include_router(downloads.router, prefix="/api/projects", tags=["Downloads"])
 
 @app.get("/api/health")
 async def health_check():

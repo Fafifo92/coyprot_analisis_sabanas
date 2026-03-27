@@ -18,6 +18,25 @@ data_service = DataProcessingService()
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+@router.get("/{project_id}/files", response_model=list[FileUploadResponse])
+async def list_project_files(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Verificar proyecto y dueño
+    result = await db.execute(select(Project).filter(Project.id == project_id))
+    project = result.scalars().first()
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if not current_user.is_admin and project.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    files_result = await db.execute(select(ProjectFile).filter(ProjectFile.project_id == project_id).order_by(ProjectFile.created_at))
+    return files_result.scalars().all()
+
 @router.post("/{project_id}/files/upload", response_model=FileUploadResponse)
 async def upload_file(
     project_id: int,
