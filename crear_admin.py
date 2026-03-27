@@ -28,7 +28,7 @@ async def create_superadmin():
             is_admin=True,
             is_active=True,
             must_change_password=False,
-            tokens_balance=9999
+            tokens_balance=0  # Admins tienen uso ilimitado por diseño, balance no importa
         )
         db.add(new_admin)
         await db.commit()

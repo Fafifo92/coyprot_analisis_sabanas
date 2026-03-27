@@ -38,6 +38,7 @@ async def create_project(
             )
         # Descontar token
         current_user.tokens_balance -= 1
+    # Si es Admin, no se descuenta ningún token y puede crear infinitos proyectos.
 
     # Crear proyecto
     new_project = Project(
