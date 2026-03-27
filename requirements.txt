@@ -12,6 +12,7 @@ alembic>=1.12.1
 pydantic[email]>=2.5.2
 pydantic-settings>=2.1.0
 celery>=5.3.6
+sqlalchemy[asyncio]>=2.0.23
 redis>=5.0.1
 pandas>=2.0.0
 numpy>=1.24.0

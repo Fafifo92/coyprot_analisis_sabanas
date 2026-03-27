@@ -5,8 +5,11 @@ from sqlalchemy.future import select
 from db.session import get_db
 from db.models import User, AuditLog
 from api.schemas.api_models import Token, ChangePasswordRequest
+from api.schemas.auth_models import UserMeResponse
 from api.services.security import verify_password, get_password_hash, create_access_token, get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
+from db.models import Project
+from sqlalchemy import func
 
 router = APIRouter()
 
@@ -57,3 +60,21 @@ async def change_password(
     await db.commit()
 
     return {"message": "Contraseña actualizada exitosamente"}
+
+@router.get("/me", response_model=UserMeResponse)
+async def get_my_info(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Endpoint para obtener perfil y métricas del usuario (ej. para la barra de tokens).
+    """
+    result = await db.execute(select(func.count(Project.id)).filter(Project.owner_id == current_user.id))
+    projects_count = result.scalar() or 0
+
+    return UserMeResponse(
+        username=current_user.username,
+        is_admin=current_user.is_admin,
+        tokens_balance=current_user.tokens_balance,
+        projects_created=projects_count
+    )

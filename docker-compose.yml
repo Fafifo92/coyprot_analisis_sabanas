@@ -31,7 +31,8 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://coyprot_user:coyprot_password@db:5432/coyprot_api
-      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - SECRET_KEY=CAMBIAR_ESTO_EN_PRODUCCION_SUPER_SECRETA_COYPROT_1234
     depends_on:
       - db
