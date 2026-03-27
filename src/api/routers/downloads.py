@@ -32,8 +32,8 @@ async def download_results(
     if not current_user.is_admin and project.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="No autorizado")
 
-    if project.status != "COMPLETED":
-        raise HTTPException(status_code=400, detail="El proyecto aún no ha terminado de analizarse o falló.")
+    if project.status not in ["COMPLETED_HTML", "COMPLETED_ALL", "FAILED"]:
+        raise HTTPException(status_code=400, detail="El proyecto aún no ha terminado de analizarse.")
 
     file_path = None
     media_type = "application/octet-stream"
