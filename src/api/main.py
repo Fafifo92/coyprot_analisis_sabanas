@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 
 from config.api_settings import get_api_settings
 from db.session import engine, Base, get_db
+from sqlalchemy import text
 from api.routers import auth, admin, projects, files, analysis, downloads, admin_projects, ftp
 from api.routers.web import pages
 
@@ -23,6 +24,16 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         logger.info("Verificando/Creando tablas de Base de Datos...")
         await conn.run_sync(Base.metadata.create_all)
+
+        # Parche de migración manual para SQLite local del usuario
+        # Añade la nueva columna 'result_ftp_url' si no existía antes de la Fase 3.
+        if get_api_settings().DATABASE_URL.startswith("sqlite"):
+            try:
+                await conn.execute(text("ALTER TABLE projects ADD COLUMN result_ftp_url VARCHAR"))
+                logger.info("Migración aplicada: Columna 'result_ftp_url' agregada.")
+            except Exception as e:
+                # Si falla es porque la columna ya existe, lo ignoramos de forma segura
+                pass
 
     yield
 
