@@ -6,7 +6,7 @@ class ApiSettings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./coyprot_api.db"
 
     # Seguridad JWT
-    SECRET_KEY: str = "super_secret_key_change_in_production"
+    SECRET_KEY: str = "super_secret_key_change_in_production_12345"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 1 semana
 
