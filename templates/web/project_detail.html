@@ -224,10 +224,18 @@
     </div>
 
     <script>
+        function parseJwt(token) {
+            try {
+                return JSON.parse(atob(token.split('.')[1]));
+            } catch (e) {
+                return null;
+            }
+        }
+
         function projectDetail(projectId) {
             return {
                 projectId: projectId,
-                project: {},
+                project: { status: '' }, // Inicializar status para evitar undefined.includes()
                 files: [], // Cada file = {id, filename, detected_sheets, status, activeTab, mappings}
                 uploading: false,
                 savingMapping: false,
