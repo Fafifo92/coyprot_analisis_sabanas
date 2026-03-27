@@ -1,3 +1,4 @@
+import threading
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -59,8 +60,28 @@ async def start_analysis(
             logger.error(f"Error conectando a Celery/Redis ({e}). Haciendo fallback a BackgroundTasks locales.")
 
     # Fallback Local / Windows sin Redis (Evita el WinError 10061 de Kombu)
+    def fallback_analyze():
+        try:
+            analyze_project_task(project_id)
+        except Exception as fall_err:
+            logger.exception(f"Error crítico en Thread local para proyecto {project_id}: {fall_err}")
+            # Tratar de actualizar el estado a fallido para que la UI no se quede "En Cola"
+            from sqlalchemy import create_engine
+            from sqlalchemy.orm import sessionmaker
+            from db.models import Project
+            from config.api_settings import get_api_settings
+
+            sync_engine = create_engine(get_api_settings().DATABASE_URL.replace("sqlite+aiosqlite", "sqlite"))
+            SyncSessionLocal = sessionmaker(bind=sync_engine)
+            with SyncSessionLocal() as db:
+                p = db.query(Project).filter(Project.id == project_id).first()
+                if p:
+                    p.status = "FAILED"
+                    p.error_message = f"Error fatal del sistema local: {str(fall_err)}"
+                    db.commit()
+
     # Ejecuta el mismo worker pero localmente en un hilo
-    threading.Thread(target=analyze_project_task, args=(project_id,), daemon=True).start()
+    threading.Thread(target=fallback_analyze, daemon=True).start()
 
     return {"message": "Análisis iniciado en segundo plano (Modo Local)."}
 
@@ -99,6 +120,25 @@ async def generate_pdf(
         except Exception as e:
             logger.error(f"Error conectando a Celery/Redis ({e}). Fallback local.")
 
-    threading.Thread(target=generate_pdf_task, args=(project_id,), daemon=True).start()
+    def fallback_pdf():
+        try:
+            generate_pdf_task(project_id)
+        except Exception as fall_err:
+            logger.exception(f"Error crítico en Thread local PDF para proyecto {project_id}: {fall_err}")
+            from sqlalchemy import create_engine
+            from sqlalchemy.orm import sessionmaker
+            from db.models import Project
+            from config.api_settings import get_api_settings
+
+            sync_engine = create_engine(get_api_settings().DATABASE_URL.replace("sqlite+aiosqlite", "sqlite"))
+            SyncSessionLocal = sessionmaker(bind=sync_engine)
+            with SyncSessionLocal() as db:
+                p = db.query(Project).filter(Project.id == project_id).first()
+                if p:
+                    p.status = "FAILED"
+                    p.error_message = f"Error fatal generando PDF: {str(fall_err)}"
+                    db.commit()
+
+    threading.Thread(target=fallback_pdf, daemon=True).start()
 
     return {"message": "Generación de PDF iniciada en segundo plano (Modo Local)."}
