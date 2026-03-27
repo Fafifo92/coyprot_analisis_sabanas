@@ -10,6 +10,9 @@ from db.session import get_db
 from db.models import User, Project, ProjectFile, AuditLog
 from api.services.security import get_current_user
 from api.worker.tasks import analyze_project_task, generate_pdf_task
+from config.api_settings import get_api_settings
+
+api_settings = get_api_settings()
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -47,10 +50,19 @@ async def start_analysis(
     db.add(audit)
     await db.commit()
 
-    # Encolar la tarea en Celery Worker
-    analyze_project_task.delay(project_id)
+    # Intentar usar Celery si está habilitado en el entorno
+    if api_settings.CELERY_ENABLED:
+        try:
+            analyze_project_task.delay(project_id)
+            return {"message": "Análisis encolado en Celery correctamente."}
+        except Exception as e:
+            logger.error(f"Error conectando a Celery/Redis ({e}). Haciendo fallback a BackgroundTasks locales.")
 
-    return {"message": "Análisis encolado correctamente. Consulta el estado del proyecto más tarde."}
+    # Fallback Local / Windows sin Redis (Evita el WinError 10061 de Kombu)
+    # Ejecuta el mismo worker pero localmente en un hilo
+    threading.Thread(target=analyze_project_task, args=(project_id,), daemon=True).start()
+
+    return {"message": "Análisis iniciado en segundo plano (Modo Local)."}
 
 @router.post("/{project_id}/generate-pdf")
 async def generate_pdf(
@@ -80,6 +92,13 @@ async def generate_pdf(
     db.add(audit)
     await db.commit()
 
-    generate_pdf_task.delay(project_id)
+    if api_settings.CELERY_ENABLED:
+        try:
+            generate_pdf_task.delay(project_id)
+            return {"message": "Generación de PDF encolada en Celery."}
+        except Exception as e:
+            logger.error(f"Error conectando a Celery/Redis ({e}). Fallback local.")
 
-    return {"message": "Generación de PDF pesada encolada correctamente."}
+    threading.Thread(target=generate_pdf_task, args=(project_id,), daemon=True).start()
+
+    return {"message": "Generación de PDF iniciada en segundo plano (Modo Local)."}

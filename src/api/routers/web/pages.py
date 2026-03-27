@@ -36,6 +36,10 @@ async def users_page(request: Request):
 async def admin_projects_page(request: Request):
     return render_template(request, "admin_projects.html")
 
+@router.get("/admin/audit", response_class=HTMLResponse)
+async def admin_audit_page(request: Request):
+    return render_template(request, "admin_audit.html")
+
 @router.get("/projects/{project_id}", response_class=HTMLResponse)
 async def project_detail_page(request: Request, project_id: int):
     return render_template(request, "project_detail.html", {"project_id": project_id})

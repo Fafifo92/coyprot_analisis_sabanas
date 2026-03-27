@@ -35,6 +35,11 @@
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     Todos los Casos
                 </a>
+
+                <a href="/admin/audit" x-show="isAdmin" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    Auditoría de Acciones
+                </a>
             </nav>
 
             <div class="p-4 bg-gray-800 border-t border-gray-700">
@@ -151,8 +156,12 @@
                                     </div>
                                 </div>
 
-                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
                                     <span class="text-indigo-600 text-sm font-medium hover:text-indigo-800">Ver Detalles &rarr;</span>
+
+                                    <button @click.stop="deleteProject(project.id)" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50" title="Eliminar proyecto permanentemente">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
                                 </div>
                             </div>
                         </template>
@@ -301,6 +310,35 @@
                         console.error('Error cargando proyectos', error);
                     } finally {
                         this.loading = false;
+                    }
+                },
+
+                async deleteProject(id) {
+                    const result = await Swal.fire({
+                        title: '¿Eliminar Proyecto?',
+                        text: "Esta acción borrará permanentemente todos los Excel y Reportes generados. El Token consumido al crearlo NO será devuelto.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, Eliminar Permanentemente'
+                    });
+
+                    if (result.isConfirmed) {
+                        try {
+                            const res = await fetch(`/api/projects/${id}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                            });
+
+                            if (!res.ok) throw new Error("Error eliminando el proyecto");
+
+                            Swal.fire('Eliminado', 'El proyecto y sus archivos han sido borrados.', 'success');
+                            this.fetchProjects();
+                            this.fetchMe(); // Por si queremos ver métricas actualizadas de proyectos creados
+                        } catch(e) {
+                            Swal.fire('Error', e.message, 'error');
+                        }
                     }
                 },
 
