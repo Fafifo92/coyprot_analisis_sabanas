@@ -18,7 +18,6 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    from config.settings import settings
     from excel_utils import cargar_excel_crudo, procesar_dataframe_con_mapeo
     from column_mapper import ColumnMapperDialog 
     from report_generator import generar_informe_html, generar_datos_llamadas_json
@@ -47,9 +46,9 @@ except Exception as e:
     print(f"Error rutas estáticas: {e}")
 
 # Credenciales FTP
-FTP_HOST = settings.ftp_host
-FTP_USER = settings.ftp_user
-FTP_PASS = settings.ftp_pass
+FTP_HOST = "plcoyprot.com"
+FTP_USER = "plcoypro"
+FTP_PASS = "181955Danilo?"
 
 # Categorías para los PDFs adjuntos
 CATEGORIAS_PDF = ["Financiero", "Propiedades", "Vehículos", "Judicial", "Antecedentes", "Otros"]

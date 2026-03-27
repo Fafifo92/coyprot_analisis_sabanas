@@ -5,6 +5,7 @@ Centraliza toda la lógica de limpieza y validación de teléfonos.
 """
 from __future__ import annotations
 
+import logging
 import re
 from typing import Optional
 
@@ -12,6 +13,8 @@ import phonenumbers
 import pandas as pd
 
 from config.constants import UNKNOWN_NUMBER
+
+logger = logging.getLogger(__name__)
 
 
 class PhoneService:
