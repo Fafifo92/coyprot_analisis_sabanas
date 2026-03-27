@@ -64,6 +64,50 @@ async def create_project(
 
     return new_project
 
+from pydantic import BaseModel
+from typing import Optional
+
+class ProjectUserUpdate(BaseModel):
+    case_number: Optional[str] = None
+    target_phone: Optional[str] = None
+    target_name: Optional[str] = None
+    period: Optional[str] = None
+
+@router.patch("/{project_id}", response_model=ProjectResponse)
+async def update_project(
+    project_id: int,
+    project_in: ProjectUserUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(select(Project).filter(Project.id == project_id))
+    project = result.scalars().first()
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if not current_user.is_admin and project.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this project")
+
+    # Solo permitir edición si el proyecto no está procesándose ni terminado
+    if project.status in ["PROCESSING", "GENERATING_HTML", "GENERATING_PDF"]:
+        raise HTTPException(status_code=400, detail="Cannot edit project while it is processing.")
+
+    update_data = project_in.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(project, key, value)
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="UPDATE_PROJECT",
+        details=f"Updated project case {project.case_number} (ID: {project_id})"
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(project)
+    return project
+
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(
     project_id: int,

@@ -40,14 +40,20 @@ async def download_results(
     filename = f"Analisis_Caso_{project.case_number}"
 
     if format.lower() == "pdf":
+        if not project.result_pdf_path:
+            raise HTTPException(status_code=404, detail="El PDF no ha sido generado o hubo un error al crearlo. Por favor genere el PDF desde el panel primero.")
         file_path = project.result_pdf_path
         media_type = "application/pdf"
         filename += ".pdf"
     elif format.lower() == "html":
+        if not project.result_html_path:
+            raise HTTPException(status_code=404, detail="El reporte HTML no existe. Puede que el análisis haya fallado antes de la fase de reportes.")
         # Para el HTML interactivo (que incluye mapas y assets), lo mejor es devolver el HTML principal,
         # pero como depende de assets, lo correcto para descarga es empacar toda la carpeta en un ZIP.
         html_dir = Path(project.result_html_path).parent.parent
-        zip_path = html_dir.parent / f"Caso_{project.case_number}_completo.zip"
+        import re
+        safe_case_number = re.sub(r'[<>:"/\\|?*]', '_', str(project.case_number))
+        zip_path = html_dir.parent / f"Caso_{safe_case_number}_completo.zip"
 
         if not zip_path.exists():
             # Crear zip de la carpeta si no existe
