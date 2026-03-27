@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 
 from config.api_settings import get_api_settings
 from db.session import engine, Base, get_db
-from api.routers import auth, admin, projects, files, analysis, downloads
+from api.routers import auth, admin, projects, files, analysis, downloads, admin_projects
 from api.routers.web import pages
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(pages.router, tags=["Web"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_projects.router, prefix="/api/admin", tags=["Admin Projects"])
 app.include_router(projects.router, prefix="/api/projects", tags=["Projects"])
 app.include_router(files.router, prefix="/api/projects", tags=["Files"])
 app.include_router(analysis.router, prefix="/api/projects", tags=["Analysis"])

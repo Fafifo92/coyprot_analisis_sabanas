@@ -53,8 +53,8 @@
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
                                   :class="{
                                       'bg-yellow-100 text-yellow-800': project.status === 'PENDING_FILES' || project.status === 'PENDING_MAPPING',
-                                      'bg-blue-100 text-blue-800': project.status === 'PROCESSING' || project.status === 'QUEUED',
-                                      'bg-green-100 text-green-800': project.status === 'COMPLETED',
+                                      'bg-blue-100 text-blue-800': project.status.includes('PROCESSING') || project.status.includes('QUEUED') || project.status.includes('GENERATING'),
+                                      'bg-green-100 text-green-800': project.status.includes('COMPLETED'),
                                       'bg-red-100 text-red-800': project.status === 'FAILED'
                                   }">
                                 <span x-text="formatStatus(project.status)"></span>
@@ -68,27 +68,29 @@
                                 Iniciar Análisis Geográfico
                             </button>
 
-                            <!-- Botón Descargar Resultados -->
-                            <div class="relative" x-data="{ open: false }" x-show="project.status === 'COMPLETED'">
-                                <button @click="open = !open"
-                                        class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
-                                    <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    Descargar Resultados
+                            <div class="flex items-center space-x-2" x-show="project.status === 'COMPLETED_HTML' || project.status === 'FAILED'">
+                                <button @click="downloadFile('html')"
+                                        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+                                    <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                                    Descargar HTML Interactivo
                                 </button>
 
-                                <!-- Dropdown menu -->
-                                <div x-show="open" @click.away="open = false"
-                                     x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                                    <div class="py-1">
-                                        <a href="#" @click.prevent="downloadFile('pdf'); open=false" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                                            <span class="font-bold text-red-600 mr-2">PDF</span> Informe Forense
-                                        </a>
-                                        <a href="#" @click.prevent="downloadFile('html'); open=false" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                                            <span class="font-bold text-blue-600 mr-2">ZIP</span> HTML Web Interactivo (Todo)
-                                        </a>
-                                    </div>
-                                </div>
+                                <button @click="generatePdf"
+                                        class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+                                    <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    Generar PDF (Forensico)
+                                </button>
+                            </div>
+
+                            <div class="flex items-center space-x-2" x-show="project.status === 'COMPLETED_ALL'">
+                                <button @click="downloadFile('html')"
+                                        class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+                                    Descargar HTML
+                                </button>
+                                <button @click="downloadFile('pdf')"
+                                        class="inline-flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+                                    Descargar PDF
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -381,6 +383,31 @@
                     }
                 },
 
+                async generatePdf() {
+                    const result = await Swal.fire({
+                        title: 'Generar PDF',
+                        text: "Este proceso construirá los mapas estáticos y el informe forense. Puede tomar varios minutos dependiendo del volumen de datos.",
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc2626',
+                        confirmButtonText: 'Sí, Generar'
+                    });
+
+                    if (result.isConfirmed) {
+                        try {
+                            const res = await fetch(`/api/projects/${this.projectId}/generate-pdf`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                            });
+                            if (!res.ok) throw new Error((await res.json()).detail);
+                            Swal.fire('En Progreso', 'La generación del PDF está en la cola.', 'success');
+                            this.fetchProject();
+                        } catch(e) {
+                            Swal.fire('Error', e.message, 'error');
+                        }
+                    }
+                },
+
                 async startAnalysis() {
                     const result = await Swal.fire({
                         title: '¿Iniciar Análisis?',
@@ -447,11 +474,14 @@
                     const map = {
                         'PENDING_FILES': 'Sin Archivos',
                         'PENDING_MAPPING': 'Falta Mapeo',
-                        'PROCESSING': 'Procesando en Celery Worker...',
-                        'GENERATING_REPORTS': 'Generando PDF y Mapas...',
+                        'PROCESSING': 'Analizando Datos...',
                         'QUEUED': 'En Cola',
-                        'COMPLETED': 'Completado',
-                        'FAILED': 'Completado (con advertencias)'
+                        'GENERATING_HTML': 'Generando Web...',
+                        'COMPLETED_HTML': 'HTML Listo',
+                        'QUEUED_PDF': 'PDF en Cola...',
+                        'GENERATING_PDF': 'Dibujando Mapas PDF...',
+                        'COMPLETED_ALL': 'PDF y HTML Listos',
+                        'FAILED': 'Error/Advertencias'
                     };
                     return map[status] || status;
                 }
