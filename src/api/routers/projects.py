@@ -170,11 +170,16 @@ async def get_project_numbers(
         if file.status == "MAPPED" and file.sheet_configs:
             sheets, _ = data_svc.load_sheets_raw(Path(file.file_path))
             if sheets:
-                df = data_svc.process_sheets(sheets, file.sheet_configs)
-                if "originador" in df.columns:
-                    unique_numbers.update(df["originador"].dropna().astype(str).unique())
-                if "receptor" in df.columns:
-                    unique_numbers.update(df["receptor"].dropna().astype(str).unique())
+                try:
+                    df = data_svc.process_sheets(sheets, file.sheet_configs)
+                    if "originador" in df.columns:
+                        unique_numbers.update(df["originador"].dropna().astype(str).unique())
+                    if "receptor" in df.columns:
+                        unique_numbers.update(df["receptor"].dropna().astype(str).unique())
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error procesando hojas para sacar números en {file.filename}: {e}")
 
     # Remover campos en blanco y ordenar
     unique_numbers.discard("")

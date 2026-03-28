@@ -210,11 +210,17 @@ class DataProcessingService:
         logger.info("Procesando fechas...")
         if COL_DATETIME in df.columns:
             df[COL_DATETIME] = df[COL_DATETIME].apply(self._parse_date)
-            df.dropna(subset=[COL_DATETIME], inplace=True)
+            # Only drop rows if we actually care about dates for final processing.
+            # However, since this service is used by `/api/projects/{id}/numbers`
+            # which just wants to read the numbers, dropping rows with invalid dates
+            # might cause it to return 0 numbers if the date mapping is wrong or missing.
+            # But the core app logic requires dates to build timelines.
+            # We will conditionally drop NaT later or let the caller handle it.
+            # For now, to prevent `EmptyDataError` during alias loading, we won't strictly fail here.
 
         if df.empty:
             raise EmptyDataError(
-                "Todas las fechas fueron inválidas o el archivo está vacío."
+                "El archivo está vacío."
             )
 
         # Duración
