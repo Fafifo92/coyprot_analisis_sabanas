@@ -96,12 +96,12 @@ def obtener_ubicacion_completa(lat, lon):
     best_muni = "Desconocido"
     best_depto = "Desconocido"
 
-    for _, row in df_search.iterrows():
-        dist = calcular_distancia(lat, lon, row['Latitud'], row['Longitud'])
+    for row in df_search.itertuples(index=False):
+        dist = calcular_distancia(lat, lon, getattr(row, 'Latitud', 0), getattr(row, 'Longitud', 0))
         if dist < min_dist:
             min_dist = dist
-            best_muni = row['Municipio']
-            best_depto = row['Departamento']
+            best_muni = getattr(row, 'Municipio', 'Desconocido')
+            best_depto = getattr(row, 'Departamento', 'Desconocido')
             
     # Umbral de precisión: si está a menos de 30km, asignamos el municipio.
     # Si no, es zona rural lejana.
@@ -124,13 +124,13 @@ def inferir_municipio_y_coords(nombre_celda):
     texto_norm = normalizar_texto(texto_sucio) # "ANT.MEDELLIN"
     
     # Buscar coincidencia exacta de palabra
-    for _, row in _df_municipios.iterrows():
-        muni_norm = row['Muni_Norm'] # "MEDELLIN"
+    for row in _df_municipios.itertuples(index=False):
+        muni_norm = getattr(row, 'Muni_Norm', '') # "MEDELLIN"
         
         # Evitar falsos positivos con nombres cortos (ej: "Ica", "Une")
         if len(muni_norm) < 4: continue
             
         if muni_norm in texto_norm:
-            return row['Municipio'], row['Latitud'], row['Longitud']
+            return getattr(row, 'Municipio', None), getattr(row, 'Latitud', None), getattr(row, 'Longitud', None)
             
     return None, None, None

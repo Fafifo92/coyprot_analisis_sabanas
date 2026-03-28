@@ -1,0 +1,3 @@
+## 2024-05-24 - Login Form Labels
+**Learning:** The login form relied entirely on `sr-only` labels and placeholders for user input fields. This creates a poor UX because placeholders disappear when the user starts typing, leaving them without context for what the field is for. It also creates accessibility issues for users with cognitive disabilities or low vision.
+**Action:** Replace `sr-only` labels with visible `<label>` elements positioned clearly above the input fields. This ensures the context of the input field remains visible at all times, improving both general usability and accessibility.
