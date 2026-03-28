@@ -40,6 +40,10 @@ class Project(Base):
     target_name = Column(String, nullable=True)
     period = Column(String, nullable=True)
 
+    # Enriquecimiento y Metadatos Extra
+    aliases = Column(JSON, default={})
+    extra_metadata = Column(JSON, default={})
+
     # Estado del Job de Análisis
     # PENDING_FILES -> MAPPING -> PROCESSING -> COMPLETED | FAILED
     status = Column(String, default="PENDING_FILES")
@@ -56,6 +60,24 @@ class Project(Base):
     # Relaciones
     owner = relationship("User", back_populates="projects")
     files = relationship("ProjectFile", back_populates="project", cascade="all, delete-orphan")
+    attachments = relationship("ProjectAttachment", back_populates="project", cascade="all, delete-orphan")
+
+class ProjectAttachment(Base):
+    """
+    Documentos adjuntos (PDF) como financieros o judiciales.
+    """
+    __tablename__ = "project_attachments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"))
+
+    filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    category = Column(String, nullable=False) # Financiero, Propiedades, etc.
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    project = relationship("Project", back_populates="attachments")
 
 class ProjectFile(Base):
     """
