@@ -1,0 +1,3 @@
+## 2024-05-24 - Pandas iterrows Performance Bottleneck
+**Learning:** Using `df.iterrows()` to iterate over Pandas DataFrames is extremely slow because it creates a new Pandas Series object for each row. In functions like `obtener_ubicacion_completa` and `inferir_municipio_y_coords` in `src/colombia_data.py`, this iteration happens over a significant amount of rows (potentially for every call record processed), causing a substantial performance bottleneck in the geocoding pipeline.
+**Action:** Replaced `df.iterrows()` with `df.itertuples(index=False)` which returns lightweight namedtuples, significantly reducing the overhead. Used `getattr(row, "column_name", default)` to safely access the namedtuple attributes as recommended in the project conventions.
