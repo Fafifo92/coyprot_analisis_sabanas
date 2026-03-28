@@ -342,11 +342,11 @@
                                         <h2 class="text-lg font-bold text-gray-900">Enriquecimiento de Agenda (Alias)</h2>
                                         <p class="text-sm text-gray-500 mt-1">Asigna nombres legibles a los números telefónicos clave. Serán visibles en los gráficos y PDF.</p>
                                     </div>
-                                    <button @click="saveProjectMetadata()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">Guardar Agenda</button>
+                                    <button @click="saveProjectMetadata()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" x-show="uniqueNumbers.length > 0">Guardar Agenda</button>
                                 </div>
 
                                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4" x-show="uniqueNumbers.length === 0">
-                                    <p class="text-sm text-gray-600 text-center py-4">Sube y mapea al menos un archivo para poder asignar Alias a los números encontrados, o <button @click="fetchUniqueNumbers" class="text-indigo-600 underline">recarga la lista</button>.</p>
+                                    <p class="text-sm text-gray-600 text-center py-4">Sube y mapea al menos un archivo para poder asignar Alias a los números encontrados, o <button @click="fetchUniqueNumbers()" class="text-indigo-600 underline">recarga la lista</button>.</p>
                                 </div>
 
                                 <div class="overflow-y-auto max-h-[600px] bg-white border border-gray-200 rounded-lg shadow-inner" x-show="uniqueNumbers.length > 0">
@@ -362,7 +362,7 @@
                                                 <tr class="hover:bg-gray-50">
                                                     <td class="px-6 py-3 text-sm font-medium text-gray-900 font-mono" x-text="num"></td>
                                                     <td class="px-6 py-2">
-                                                        <input type="text" x-model="aliases[num]" placeholder="Ej: Sospechoso, Esposa, Oficina..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm px-3 py-1.5">
+                                                        <input type="text" x-model="aliases[num]" placeholder="Ej: Sospechoso, Esposa, Oficina..." class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm px-3 py-1.5" :aria-label="'Alias para ' + num">
                                                     </td>
                                                 </tr>
                                             </template>

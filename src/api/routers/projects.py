@@ -177,6 +177,7 @@ async def get_project_numbers(
     # Remover campos en blanco y ordenar
     unique_numbers.discard("")
     unique_numbers.discard("nan")
+    unique_numbers.discard("None")
 
     return {"numbers": sorted(list(unique_numbers))}
 

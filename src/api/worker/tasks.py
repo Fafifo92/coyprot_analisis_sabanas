@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from config.api_settings import get_api_settings
 from config.settings import settings as app_settings
-from db.models import Project, ProjectFile
+from db.models import Project, ProjectFile, ProjectAttachment
 from core.models import ReportConfig, CaseMetadata, PdfExportConfig, RouteMapMode
 from services.data_processing_service import DataProcessingService
 from services.geocoding_service import GeocodingService
