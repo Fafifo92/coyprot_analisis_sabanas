@@ -149,7 +149,7 @@ def analyze_project_task(self, project_id: int):
             db_atts = db.query(ProjectAttachment).filter(ProjectAttachment.project_id == project_id).all()
             pdf_attachments = []
             for att in db_atts:
-                pdf_attachments.append(PdfAttachment(category=att.category, source_path=Path(att.file_path), filename=att.filename))
+                pdf_attachments.append(PdfAttachment(category=att.category, source_path=Path(att.file_path)))
 
             report_cfg = ReportConfig(
                 report_name=f"Caso_{safe_case_number}",
@@ -235,7 +235,7 @@ def generate_pdf_task(self, project_id: int):
 
             from core.models import PdfAttachment
             db_atts = db.query(ProjectAttachment).filter(ProjectAttachment.project_id == project_id).all()
-            pdf_attachments = [PdfAttachment(category=a.category, source_path=Path(a.file_path), filename=a.filename) for a in db_atts]
+            pdf_attachments = [PdfAttachment(category=a.category, source_path=Path(a.file_path)) for a in db_atts]
 
             report_cfg = ReportConfig(
                 report_name=f"Caso_{safe_case_number}",
