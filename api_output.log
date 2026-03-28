@@ -11,3 +11,14 @@ El sistema no puede iniciar de forma segura con una clave por defecto.
 Para solucionarlo, añade la siguiente línea a tu archivo '.env':
 SECRET_KEY=tu_clave_secreta_super_segura_aqui_12345
 ======================================================================
+
+WARNING:  WatchFiles detected changes in 'src/api/routers/projects.py'. Reloading...
+
+======================================================================
+🚨 ERROR CRÍTICO DE CONFIGURACIÓN DE SEGURIDAD 🚨
+Falta la variable de entorno obligatoria: 'SECRET_KEY'
+El sistema no puede iniciar de forma segura con una clave por defecto.
+
+Para solucionarlo, añade la siguiente línea a tu archivo '.env':
+SECRET_KEY=tu_clave_secreta_super_segura_aqui_12345
+======================================================================
