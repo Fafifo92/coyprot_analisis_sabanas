@@ -64,14 +64,9 @@ async def create_project(
 
     return new_project
 
-from pydantic import BaseModel
-from typing import Optional
-
-class ProjectUserUpdate(BaseModel):
-    case_number: Optional[str] = None
-    target_phone: Optional[str] = None
-    target_name: Optional[str] = None
-    period: Optional[str] = None
+from api.schemas.api_models import ProjectUserUpdate
+import pandas as pd
+from pathlib import Path
 
 @router.patch("/{project_id}", response_model=ProjectResponse)
 async def update_project(
@@ -145,6 +140,45 @@ async def delete_project(
 
     await db.commit()
     return None
+
+@router.get("/{project_id}/numbers")
+async def get_project_numbers(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Lee rápidamente los archivos Excel mapeados y devuelve una lista de números de teléfono únicos
+    presentes (originadores y receptores) para que el usuario pueda asignarles nombres/alias en el frontend.
+    """
+    result = await db.execute(select(Project).options(selectinload(Project.files)).filter(Project.id == project_id))
+    project = result.scalars().first()
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if not current_user.is_admin and project.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    from services.data_processing_service import DataProcessingService
+    data_svc = DataProcessingService()
+
+    unique_numbers = set()
+    for file in project.files:
+        if file.status == "MAPPED" and file.sheet_configs:
+            sheets, _ = data_svc.load_sheets_raw(Path(file.file_path))
+            if sheets:
+                df = data_svc.process_sheets(sheets, file.sheet_configs)
+                if "originador" in df.columns:
+                    unique_numbers.update(df["originador"].dropna().astype(str).unique())
+                if "receptor" in df.columns:
+                    unique_numbers.update(df["receptor"].dropna().astype(str).unique())
+
+    # Remover campos en blanco y ordenar
+    unique_numbers.discard("")
+    unique_numbers.discard("nan")
+
+    return {"numbers": sorted(list(unique_numbers))}
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(

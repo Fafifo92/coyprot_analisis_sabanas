@@ -44,9 +44,19 @@ class ProjectBase(BaseModel):
 class ProjectCreate(ProjectBase):
     pass
 
+class ProjectUserUpdate(BaseModel):
+    case_number: Optional[str] = None
+    target_phone: Optional[str] = None
+    target_name: Optional[str] = None
+    period: Optional[str] = None
+    aliases: Optional[dict] = None
+    extra_metadata: Optional[dict] = None
+
 class ProjectResponse(ProjectBase):
     id: int
     owner_id: int
+    aliases: Optional[dict] = None
+    extra_metadata: Optional[dict] = None
     status: str
     error_message: Optional[str] = None
     result_html_path: Optional[str] = None
