@@ -1,5 +1,7 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import sys
+from pydantic import ValidationError
 from functools import lru_cache
 
 class ApiSettings(BaseSettings):
@@ -21,4 +23,14 @@ class ApiSettings(BaseSettings):
 
 @lru_cache()
 def get_api_settings() -> ApiSettings:
-    return ApiSettings()
+    try:
+        return ApiSettings()
+    except ValidationError as e:
+        print("\n" + "="*70)
+        print("🚨 ERROR CRÍTICO DE CONFIGURACIÓN DE SEGURIDAD 🚨")
+        print("Falta la variable de entorno obligatoria: 'SECRET_KEY'")
+        print("El sistema no puede iniciar de forma segura con una clave por defecto.")
+        print("\nPara solucionarlo, añade la siguiente línea a tu archivo '.env':")
+        print("SECRET_KEY=tu_clave_secreta_super_segura_aqui_12345")
+        print("="*70 + "\n")
+        sys.exit(1)
