@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from typing import List
 
 from db.session import get_db
@@ -84,9 +85,10 @@ async def update_project(
     if not current_user.is_admin and project.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to edit this project")
 
-    # Solo permitir edición si el proyecto no está procesándose ni terminado
-    if project.status in ["PROCESSING", "GENERATING_HTML", "GENERATING_PDF"]:
-        raise HTTPException(status_code=400, detail="Cannot edit project while it is processing.")
+    # Solo bloquear la edición si el proyecto está activamente procesándose
+    # Permitir edición si el proyecto está pendiente o ya fue generado y se quiere volver a procesar con los nuevos cambios (anti-abuso rule support)
+    if project.status in ["PROCESSING", "QUEUED", "QUEUED_PDF", "GENERATING_HTML", "GENERATING_PDF"]:
+        raise HTTPException(status_code=400, detail="Cannot edit project while it is actively processing.")
 
     update_data = project_in.model_dump(exclude_unset=True)
     for key, value in update_data.items():
