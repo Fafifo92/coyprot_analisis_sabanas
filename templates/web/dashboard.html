@@ -89,7 +89,7 @@
                     <div class="mt-3 text-center sm:mt-5">
                         <h3 class="text-lg font-medium leading-6 text-gray-900">Crear Nuevo Proyecto</h3>
                         <div class="mt-2 text-sm text-gray-500 bg-yellow-50 p-3 rounded-md text-left">
-                            <p><strong>Aviso Importante:</strong> <span x-show="!$parent.isAdmin">Esta acción consumirá 1 Token. </span>Los datos ingresados podrán ser corregidos desde los detalles si fallan.</p>
+                            <p><strong>Aviso Importante:</strong> <span x-show="!isAdmin">Esta acción consumirá 1 Token. </span>Los datos ingresados podrán ser corregidos desde los detalles si fallan.</p>
                         </div>
                     </div>
                 </div>
@@ -113,12 +113,12 @@
                     </div>
 
                     <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3">
-                        <button type="submit" :disabled="creating" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none sm:col-start-2 disabled:opacity-50">
-                            <span x-show="!$parent.isAdmin" x-text="creating ? 'Creando...' : 'Consumir Token'"></span>
-                            <span x-show="$parent.isAdmin" x-text="creating ? 'Creando...' : 'Crear Proyecto'"></span>
-                        </button>
                         <button type="button" @click="closeModal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:col-start-1">
                             Cancelar
+                        </button>
+                        <button type="submit" :disabled="creating" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none sm:col-start-2 disabled:opacity-50">
+                            <span x-show="!isAdmin" x-text="creating ? 'Creando...' : 'Consumir Token'"></span>
+                            <span x-show="isAdmin" x-text="creating ? 'Creando...' : 'Crear Proyecto'"></span>
                         </button>
                     </div>
                 </form>
