@@ -45,6 +45,24 @@ async def update_project_admin(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    update_data = project_in.model_dump(exclude_unset=True)
+
+    # Si se cambia el estado a un estado inicial, limpiamos el mensaje de error anterior
+    if "status" in update_data and update_data["status"] in ["PENDING_FILES", "PENDING_MAPPING"]:
+        project.error_message = None
+        project.result_html_path = None
+        project.result_pdf_path = None
+
+    for key, value in update_data.items():
+        setattr(project, key, value)
+
+    audit = AuditLog(user_id=admin.id, action="ADMIN_UPDATE_PROJECT", details=f"Admin updated project {project_id}")
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(project)
+    return project
+
 @router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project_admin(
     project_id: int,
@@ -84,21 +102,3 @@ async def delete_project_admin(
     db.add(audit)
     await db.commit()
     return None
-
-    update_data = project_in.model_dump(exclude_unset=True)
-
-    # Si se cambia el estado a un estado inicial, limpiamos el mensaje de error anterior
-    if "status" in update_data and update_data["status"] in ["PENDING_FILES", "PENDING_MAPPING"]:
-        project.error_message = None
-        project.result_html_path = None
-        project.result_pdf_path = None
-
-    for key, value in update_data.items():
-        setattr(project, key, value)
-
-    audit = AuditLog(user_id=admin.id, action="ADMIN_UPDATE_PROJECT", details=f"Admin updated project {project_id}")
-    db.add(audit)
-
-    await db.commit()
-    await db.refresh(project)
-    return project

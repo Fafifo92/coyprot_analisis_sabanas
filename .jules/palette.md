@@ -1,3 +1,3 @@
-## 2024-05-24 - Login Form Labels
-**Learning:** The login form relied entirely on `sr-only` labels and placeholders for user input fields. This creates a poor UX because placeholders disappear when the user starts typing, leaving them without context for what the field is for. It also creates accessibility issues for users with cognitive disabilities or low vision.
-**Action:** Replace `sr-only` labels with visible `<label>` elements positioned clearly above the input fields. This ensures the context of the input field remains visible at all times, improving both general usability and accessibility.
+## 2024-10-25 - Icon-only buttons lack screen reader context
+**Learning:** Icon-only buttons (like delete trash cans) missing descriptive labels are completely opaque to screen readers, causing a severe accessibility barrier for visually impaired users. Relying solely on a visual `title` attribute is insufficient for assistive technologies.
+**Action:** Always add `aria-label` to buttons containing only icons or SVGs. This small change makes actions explicit and accessible to screen-reader users without affecting visual layout.

@@ -58,7 +58,8 @@ async def upload_file(
     project_dir = UPLOAD_DIR / str(project_id)
     project_dir.mkdir(exist_ok=True)
 
-    file_path = project_dir / file.filename
+    safe_filename = Path(file.filename).name
+    file_path = project_dir / safe_filename
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
@@ -78,7 +79,7 @@ async def upload_file(
     # Guardar en base de datos
     new_file = ProjectFile(
         project_id=project.id,
-        filename=file.filename,
+        filename=safe_filename,
         file_path=str(file_path),
         detected_sheets=detected_sheets,
         status="UPLOADED"
