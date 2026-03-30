@@ -1,3 +1,3 @@
-## 2024-10-25 - Icon-only buttons lack screen reader context
-**Learning:** Icon-only buttons (like delete trash cans) missing descriptive labels are completely opaque to screen readers, causing a severe accessibility barrier for visually impaired users. Relying solely on a visual `title` attribute is insufficient for assistive technologies.
-**Action:** Always add `aria-label` to buttons containing only icons or SVGs. This small change makes actions explicit and accessible to screen-reader users without affecting visual layout.
+## 2024-05-24 - Interactive Component Accessibility
+**Learning:** Icon-only interactive elements in Vue/Alpine.js applications (like delete buttons or tooltips) often lack screen-reader context if not explicitly labeled. The `aria-label` attribute is necessary to describe their function, even if visual icons or title tooltips are present.
+**Action:** Always add `aria-label` directly to icon-only buttons (e.g., `<button aria-label="Eliminar documento">...</button>`) to ensure accessibility for screen readers in all future UI components.
