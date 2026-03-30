@@ -18,3 +18,13 @@ INFO:     127.0.0.1:41516 - "GET /api/projects/1/files HTTP/1.1" 200 OK
 INFO:     127.0.0.1:43774 - "GET /api/projects/1 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:43782 - "GET /api/auth/me HTTP/1.1" 200 OK
 INFO:     127.0.0.1:43782 - "GET /api/projects/1/attachments HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'src/api/routers/analysis.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-03-30 18:20:45,460 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [19976]
+INFO:     Started server process [23817]
+INFO:     Waiting for application startup.
+2026-03-30 18:20:53,224 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
