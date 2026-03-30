@@ -3,13 +3,14 @@ import shutil
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
 from db.session import get_db
 import json
-from db.models import User, Project, ProjectFile, AuditLog
+from db.models import User
 from api.schemas.file_models import FileUploadResponse, ProjectFileMapRequest, SheetMappingConfig
 from api.services.security import get_current_user
+from api.repositories.project_repository import ProjectRepository
+from api.repositories.audit_repository import AuditRepository
 from services.data_processing_service import DataProcessingService
 
 router = APIRouter()
@@ -24,9 +25,8 @@ async def list_project_files(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Verificar proyecto y dueño
-    result = await db.execute(select(Project).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -34,8 +34,7 @@ async def list_project_files(
     if not current_user.is_admin and project.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    files_result = await db.execute(select(ProjectFile).filter(ProjectFile.project_id == project_id).order_by(ProjectFile.created_at))
-    return files_result.scalars().all()
+    return await project_repo.get_files_for_project(project_id)
 
 @router.post("/{project_id}/files/upload", response_model=FileUploadResponse)
 async def upload_file(
@@ -44,9 +43,8 @@ async def upload_file(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Verificar proyecto y dueño
-    result = await db.execute(select(Project).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -77,23 +75,12 @@ async def upload_file(
         raise HTTPException(status_code=400, detail=f"Error al procesar el archivo: {str(exc)}")
 
     # Guardar en base de datos
-    new_file = ProjectFile(
-        project_id=project.id,
-        filename=safe_filename,
-        file_path=str(file_path),
-        detected_sheets=detected_sheets,
-        status="UPLOADED"
-    )
+    new_file = await project_repo.create_file(project.id, safe_filename, str(file_path), detected_sheets)
 
-    db.add(new_file)
-    project.status = "PENDING_MAPPING"
+    await project_repo.update(project, {"status": "PENDING_MAPPING"})
 
-    audit = AuditLog(
-        user_id=current_user.id,
-        action="UPLOAD_FILE",
-        details=f"Uploaded {file.filename} to project {project_id}"
-    )
-    db.add(audit)
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(current_user.id, "UPLOAD_FILE", f"Uploaded {file.filename} to project {project_id}")
 
     await db.commit()
     await db.refresh(new_file)
@@ -114,9 +101,8 @@ async def save_file_mapping(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Verificar proyecto y dueño
-    result = await db.execute(select(Project).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -125,8 +111,7 @@ async def save_file_mapping(
         raise HTTPException(status_code=403, detail="Not authorized")
 
     # Verificar archivo
-    file_result = await db.execute(select(ProjectFile).filter(ProjectFile.id == file_id, ProjectFile.project_id == project_id))
-    project_file = file_result.scalars().first()
+    project_file = await project_repo.get_file_by_id(file_id, project_id)
 
     if not project_file:
         raise HTTPException(status_code=404, detail="File not found in this project")
@@ -136,13 +121,8 @@ async def save_file_mapping(
     project_file.sheet_configs = configs_list
     project_file.status = "MAPPED"
 
-    # Audit logic
-    audit = AuditLog(
-        user_id=current_user.id,
-        action="MAP_FILE",
-        details=f"Mapped file {project_file.filename} in project {project_id}"
-    )
-    db.add(audit)
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(current_user.id, "MAP_FILE", f"Mapped file {project_file.filename} in project {project_id}")
 
     await db.commit()
 

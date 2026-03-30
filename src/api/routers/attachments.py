@@ -3,11 +3,12 @@ import shutil
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
 from db.session import get_db
-from db.models import User, Project, ProjectAttachment, AuditLog
+from db.models import User
 from api.services.security import get_current_user
+from api.repositories.project_repository import ProjectRepository
+from api.repositories.audit_repository import AuditRepository
 
 router = APIRouter()
 
@@ -20,16 +21,15 @@ async def list_attachments(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Project).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     if not current_user.is_admin and project.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    atts_result = await db.execute(select(ProjectAttachment).filter(ProjectAttachment.project_id == project_id))
-    return atts_result.scalars().all()
+    return await project_repo.get_attachments_for_project(project_id)
 
 @router.post("/{project_id}/attachments")
 async def upload_attachment(
@@ -42,8 +42,8 @@ async def upload_attachment(
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Solo se permiten archivos PDF.")
 
-    result = await db.execute(select(Project).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -60,21 +60,10 @@ async def upload_attachment(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    new_att = ProjectAttachment(
-        project_id=project.id,
-        filename=file.filename,
-        file_path=str(file_path),
-        category=category
-    )
+    new_att = await project_repo.create_attachment(project.id, file.filename, str(file_path), category)
 
-    db.add(new_att)
-
-    audit = AuditLog(
-        user_id=current_user.id,
-        action="UPLOAD_ATTACHMENT",
-        details=f"Uploaded PDF {file.filename} as {category} for project {project_id}"
-    )
-    db.add(audit)
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(current_user.id, "UPLOAD_ATTACHMENT", f"Uploaded PDF {file.filename} as {category} for project {project_id}")
 
     await db.commit()
     await db.refresh(new_att)
@@ -88,14 +77,13 @@ async def delete_attachment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Project).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
 
     if not project or (not current_user.is_admin and project.owner_id != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    att_result = await db.execute(select(ProjectAttachment).filter(ProjectAttachment.id == att_id, ProjectAttachment.project_id == project_id))
-    att = att_result.scalars().first()
+    att = await project_repo.get_attachment_by_id(att_id, project_id)
 
     if not att:
         raise HTTPException(status_code=404, detail="Attachment not found")
@@ -104,6 +92,10 @@ async def delete_attachment(
     if os.path.exists(att.file_path):
         os.remove(att.file_path)
 
-    await db.delete(att)
+    await project_repo.delete_attachment(att)
+
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(current_user.id, "DELETE_ATTACHMENT", f"Deleted PDF {att.filename} from project {project_id}")
+
     await db.commit()
     return None
