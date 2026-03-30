@@ -21,8 +21,6 @@ async def list_projects(
     current_user: User = Depends(get_current_user)
 ):
     project_repo = ProjectRepository(db)
-    if current_user.is_admin:
-        return await project_repo.get_all(skip=skip, limit=limit)
     return await project_repo.get_by_owner(current_user.id, skip=skip, limit=limit)
 
 @router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
