@@ -1,0 +1,3 @@
+## 2024-05-24 - Optimizing Pandas iteration
+**Learning:** Iterating over a pandas DataFrame using `.iterrows()` is known to be extremely slow and memory inefficient because it packages every row into a Series object.
+**Action:** When a loop is absolutely necessary over a DataFrame (and vectorization is not possible), prefer `.itertuples()` over `.iterrows()`. Access elements via `getattr(row, 'column_name', default)` if dynamic column checking is needed, which performs significantly faster than Series access.

@@ -84,10 +84,11 @@ class GeocodingService:
                 df[col] = pd.NA
 
         count = 0
-        for idx, row in df.iterrows():
-            if pd.notna(row.get(COL_LATITUDE)) and pd.notna(row.get(COL_LONGITUDE)):
+        for row in df.itertuples():
+            idx = row.Index
+            if pd.notna(getattr(row, COL_LATITUDE, None)) and pd.notna(getattr(row, COL_LONGITUDE, None)):
                 continue
-            cell_name = row.get(COL_CELL_NAME)
+            cell_name = getattr(row, COL_CELL_NAME, None)
             result = self._muni_repo.find_by_name(str(cell_name) if cell_name else "")
             if result:
                 _, lat, lon = result

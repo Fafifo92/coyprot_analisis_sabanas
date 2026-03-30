@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 from typing import List
 
 from db.session import get_db
-from db.models import User, AuditLog
+from db.models import User
 from api.schemas.api_models import UserCreate, UserUpdate, UserResponse, AuditLogResponse
-from api.services.security import get_current_admin, get_password_hash
+from api.services.security import get_current_admin
+from api.repositories.user_repository import UserRepository
+from api.repositories.audit_repository import AuditRepository
 
 router = APIRouter()
 
@@ -16,8 +17,8 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin)
 ):
-    result = await db.execute(select(User).offset(skip).limit(limit))
-    return result.scalars().all()
+    user_repo = UserRepository(db)
+    return await user_repo.get_all(skip=skip, limit=limit)
 
 @router.post("/users", response_model=UserResponse)
 async def create_user(
@@ -25,23 +26,15 @@ async def create_user(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin)
 ):
-    result = await db.execute(select(User).filter(User.username == user_in.username))
-    if result.scalars().first():
+    user_repo = UserRepository(db)
+    existing_user = await user_repo.get_by_username(user_in.username)
+    if existing_user:
         raise HTTPException(status_code=400, detail="Username already registered")
 
-    hashed_password = get_password_hash(user_in.password)
-    new_user = User(
-        username=user_in.username,
-        hashed_password=hashed_password,
-        is_admin=user_in.is_admin,
-        tokens_balance=user_in.tokens_balance,
-        must_change_password=True,
-        is_active=True
-    )
-    db.add(new_user)
+    new_user = await user_repo.create(user_in.model_dump())
 
-    audit = AuditLog(user_id=admin.id, action="ADMIN_CREATE_USER", details=f"Created {user_in.username}")
-    db.add(audit)
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(admin.id, "ADMIN_CREATE_USER", f"Created {user_in.username}")
 
     await db.commit()
     await db.refresh(new_user)
@@ -54,22 +47,16 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin)
 ):
-    result = await db.execute(select(User).filter(User.id == user_id))
-    user = result.scalars().first()
+    user_repo = UserRepository(db)
+    user = await user_repo.get_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     update_data = user_in.model_dump(exclude_unset=True)
-    if "password" in update_data:
-        user.hashed_password = get_password_hash(update_data["password"])
-        user.must_change_password = True # Fuerza a que la cambie
-        del update_data["password"]
+    user = await user_repo.update(user, update_data)
 
-    for key, value in update_data.items():
-        setattr(user, key, value)
-
-    audit = AuditLog(user_id=admin.id, action="ADMIN_UPDATE_USER", details=f"Updated user_id {user_id}")
-    db.add(audit)
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(admin.id, "ADMIN_UPDATE_USER", f"Updated user_id {user_id}")
 
     await db.commit()
     await db.refresh(user)
@@ -81,15 +68,15 @@ async def soft_delete_user(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin)
 ):
-    result = await db.execute(select(User).filter(User.id == user_id))
-    user = result.scalars().first()
+    user_repo = UserRepository(db)
+    user = await user_repo.get_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user.is_active = False # Soft delete / Bloqueo
+    await user_repo.soft_delete(user)
 
-    audit = AuditLog(user_id=admin.id, action="ADMIN_BLOCK_USER", details=f"Blocked user_id {user_id}")
-    db.add(audit)
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(admin.id, "ADMIN_BLOCK_USER", f"Blocked user_id {user_id}")
 
     await db.commit()
     return None
@@ -100,5 +87,5 @@ async def list_audit_logs(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin)
 ):
-    result = await db.execute(select(AuditLog).order_by(AuditLog.created_at.desc()).offset(skip).limit(limit))
-    return result.scalars().all()
+    audit_repo = AuditRepository(db)
+    return await audit_repo.get_all(skip=skip, limit=limit)

@@ -136,36 +136,7 @@ def analyze_project_task(self, project_id: int):
             project.status = "GENERATING_HTML"
             db.commit()
 
-            import re
-            safe_case_number = re.sub(r'[<>:"/\\|?*]', '_', str(project.case_number))
-
-            # Combina el alias por defecto del objetivo con los guardados por el usuario
-            final_aliases = {project.target_phone: project.target_name or "Objetivo Principal"}
-            if project.aliases:
-                final_aliases.update(project.aliases)
-
-            # Recuperar y mapear adjuntos de la DB a PdfAttachment models
-            from core.models import PdfAttachment
-            db_atts = db.query(ProjectAttachment).filter(ProjectAttachment.project_id == project_id).all()
-            pdf_attachments = []
-            for att in db_atts:
-                pdf_attachments.append(PdfAttachment(category=att.category, source_path=Path(att.file_path)))
-
-            report_cfg = ReportConfig(
-                report_name=f"Caso_{safe_case_number}",
-                include_letterhead=True,
-                upload_ftp=False,
-                aliases=final_aliases,
-                case_metadata=CaseMetadata(
-                    fields={
-                        "Número de Caso": project.case_number,
-                        "Teléfono Objetivo": project.target_phone,
-                        "Nombre/Alias": project.target_name or "N/A",
-                        "Periodo Evaluado": project.period or "N/A"
-                    }
-                ),
-                pdf_attachments=pdf_attachments
-            )
+            report_cfg = _prepare_report_config(project, db, project_id)
 
             report_gen = ReportGenerator(geocoding_service=geo_svc)
 
@@ -226,32 +197,7 @@ def generate_pdf_task(self, project_id: int):
 
             base_dir = Path(project.result_html_path).parent.parent
 
-            import re
-            safe_case_number = re.sub(r'[<>:"/\\|?*]', '_', str(project.case_number))
-
-            final_aliases = {project.target_phone: project.target_name or "Objetivo Principal"}
-            if project.aliases:
-                final_aliases.update(project.aliases)
-
-            from core.models import PdfAttachment
-            db_atts = db.query(ProjectAttachment).filter(ProjectAttachment.project_id == project_id).all()
-            pdf_attachments = [PdfAttachment(category=a.category, source_path=Path(a.file_path)) for a in db_atts]
-
-            report_cfg = ReportConfig(
-                report_name=f"Caso_{safe_case_number}",
-                include_letterhead=True,
-                upload_ftp=False,
-                aliases=final_aliases,
-                case_metadata=CaseMetadata(
-                    fields={
-                        "Número de Caso": project.case_number,
-                        "Teléfono Objetivo": project.target_phone,
-                        "Nombre/Alias": project.target_name or "N/A",
-                        "Periodo Evaluado": project.period or "N/A"
-                    }
-                ),
-                pdf_attachments=pdf_attachments
-            )
+            report_cfg = _prepare_report_config(project, db, project_id)
 
             # Instanciar el servicio de geocodificación (solo por si lo pide el PDF builder para referencias, aunque los datos ya vengan con coordenadas)
             geo_svc = GeocodingService.from_paths(
@@ -314,3 +260,34 @@ def generate_pdf_task(self, project_id: int):
             project.error_message = f"Error al generar PDF: {str(e)}"
             db.commit()
             raise self.retry(exc=e, countdown=60)
+
+def _prepare_report_config(project: Project, db, project_id: int) -> ReportConfig:
+    import re
+    from core.models import PdfAttachment
+
+    safe_case_number = re.sub(r'[<>:"/\\|?*]', '_', str(project.case_number))
+
+    # Combina el alias por defecto del objetivo con los guardados por el usuario
+    final_aliases = {project.target_phone: project.target_name or "Objetivo Principal"}
+    if project.aliases:
+        final_aliases.update(project.aliases)
+
+    # Recuperar y mapear adjuntos de la DB a PdfAttachment models
+    db_atts = db.query(ProjectAttachment).filter(ProjectAttachment.project_id == project_id).all()
+    pdf_attachments = [PdfAttachment(category=a.category, source_path=Path(a.file_path)) for a in db_atts]
+
+    return ReportConfig(
+        report_name=f"Caso_{safe_case_number}",
+        include_letterhead=True,
+        upload_ftp=False,
+        aliases=final_aliases,
+        case_metadata=CaseMetadata(
+            fields={
+                "Número de Caso": project.case_number,
+                "Teléfono Objetivo": project.target_phone,
+                "Nombre/Alias": project.target_name or "N/A",
+                "Periodo Evaluado": project.period or "N/A"
+            }
+        ),
+        pdf_attachments=pdf_attachments
+    )

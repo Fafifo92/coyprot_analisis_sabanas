@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
 from typing import List
 
 from db.session import get_db
-from db.models import User, Project, AuditLog
-from api.schemas.api_models import ProjectCreate, ProjectResponse
+from db.models import User
+from api.schemas.api_models import ProjectCreate, ProjectResponse, ProjectUserUpdate
 from api.services.security import get_current_user
+from api.repositories.project_repository import ProjectRepository
+from api.repositories.audit_repository import AuditRepository
+from api.repositories.user_repository import UserRepository
+import pandas as pd
+from pathlib import Path
 
 router = APIRouter()
 
@@ -17,12 +20,10 @@ async def list_projects(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    query = select(Project)
-    if not current_user.is_admin:
-        query = query.filter(Project.owner_id == current_user.id)
-
-    result = await db.execute(query.order_by(Project.created_at.desc()).offset(skip).limit(limit))
-    return result.scalars().all()
+    project_repo = ProjectRepository(db)
+    if current_user.is_admin:
+        return await project_repo.get_all(skip=skip, limit=limit)
+    return await project_repo.get_by_owner(current_user.id, skip=skip, limit=limit)
 
 @router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 async def create_project(
@@ -30,6 +31,8 @@ async def create_project(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    user_repo = UserRepository(db)
+
     # Validar que el usuario tenga tokens suficientes (si no es admin)
     if not current_user.is_admin:
         if current_user.tokens_balance <= 0:
@@ -38,36 +41,22 @@ async def create_project(
                 detail="No tienes suficientes tokens para crear un nuevo proyecto/caso."
             )
         # Descontar token
-        current_user.tokens_balance -= 1
-    # Si es Admin, no se descuenta ningún token y puede crear infinitos proyectos.
+        await user_repo.update(current_user, {"tokens_balance": current_user.tokens_balance - 1})
 
-    # Crear proyecto
-    new_project = Project(
-        owner_id=current_user.id,
-        case_number=project_in.case_number,
-        target_phone=project_in.target_phone,
-        target_name=project_in.target_name,
-        period=project_in.period,
-        status="PENDING_FILES"
-    )
+    project_repo = ProjectRepository(db)
+    new_project = await project_repo.create(current_user.id, project_in.model_dump())
 
-    db.add(new_project)
+    # We update the status for compatibility with old routing
+    await project_repo.update(new_project, {"status": "PENDING_FILES"})
 
-    audit = AuditLog(
-        user_id=current_user.id,
-        action="CREATE_PROJECT",
-        details=f"Created project case {project_in.case_number} targeting phone {project_in.target_phone}"
-    )
-    db.add(audit)
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(current_user.id, "CREATE_PROJECT", f"Created project case {project_in.case_number} targeting phone {project_in.target_phone}")
 
     await db.commit()
     await db.refresh(new_project)
 
     return new_project
 
-from api.schemas.api_models import ProjectUserUpdate
-import pandas as pd
-from pathlib import Path
 
 @router.patch("/{project_id}", response_model=ProjectResponse)
 async def update_project(
@@ -76,8 +65,8 @@ async def update_project(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Project).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -86,20 +75,14 @@ async def update_project(
         raise HTTPException(status_code=403, detail="Not authorized to edit this project")
 
     # Solo bloquear la edición si el proyecto está activamente procesándose
-    # Permitir edición si el proyecto está pendiente o ya fue generado y se quiere volver a procesar con los nuevos cambios (anti-abuso rule support)
     if project.status in ["PROCESSING", "QUEUED", "QUEUED_PDF", "GENERATING_HTML", "GENERATING_PDF"]:
         raise HTTPException(status_code=400, detail="Cannot edit project while it is actively processing.")
 
     update_data = project_in.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(project, key, value)
+    project = await project_repo.update(project, update_data)
 
-    audit = AuditLog(
-        user_id=current_user.id,
-        action="UPDATE_PROJECT",
-        details=f"Updated project case {project.case_number} (ID: {project_id})"
-    )
-    db.add(audit)
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(current_user.id, "UPDATE_PROJECT", f"Updated project case {project.case_number} (ID: {project_id})")
 
     await db.commit()
     await db.refresh(project)
@@ -111,8 +94,8 @@ async def delete_project(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Project).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -131,14 +114,10 @@ async def delete_project(
     if upload_dir.exists():
         shutil.rmtree(upload_dir, ignore_errors=True)
 
-    await db.delete(project)
+    await project_repo.delete(project)
 
-    audit = AuditLog(
-        user_id=current_user.id,
-        action="DELETE_PROJECT",
-        details=f"Deleted project case {project.case_number} (ID: {project_id})"
-    )
-    db.add(audit)
+    audit_repo = AuditRepository(db)
+    await audit_repo.log_action(current_user.id, "DELETE_PROJECT", f"Deleted project case {project.case_number} (ID: {project_id})")
 
     await db.commit()
     return None
@@ -149,12 +128,8 @@ async def get_project_numbers(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Lee rápidamente los archivos Excel mapeados y devuelve una lista de números de teléfono únicos
-    presentes (originadores y receptores) para que el usuario pueda asignarles nombres/alias en el frontend.
-    """
-    result = await db.execute(select(Project).options(selectinload(Project.files)).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id_with_files(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -194,8 +169,8 @@ async def get_project(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Project).filter(Project.id == project_id))
-    project = result.scalars().first()
+    project_repo = ProjectRepository(db)
+    project = await project_repo.get_by_id(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
