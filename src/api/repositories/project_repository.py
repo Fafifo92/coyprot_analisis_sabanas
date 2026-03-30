@@ -52,6 +52,11 @@ class ProjectRepository:
             project.result_html_path = None
             project.result_pdf_path = None
 
+            # Reset file statuses to UPLOADED to allow re-mapping
+            files = await self.get_files_for_project(project.id)
+            for file in files:
+                file.status = "UPLOADED"
+
         for key, value in update_data.items():
             setattr(project, key, value)
 
