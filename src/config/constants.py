@@ -21,6 +21,7 @@ COL_DURATION: Final[str] = "duracion"
 COL_CELL_NAME: Final[str] = "nombre_celda"
 COL_LATITUDE: Final[str] = "latitud_n"
 COL_LONGITUDE: Final[str] = "longitud_w"
+COL_LOCATION_TYPE: Final[str] = "tipo_ubicacion"  # 'EXACT', 'TOWER', 'INFERRED'
 COL_CALL_TYPE: Final[str] = "tipo_llamada"
 COL_CELL_ID: Final[str] = "cell_identity_decimal"
 COL_LAC: Final[str] = "lac"

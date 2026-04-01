@@ -23,6 +23,7 @@ from config.constants import (
     COL_DATETIME,
     COL_LATITUDE,
     COL_LONGITUDE,
+    COL_LOCATION_TYPE,
     COL_ORIGINATOR,
     COL_RECEIVER,
     MAP_HEATMAP_BLUR,
@@ -196,6 +197,10 @@ class RouteMapBuilder:
                 if cell_id in ("nan", "None", "0", "0.0", ""):
                     cell_id = ""
 
+                loc_type = str(getattr(row, COL_LOCATION_TYPE, "EXACT"))
+                if loc_type in ("nan", "None", ""):
+                    loc_type = "EXACT"
+
                 points.append({
                     "lat": round(float(getattr(row, COL_LATITUDE)), 6),
                     "lon": round(float(getattr(row, COL_LONGITUDE)), 6),
@@ -204,6 +209,7 @@ class RouteMapBuilder:
                     "cell": cell_name,
                     "cellId": cell_id,
                     "seq": seq,
+                    "locType": loc_type,
                 })
 
             days_data.append({
@@ -332,10 +338,23 @@ html,body{{height:100%;font-family:'Segoe UI',system-ui,-apple-system,sans-serif
   justify-content:center;font-size:10px;font-weight:700;
   border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);
 }}
+.numbered-marker.inferred{{
+  background:#f59f00; /* Naranja para inferido */
+  border:2px dashed #fff;
+}}
+.numbered-marker.tower{{
+  background:#2b8a3e; /* Verde para torre db */
+}}
 .dot-marker{{
   background:#d62728;border-radius:50%;
   width:10px;height:10px;
   border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3);
+}}
+.dot-marker.inferred{{
+  background:#f59f00;
+}}
+.dot-marker.tower{{
+  background:#2b8a3e;
 }}
 
 .leaflet-popup-content{{margin:10px 14px}}
@@ -419,17 +438,21 @@ function goToDay(i) {{
 function prevDay() {{ if (curDay > 0) goToDay(curDay - 1); }}
 function nextDay() {{ if (curDay < R.days.length - 1) goToDay(curDay + 1); }}
 
-function makeIcon(seq, total) {{
+function makeIcon(seq, total, locType) {{
+  var extraClass = '';
+  if (locType === 'INFERRED') extraClass = ' inferred';
+  else if (locType === 'TOWER') extraClass = ' tower';
+
   if (total > 200) {{
     return L.divIcon({{
       className: '',
-      html: '<div class="dot-marker"></div>',
+      html: '<div class="dot-marker' + extraClass + '"></div>',
       iconSize: [10, 10], iconAnchor: [5, 5]
     }});
   }}
   return L.divIcon({{
     className: '',
-    html: '<div class="numbered-marker">' + seq + '</div>',
+    html: '<div class="numbered-marker' + extraClass + '">' + seq + '</div>',
     iconSize: [24, 24], iconAnchor: [12, 12]
   }});
 }}
@@ -455,13 +478,18 @@ function renderDay(idx) {{
 
   var total = day.points.length;
   day.points.forEach(function(pt) {{
-    var m = L.marker([pt.lat, pt.lon], {{ icon: makeIcon(pt.seq, total) }});
+    var m = L.marker([pt.lat, pt.lon], {{ icon: makeIcon(pt.seq, total, pt.locType) }});
     m._rd = pt;
+    var locText = 'GPS Exacto';
+    if (pt.locType === 'INFERRED') locText = 'Centro del Municipio (Inferido)';
+    else if (pt.locType === 'TOWER') locText = 'Antena Celular DB';
+
     m.bindPopup(
       '<div class="route-popup">' +
       '<b>' + esc(pt.cell) + '</b><span class="seq-badge">#' + pt.seq + '</span><br>' +
       (pt.cellId ? 'ID: <b>' + esc(pt.cellId) + '</b><br>' : '') +
       'Hora: <b>' + pt.time + '</b><br>' +
+      'Ubicación: <b>' + locText + '</b><br>' +
       'Lat: ' + pt.lat.toFixed(6) + ', Lon: ' + pt.lon.toFixed(6) +
       '</div>', {{ maxWidth: 300 }}
     );
