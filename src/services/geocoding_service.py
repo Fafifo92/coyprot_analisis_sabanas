@@ -16,7 +16,7 @@ from typing import Optional
 
 import pandas as pd
 
-from config.constants import COL_CELL_NAME, COL_LATITUDE, COL_LONGITUDE
+from config.constants import COL_CELL_NAME, COL_LATITUDE, COL_LONGITUDE, COL_LOCATION_TYPE
 from data.repositories.cell_tower_repository import CellTowerRepository
 from data.repositories.municipality_repository import MunicipalityRepository
 
@@ -42,13 +42,25 @@ class GeocodingService:
         self._cell_repo = cell_repo
         self._muni_repo = muni_repo
 
+    # ── Identificar coordenadas previas ───────────────────────────────────────
+    def _mark_exact_locations(self, df: pd.DataFrame) -> pd.DataFrame:
+        if COL_LOCATION_TYPE not in df.columns:
+            df[COL_LOCATION_TYPE] = pd.NA
+
+        if COL_LATITUDE in df.columns and COL_LONGITUDE in df.columns:
+            mask = df[COL_LATITUDE].notna() & df[COL_LONGITUDE].notna() & df[COL_LOCATION_TYPE].isna()
+            df.loc[mask, COL_LOCATION_TYPE] = "EXACT"
+
+        return df
+
     # ── Estrategia 1: DB de celdas ────────────────────────────────────────────
 
     def geocode_by_cell_db(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Llena coordenadas faltantes usando la base de datos de torres celulares.
-        Solo actúa si no hay coordenadas GPS nativas y existe nombre_celda.
         """
+        df = self._mark_exact_locations(df)
+
         if self._cell_repo is None or not self._cell_repo.is_available:
             logger.debug("Repositorio de celdas no disponible.")
             return df
@@ -56,15 +68,14 @@ class GeocodingService:
         if COL_CELL_NAME not in df.columns:
             return df
 
-        has_native_coords = (
-            COL_LATITUDE in df.columns and df[COL_LATITUDE].notna().any()
-        )
-        if has_native_coords:
-            logger.debug("Coordenadas GPS nativas detectadas. Omitiendo DB celdas.")
-            return df
-
         logger.info("Geolocalizando con base de datos de celdas...")
-        return self._cell_repo.bulk_lookup(df, COL_CELL_NAME)
+        df = self._cell_repo.bulk_lookup(df, COL_CELL_NAME)
+
+        # Marcar las coordenadas recién encontradas (que no son exactas nativas)
+        mask = df[COL_LATITUDE].notna() & df[COL_LONGITUDE].notna() & df[COL_LOCATION_TYPE].isna()
+        df.loc[mask, COL_LOCATION_TYPE] = "TOWER"
+
+        return df
 
     # ── Estrategia 2: Inferencia por municipio ────────────────────────────────
 
@@ -79,7 +90,7 @@ class GeocodingService:
         if COL_CELL_NAME not in df.columns:
             return df
 
-        for col in (COL_LATITUDE, COL_LONGITUDE):
+        for col in (COL_LATITUDE, COL_LONGITUDE, COL_LOCATION_TYPE):
             if col not in df.columns:
                 df[col] = pd.NA
 
@@ -94,6 +105,7 @@ class GeocodingService:
                 _, lat, lon = result
                 df.at[idx, COL_LATITUDE] = lat
                 df.at[idx, COL_LONGITUDE] = lon
+                df.at[idx, COL_LOCATION_TYPE] = "INFERRED"
                 count += 1
 
         logger.info("Inferencia por municipio: %d registros recuperados.", count)

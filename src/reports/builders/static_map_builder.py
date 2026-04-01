@@ -134,6 +134,7 @@ class StaticLocationMapBuilder:
             logger.warning("Sin coordenadas para mapa de ubicaciones.")
             return False
 
+        from config.constants import COL_LOCATION_TYPE
         clean = clean.copy()
         tipo_map = {
             CALL_TYPE_INCOMING: "Entrante",
@@ -156,16 +157,24 @@ class StaticLocationMapBuilder:
             if location:
                 loc_title += f" — {location}"
 
+            # Asegurar que la columna existe y dar nombres legibles
+            if COL_LOCATION_TYPE not in clean.columns:
+                clean[COL_LOCATION_TYPE] = "EXACT"
+
+            clean["loc_display"] = clean[COL_LOCATION_TYPE].map({
+                "EXACT": "GPS Exacto",
+                "TOWER": "Antena DB",
+                "INFERRED": "Inferido (Centro Municipio)"
+            }).fillna("GPS Exacto")
+
+            # Combinamos ambos para visualización
+            clean["leyenda"] = clean["tipo_display"] + " (" + clean["loc_display"] + ")"
+
             fig = px.scatter_map(
                 clean,
                 lat=COL_LATITUDE,
                 lon=COL_LONGITUDE,
-                color="tipo_display",
-                color_discrete_map={
-                    "Entrante": "#0d6efd",
-                    "Saliente": "#28a745",
-                    "Otro": "#6c757d",
-                },
+                color="leyenda",
                 opacity=0.7,
                 zoom=zoom,
                 title=loc_title,
@@ -341,11 +350,22 @@ def _build_route_figure(group: pd.DataFrame, title: str) -> go.Figure:
     fig = go.Figure()
 
     # Marcadores numerados
+    from config.constants import COL_LOCATION_TYPE
+    if COL_LOCATION_TYPE not in group.columns:
+        group[COL_LOCATION_TYPE] = "EXACT"
+
+    # Colores baseados en el tipo de ubicación (para diferenciar inferidos en PDF estático)
+    colors = group[COL_LOCATION_TYPE].map({
+        "EXACT": "#d62728",
+        "TOWER": "#2b8a3e",
+        "INFERRED": "#f59f00"
+    }).fillna("#d62728").tolist()
+
     fig.add_trace(go.Scattermap(
         lat=group[COL_LATITUDE],
         lon=group[COL_LONGITUDE],
         mode="markers+text",
-        marker=dict(size=10, color="#d62728", opacity=0.85),
+        marker=dict(size=10, color=colors, opacity=0.85),
         text=[str(i + 1) for i in range(len(group))],
         textfont=dict(size=8, color="white"),
         hovertext=group.get(COL_CELL_NAME, ""),
