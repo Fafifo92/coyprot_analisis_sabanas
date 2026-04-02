@@ -59,7 +59,10 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                 <span x-show="user.is_admin" class="text-gray-400 italic text-xs">Uso Ilimitado</span>
-                                <span x-show="!user.is_admin" class="text-indigo-600 font-bold text-lg" x-text="user.tokens_balance"></span>
+                                <div x-show="!user.is_admin" class="flex flex-col items-center">
+                                    <span class="text-indigo-600 font-bold text-lg"><span x-text="user.tokens_balance"></span><span class="text-gray-500 text-xs ml-1 font-normal">disponibles</span></span>
+                                    <span class="text-gray-500 text-xs mt-1 border-t pt-1 border-gray-200"><span x-text="user.projects_created || 0"></span> usos / casos creados</span>
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                 <button @click="openEditModal(user)" class="text-indigo-600 hover:text-indigo-900">Editar</button>

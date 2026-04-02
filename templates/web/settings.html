@@ -6,10 +6,29 @@
 <div class="max-w-4xl mx-auto" x-data="settingsData()" x-init="init()">
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Configuración de Cuenta</h1>
-        <p class="text-sm text-gray-500">Personaliza la apariencia y los datos de tus informes.</p>
+        <p class="text-sm text-gray-500">Administra tu perfil, colores, logos, agenda de contactos y seguridad.</p>
     </div>
 
-    <div class="bg-white shadow rounded-lg mb-6">
+    <!-- Tabs Navegación Configuración -->
+    <div class="mb-6 border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+            <button @click="activeTab = 'perfil'" :class="activeTab === 'perfil' ? 'border-indigo-500 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Perfil y Empresa
+            </button>
+            <button @click="activeTab = 'apariencia'" :class="activeTab === 'apariencia' ? 'border-indigo-500 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Apariencia / Logo
+            </button>
+            <button @click="activeTab = 'agenda'" :class="activeTab === 'agenda' ? 'border-indigo-500 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Agenda Global de Alias
+            </button>
+            <button @click="activeTab = 'seguridad'" :class="activeTab === 'seguridad' ? 'border-indigo-500 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Privacidad y Seguridad
+            </button>
+        </nav>
+    </div>
+
+    <!-- Contenido: Perfil y Empresa -->
+    <div x-show="activeTab === 'perfil'" class="bg-white shadow rounded-lg mb-6">
         <div class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">Información de la Empresa</h2>
 
@@ -45,7 +64,8 @@
         </div>
     </div>
 
-    <div class="bg-white shadow rounded-lg mb-6">
+    <!-- Contenido: Apariencia del Informe -->
+    <div x-show="activeTab === 'apariencia'" class="bg-white shadow rounded-lg mb-6">
         <div class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">Apariencia del Informe</h2>
 
@@ -92,9 +112,16 @@
         </div>
     </div>
 
-    <div class="bg-white shadow rounded-lg mb-6">
+    <!-- Contenido: Agenda Global -->
+    <div x-show="activeTab === 'agenda'" class="bg-white shadow rounded-lg mb-6">
         <div class="p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">Agenda Global de Alias</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Agenda Global de Alias</h2>
+                <!-- Botón de admin para sincronizar con Master si es admin, o si se desea mostrar -->
+                <button x-show="isAdmin" @click="fetchAdminMasterAliases" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded hover:bg-indigo-200 transition-colors">
+                    Sincronizar DB Maestra
+                </button>
+            </div>
             <p class="text-sm text-gray-500 mb-4">Números guardados globalmente para autocompletar en tus proyectos.</p>
 
             <div class="overflow-y-auto max-h-60 border border-gray-200 rounded-md">
@@ -129,7 +156,8 @@
         </div>
     </div>
 
-    <div class="bg-white shadow rounded-lg mb-6">
+    <!-- Contenido: Privacidad y Seguridad -->
+    <div x-show="activeTab === 'seguridad'" class="bg-white shadow rounded-lg mb-6">
         <div class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">Privacidad y Telemetría</h2>
 
@@ -156,6 +184,8 @@
 <script>
 function settingsData() {
     return {
+        activeTab: 'perfil',
+        isAdmin: localStorage.getItem('is_admin') === 'true',
         settings: {
             company_name: '',
             address: '',
@@ -193,6 +223,21 @@ function settingsData() {
 
         removeAlias(number) {
             delete this.globalAliases[number];
+        },
+
+        async fetchAdminMasterAliases() {
+            try {
+                const res = await fetch('/api/admin/global_aliases', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+                if(res.ok) {
+                    const master = await res.json();
+                    this.globalAliases = { ...this.globalAliases, ...master };
+                    Swal.fire('Sincronizado', 'Se han importado los alias de la DB maestra.', 'success');
+                }
+            } catch(e) {
+                console.error(e);
+            }
         },
 
         async init() {
@@ -239,6 +284,17 @@ function settingsData() {
                 });
 
                 if (!res.ok) throw new Error("Error al guardar");
+
+                if (this.isAdmin) {
+                    await fetch('/api/admin/global_aliases', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                        },
+                        body: JSON.stringify(this.globalAliases)
+                    });
+                }
 
                 Swal.fire('Guardado', 'La configuración ha sido actualizada.', 'success');
             } catch (error) {
