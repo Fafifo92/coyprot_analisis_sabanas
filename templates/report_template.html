@@ -338,19 +338,23 @@
                     <div class="col-4">
                       <div class="p-2 bg-light rounded">
                         <div class="h3 fw-bold text-primary mb-0">{{ total_llamadas }}</div><small
-                          class="text-muted text-uppercase" style="font-size: 0.7rem;">Eventos</small>
+                          class="text-muted text-uppercase d-block" style="font-size: 0.7rem;">Eventos</small>
+                        <div class="d-flex justify-content-center gap-2 mt-1">
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size: 0.65rem;" title="Entrantes"><i class="bi bi-arrow-down"></i> {{ total_entrantes }}</span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 0.65rem;" title="Salientes"><i class="bi bi-arrow-up"></i> {{ total_salientes }}</span>
+                        </div>
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="p-2 bg-light rounded">
+                      <div class="p-2 bg-light rounded h-100 d-flex flex-column justify-content-center">
                         <div class="h3 fw-bold text-dark mb-0">{{ total_numeros }}</div><small
                           class="text-muted text-uppercase" style="font-size: 0.7rem;">Números</small>
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="p-2 bg-light rounded">
+                      <div class="p-2 bg-light rounded h-100 d-flex flex-column justify-content-center">
                         <div class="h3 fw-bold text-success mb-0">{{ promedio_llamadas }}</div><small
-                          class="text-muted text-uppercase" style="font-size: 0.7rem;">Promedio</small>
+                          class="text-muted text-uppercase" style="font-size: 0.7rem;">Por Día</small>
                       </div>
                     </div>
                   </div>
@@ -426,33 +430,45 @@
         </div>
 
         {% if has_atypical_locations %}
-        <h4 class="text-danger mb-3 mt-5 border-bottom border-danger border-opacity-25 pb-2"><i class="bi bi-exclamation-triangle-fill"></i> Advertencia: Ubicaciones y Conexiones Atípicas</h4>
-        <p class="text-muted small mb-4">Con base en los datos de llamadas y conexiones a internet, se han detectado los siguientes sectores que el objetivo frecuentó menos del 5% del tiempo total evaluado. Estas ubicaciones podrían representar viajes, desvíos inusuales o lugares de interés secundario.</p>
+        <div class="accordion mb-4" id="accordionAtypical">
+          <div class="accordion-item border-danger border-opacity-25 shadow-sm">
+            <h2 class="accordion-header" id="headingAtypical">
+              <button class="accordion-button collapsed bg-danger bg-opacity-10 text-danger fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAtypical" aria-expanded="false" aria-controls="collapseAtypical">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> Advertencia: Ver Ubicaciones y Conexiones Atípicas
+              </button>
+            </h2>
+            <div id="collapseAtypical" class="accordion-collapse collapse" aria-labelledby="headingAtypical" data-bs-parent="#accordionAtypical">
+              <div class="accordion-body">
+                <p class="text-muted small mb-4">Con base en los datos de llamadas y conexiones a internet, se han detectado los siguientes sectores que el objetivo frecuentó menos del 5% del tiempo total evaluado. Estas ubicaciones podrían representar viajes, desvíos inusuales o lugares de interés secundario.</p>
 
-        <div class="row g-4 mb-4">
-           {% for at_map in atypical_maps %}
-           <div class="col-md-6">
-               <div class="card shadow-sm border-danger border-opacity-25 h-100">
-                  <div class="card-header bg-danger bg-opacity-10 pt-3 pb-2 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold text-danger m-0">Sector Atípico {{ loop.index }}</h6>
-                    <span class="badge bg-danger rounded-pill">{{ at_map.count }} Registros</span>
-                  </div>
-                  <div class="card-body p-0">
-                     <div style="height: 300px; width: 100%;">
-                        <iframe src="../maps/{{ at_map.file }}" class="w-100 h-100 border-0"></iframe>
-                     </div>
-                  </div>
-                  <div class="card-footer bg-white text-muted small p-3" style="max-height: 120px; overflow-y: auto;">
-                      <strong>Fechas/Horas de detección:</strong><br>
-                      <ul class="mb-0 ps-3 mt-1">
-                          {% for date_str in at_map.dates %}
-                              <li>{{ date_str }}</li>
-                          {% endfor %}
-                      </ul>
-                  </div>
-               </div>
-           </div>
-           {% endfor %}
+                <div class="row g-4">
+                   {% for at_map in atypical_maps %}
+                   <div class="col-md-6">
+                       <div class="card shadow-sm border-danger border-opacity-25 h-100 mb-0">
+                          <div class="card-header bg-white pt-3 pb-2 d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold text-danger m-0">Sector {{ loop.index }}</h6>
+                            <span class="badge bg-danger rounded-pill">{{ at_map.count }} Registros</span>
+                          </div>
+                          <div class="card-body p-0">
+                             <div style="height: 300px; width: 100%;">
+                                <iframe src="../maps/{{ at_map.file }}" class="w-100 h-100 border-0"></iframe>
+                             </div>
+                          </div>
+                          <div class="card-footer bg-white text-muted small p-3" style="max-height: 120px; overflow-y: auto;">
+                              <strong>Fechas/Horas de detección:</strong><br>
+                              <ul class="mb-0 ps-3 mt-1">
+                                  {% for date_str in at_map.dates %}
+                                      <li>{{ date_str }}</li>
+                                  {% endfor %}
+                              </ul>
+                          </div>
+                       </div>
+                   </div>
+                   {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         {% endif %}
         {% endif %}
