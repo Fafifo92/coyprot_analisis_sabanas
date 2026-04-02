@@ -19,6 +19,11 @@ class ApiSettings(BaseSettings):
     CELERY_ENABLED: bool = Field(default=False) # False para usar BackgroundTasks localmente en Windows sin Redis
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
 
+    # Seguridad CORS
+    ALLOWED_ORIGINS: list[str] = Field(
+        default=["http://localhost", "http://localhost:8000", "http://127.0.0.1", "http://127.0.0.1:8000"]
+    )
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 @lru_cache()
