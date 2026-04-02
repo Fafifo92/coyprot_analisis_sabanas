@@ -461,3 +461,34 @@ INFO:     Started server process [2638137]
 INFO:     Waiting for application startup.
 2026-04-02 14:09:54,374 [INFO] Verificando/Creando tablas de Base de Datos...
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/reports/builders/map_builder.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 18:32:06,738 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2638137]
+INFO:     Started server process [3571461]
+INFO:     Waiting for application startup.
+2026-04-02 18:32:14,441 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+INFO:     127.0.0.1:48576 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48576 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48576 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48576 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48590 - "GET /api/projects/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57320 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57320 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57320 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57322 - "GET /api/projects/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57320 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52148 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52148 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52148 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52148 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52162 - "GET /api/projects/ HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 19:05:06,546 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3571461]
+INFO:     Stopping reloader process [3383478]

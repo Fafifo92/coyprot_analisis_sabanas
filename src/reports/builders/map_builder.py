@@ -113,14 +113,19 @@ class ClusterMapBuilder:
         lat_min, lon_min = clean[COL_LATITUDE].min(), clean[COL_LONGITUDE].min()
         lat_max, lon_max = clean[COL_LATITUDE].max(), clean[COL_LONGITUDE].max()
 
-        # Add a tiny padding/max_zoom safeguard if min==max to prevent infinite zoom
-        # Also add a slight padding in general so points are not exactly on the edge
-        padding_lat = max(0.01, (lat_max - lat_min) * 0.05)
-        padding_lon = max(0.01, (lon_max - lon_min) * 0.05)
+        # Adjust fit_bounds to provide closer zoom instead of zooming out too much
+        # We ensure padding isn't excessive by capping it at a max relative degree shift
+        # (e.g. 0.05 degree is ~5.5km, which is plenty of padding)
 
         if lat_min == lat_max and lon_min == lon_max:
-            mapa.fit_bounds([[lat_min - 0.01, lon_min - 0.01], [lat_max + 0.01, lon_max + 0.01]])
+            # Only one point, use a fixed zoom
+            mapa.fit_bounds([[lat_min - 0.005, lon_min - 0.005], [lat_max + 0.005, lon_max + 0.005]])
         else:
+            # For multiple points, padding should scale with distance but not exceed a tiny offset
+            # to prevent showing continents for dense clusters.
+            padding_lat = min(0.05, max(0.002, (lat_max - lat_min) * 0.05))
+            padding_lon = min(0.05, max(0.002, (lon_max - lon_min) * 0.05))
+
             mapa.fit_bounds(
                 [[lat_min - padding_lat, lon_min - padding_lon],
                  [lat_max + padding_lat, lon_max + padding_lon]]
@@ -224,12 +229,12 @@ class HeatMapBuilder:
         lat_min, lon_min = clean[COL_LATITUDE].min(), clean[COL_LONGITUDE].min()
         lat_max, lon_max = clean[COL_LATITUDE].max(), clean[COL_LONGITUDE].max()
 
-        padding_lat = max(0.01, (lat_max - lat_min) * 0.05)
-        padding_lon = max(0.01, (lon_max - lon_min) * 0.05)
-
         if lat_min == lat_max and lon_min == lon_max:
-            mapa.fit_bounds([[lat_min - 0.01, lon_min - 0.01], [lat_max + 0.01, lon_max + 0.01]])
+            mapa.fit_bounds([[lat_min - 0.005, lon_min - 0.005], [lat_max + 0.005, lon_max + 0.005]])
         else:
+            padding_lat = min(0.05, max(0.002, (lat_max - lat_min) * 0.05))
+            padding_lon = min(0.05, max(0.002, (lon_max - lon_min) * 0.05))
+
             mapa.fit_bounds(
                 [[lat_min - padding_lat, lon_min - padding_lon],
                  [lat_max + padding_lat, lon_max + padding_lon]]
