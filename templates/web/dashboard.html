@@ -107,10 +107,6 @@
                         <label class="block text-sm font-medium text-gray-700">Nombre del Objetivo (Opcional)</label>
                         <input type="text" x-model="newProject.target_name" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Periodo de Análisis (Opcional)</label>
-                        <input type="text" x-model="newProject.period" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500">
-                    </div>
 
                     <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3">
                         <button type="button" @click="closeModal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:col-start-1">
@@ -136,7 +132,7 @@
             loading: true,
             isModalOpen: false,
             creating: false,
-            newProject: { case_number: '', target_phone: '', target_name: '', period: '' },
+            newProject: { case_number: '', target_phone: '', target_name: '' },
 
             init() {
                 this.fetchProjects();
@@ -158,7 +154,7 @@
             },
 
             openModal() {
-                this.newProject = { case_number: '', target_phone: '', target_name: '', period: '' };
+                this.newProject = { case_number: '', target_phone: '', target_name: '' };
                 this.isModalOpen = true;
             },
 

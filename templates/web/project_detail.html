@@ -96,10 +96,6 @@
                                 <label class="block text-sm font-medium text-gray-700">Nombre (Opcional)</label>
                                 <input type="text" x-model="formProject.target_name" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Periodo (Opcional)</label>
-                                <input type="text" x-model="formProject.period" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                            </div>
 
                             <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense pt-4 border-t border-gray-200">
                                 <button type="submit" :disabled="savingProjectData" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none sm:col-start-2 sm:text-sm">
@@ -142,7 +138,6 @@
                             <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
                                 <span><strong class="text-gray-700">Objetivo:</strong> <span x-text="project.target_phone"></span></span>
                                 <span x-show="project.target_name"><strong class="text-gray-700">Nombre:</strong> <span x-text="project.target_name"></span></span>
-                                <span x-show="project.period"><strong class="text-gray-700">Periodo:</strong> <span x-text="project.period"></span></span>
                             </div>
                             <!-- Show error if any -->
                             <div x-show="project.error_message" class="mt-3 p-3 bg-red-50 text-red-700 rounded-md text-sm border border-red-100 shadow-sm max-w-xl">
@@ -542,7 +537,7 @@
 
                 isEditModalOpen: false,
                 savingProjectData: false,
-                formProject: { case_number: '', target_phone: '', target_name: '', period: '' },
+                formProject: { case_number: '', target_phone: '', target_name: '' },
 
                 init() {
                     const token = localStorage.getItem('access_token');
@@ -584,8 +579,7 @@
                     this.formProject = {
                         case_number: this.project.case_number,
                         target_phone: this.project.target_phone,
-                        target_name: this.project.target_name || '',
-                        period: this.project.period || ''
+                        target_name: this.project.target_name || ''
                     };
                     this.isEditModalOpen = true;
                 },

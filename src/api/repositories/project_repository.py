@@ -38,8 +38,7 @@ class ProjectRepository:
             owner_id=owner_id,
             case_number=project_data["case_number"],
             target_phone=project_data["target_phone"],
-            target_name=project_data.get("target_name"),
-            period=project_data.get("period")
+            target_name=project_data.get("target_name")
         )
         self.db.add(new_project)
         await self.db.flush()

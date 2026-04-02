@@ -136,7 +136,7 @@ def analyze_project_task(self, project_id: int):
             project.status = "GENERATING_HTML"
             db.commit()
 
-            report_cfg = _prepare_report_config(project, db, project_id)
+            report_cfg = _prepare_report_config(project, db, project_id, df_all=df_final)
 
             report_gen = ReportGenerator(geocoding_service=geo_svc)
 
@@ -219,7 +219,7 @@ def generate_pdf_task(self, project_id: int):
 
             base_dir = Path(project.result_html_path).parent.parent
 
-            report_cfg = _prepare_report_config(project, db, project_id)
+            report_cfg = _prepare_report_config(project, db, project_id, df_all=df_final)
 
             # Instanciar el servicio de geocodificación (solo por si lo pide el PDF builder para referencias, aunque los datos ya vengan con coordenadas)
             geo_svc = GeocodingService.from_paths(
@@ -304,9 +304,10 @@ def generate_pdf_task(self, project_id: int):
             db.commit()
             raise self.retry(exc=e, countdown=60)
 
-def _prepare_report_config(project: Project, db, project_id: int) -> ReportConfig:
+def _prepare_report_config(project: Project, db, project_id: int, df_all=None) -> ReportConfig:
     import re
     from core.models import PdfAttachment
+    import pandas as pd
 
     safe_case_number = re.sub(r'[<>:"/\\|?*]', '_', str(project.case_number))
 
@@ -363,6 +364,14 @@ def _prepare_report_config(project: Project, db, project_id: int) -> ReportConfi
     if not p_color.startswith("#"): p_color = f"#{p_color}"
     if not s_color.startswith("#"): s_color = f"#{s_color}"
 
+    period_str = project.period or "N/A"
+    if df_all is not None and not df_all.empty and "fecha_hora" in df_all.columns:
+        dates = pd.to_datetime(df_all["fecha_hora"], errors="coerce").dropna()
+        if not dates.empty:
+            min_date = dates.min().strftime("%Y-%m-%d")
+            max_date = dates.max().strftime("%Y-%m-%d")
+            period_str = f"{min_date} a {max_date}"
+
     return ReportConfig(
         report_name=f"Caso_{safe_case_number}",
         include_letterhead=include_letterhead,
@@ -373,7 +382,7 @@ def _prepare_report_config(project: Project, db, project_id: int) -> ReportConfi
                 "Número de Caso": project.case_number,
                 "Teléfono Objetivo": project.target_phone,
                 "Nombre/Alias": project.target_name or "N/A",
-                "Periodo Evaluado": project.period or "N/A"
+                "Periodo Evaluado": period_str
             }
         ),
         pdf_attachments=pdf_attachments,

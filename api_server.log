@@ -1,0 +1,3 @@
+INFO:     Will watch for changes in these directories: ['/app']
+ERROR:    [Errno 98] Address already in use
+Iniciando Servidor Coyprot SaaS en http://127.0.0.1:8000
