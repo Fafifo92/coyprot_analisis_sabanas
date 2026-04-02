@@ -293,23 +293,20 @@
 
     <ul class="nav nav-tabs mb-4" id="mainTab" role="tablist">
       <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview"><i
-            class="bi bi-file-earmark-bar-graph"></i> Resumen</button></li>
+            class="bi bi-file-earmark-bar-graph"></i> Resumen General</button></li>
+
       {% if llamadas_entrantes %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
-          data-bs-target="#entrantes"><i class="bi bi-box-arrow-in-down"></i> Entrantes</button></li>{% endif %}
+          data-bs-target="#entrantes"><i class="bi bi-box-arrow-in-down"></i> Llamadas Entrantes</button></li>{% endif %}
+
       {% if llamadas_salientes %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
-          data-bs-target="#salientes"><i class="bi bi-box-arrow-up"></i> Salientes</button></li>{% endif %}
-      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tendencias"><i
-            class="bi bi-graph-up-arrow"></i> Tendencias</button></li>
+          data-bs-target="#salientes"><i class="bi bi-box-arrow-up"></i> Llamadas Salientes</button></li>{% endif %}
 
       {% if has_datos_recorrido %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
-          data-bs-target="#recorrido"><i class="bi bi-signpost-split-fill"></i> Recorrido por datos</button></li>{%
-      endif %}
+          data-bs-target="#recorrido"><i class="bi bi-signpost-split-fill"></i> Recorrido por Datos</button></li>{% endif %}
 
-      {% if has_coords %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#maps"><i
-            class="bi bi-map-fill"></i> Mapas de llamadas</button></li>{% endif %}
-      {% if adjuntos %}{% for pdf in adjuntos %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
-          data-bs-target="#pdf-{{ loop.index }}"><i class="bi bi-paperclip"></i> {{ pdf.categoria }}</button></li>{%
-      endfor %}{% endif %}
+      {% if adjuntos %}
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#documentos"><i class="bi bi-folder-fill"></i> Documentos</button></li>
+      {% endif %}
     </ul>
 
     <div class="tab-content">
@@ -341,7 +338,7 @@
                     <div class="col-4">
                       <div class="p-2 bg-light rounded">
                         <div class="h3 fw-bold text-primary mb-0">{{ total_llamadas }}</div><small
-                          class="text-muted text-uppercase" style="font-size: 0.7rem;">Llamadas</small>
+                          class="text-muted text-uppercase" style="font-size: 0.7rem;">Eventos</small>
                       </div>
                     </div>
                     <div class="col-4">
@@ -367,7 +364,81 @@
           </div>
         </div>
 
-        <div class="row g-4">
+        <div class="card p-4 mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0"><i class="bi bi-clock-history text-info"></i> Tendencia Horaria (Global)</h3>
+          </div>
+          <div class="row mb-4 p-3 bg-light border rounded-3 mx-1 align-items-center">
+            <div class="col-md-6"><label for="chart-number-filter" class="form-label fw-bold text-dark mb-1">🔍 Filtrar
+                por número específico:</label><select id="chart-number-filter" placeholder="Escribe o selecciona..." autocomplete="off">
+                <option value="">-- Todos los números (Global) --</option>{% for number in numeros_unicos %}<option value="{{ number }}">
+                  {{ number }}</option>{% endfor %}
+              </select></div>
+            <div class="col-md-6 text-muted text-end"><small><i class="bi bi-cursor-fill"></i> Haz clic en los puntos del gráfico para ver la hora, fecha exacta y <b>ubicación</b> en mapa del evento.</small></div>
+          </div>
+          <div class="d-flex justify-content-center gap-3 mb-4 filter-btn-group">
+            <button class="btn btn-sm btn-outline-primary active shadow-sm" id="btn-entrante"
+              onclick="setChartFilter('entrante')"><i class="bi bi-arrow-down"></i> Eventos Entrantes</button>
+            <button class="btn btn-sm btn-outline-warning shadow-sm" id="btn-todas" onclick="setChartFilter('todas')"><i
+                class="bi bi-circle-half"></i> Mostrar Ambos</button>
+            <button class="btn btn-sm btn-outline-success shadow-sm" id="btn-saliente"
+              onclick="setChartFilter('saliente')"><i class="bi bi-arrow-up"></i> Eventos Salientes</button>
+          </div>
+          <div class="chart-container bg-white border rounded p-2"><canvas id="call-chart"></canvas></div>
+        </div>
+
+        {% if has_coords %}
+        <!-- Mapas Analíticos de Resumen -->
+        <h4 class="text-secondary mb-3 mt-5 border-bottom pb-2"><i class="bi bi-compass"></i> Patrones de Ubicación de Objetivos</h4>
+        <div class="row g-4 mb-4">
+          <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+               <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+                 <h5 class="fw-bold text-dark m-0"><i class="bi bi-brightness-high text-warning"></i> Zonas Frecuentes (Día)</h5>
+                 <p class="text-muted small m-0 mt-1">Ubicaciones inferidas durante horario laboral (06:00 - 18:00).</p>
+               </div>
+               <div class="card-body p-0">
+                  <div style="height: 350px; width: 100%;">
+                     <!-- Mostrar mapa general con filtro nocturno=falso -->
+                     <iframe src="../maps/mapa_calor.html?is_night=false" class="w-100 h-100 border-0"></iframe>
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+               <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+                 <h5 class="fw-bold text-dark m-0"><i class="bi bi-moon-stars text-indigo-500"></i> Zonas Frecuentes (Noche)</h5>
+                 <p class="text-muted small m-0 mt-1">Ubicaciones inferidas durante horario nocturno (18:00 - 06:00).</p>
+               </div>
+               <div class="card-body p-0">
+                  <div style="height: 350px; width: 100%;">
+                     <iframe src="../maps/mapa_calor.html?is_night=true" class="w-100 h-100 border-0"></iframe>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {% if has_atypical_locations %}
+        <div class="card shadow-sm border-danger border-opacity-25 mb-4">
+           <div class="card-header bg-danger bg-opacity-10 pt-3 pb-2">
+             <h5 class="fw-bold text-danger m-0"><i class="bi bi-exclamation-triangle-fill"></i> Alerta: Ubicaciones y Conexiones Atípicas</h5>
+             <p class="text-danger opacity-75 small m-0 mt-1">Se han detectado ubicaciones que el objetivo frecuentó menos del 5% del tiempo en la sabana de datos/llamadas (posibles viajes o desvíos inusuales).</p>
+           </div>
+           <div class="card-body p-0">
+              <div style="height: 400px; width: 100%;">
+                 <iframe src="../maps/mapa_agrupado.html?is_atypical=true" class="w-100 h-100 border-0"></iframe>
+              </div>
+           </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <h4 class="text-secondary mb-3 mt-5 border-bottom pb-2"><i class="bi bi-telephone-inbound"></i> Rankings de Comunicación</h4>
+        <div class="row g-4 mb-4">
+          <!-- Left out existing tables to keep them, just wrapping under the new heading -->
           <div class="col-md-6">
             <div class="card h-100">
               <div class="card-header border-0 pb-0 pt-4 px-4 bg-white">
@@ -429,6 +500,15 @@
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h3 class="mb-0"><i class="bi bi-box-arrow-in-down text-primary"></i> Detalle: Llamadas Entrantes</h3>
           </div>
+
+          {% if has_coords %}
+          <div class="mb-4">
+              <h5 class="fw-bold text-primary mb-3">📍 Mapa de Llamadas Entrantes</h5>
+              <div class="map-display-area" style="height: 500px;">
+                  <iframe src="../maps/mapa_agrupado.html?type=entrante" class="w-100 h-100 border-0"></iframe>
+              </div>
+          </div>
+          {% endif %}
 
           <div class="filter-toolbar theme-blue">
             <div class="filter-group">
@@ -496,6 +576,15 @@
             <h3 class="mb-0"><i class="bi bi-box-arrow-up text-success"></i> Detalle: Llamadas Salientes</h3>
           </div>
 
+          {% if has_coords %}
+          <div class="mb-4">
+              <h5 class="fw-bold text-success mb-3">📍 Mapa de Llamadas Salientes</h5>
+              <div class="map-display-area" style="height: 500px;">
+                  <iframe src="../maps/mapa_agrupado.html?type=saliente" class="w-100 h-100 border-0"></iframe>
+              </div>
+          </div>
+          {% endif %}
+
           <div class="filter-toolbar theme-green">
             <div class="filter-group">
               <i class="bi bi-calendar-event text-success fs-5"></i>
@@ -554,63 +643,6 @@
       </div>
       {% endif %}
 
-      <div class="tab-pane fade" id="tendencias">
-        <div class="card p-4">
-          <h3 class="mb-4"><i class="bi bi-graph-up-arrow text-info"></i> Análisis Gráfico</h3>
-          <div class="row mb-4 p-3 bg-light border rounded-3 mx-1 align-items-center">
-            <div class="col-md-6"><label for="chart-number-filter" class="form-label fw-bold text-dark mb-1">🔍 Filtrar
-                gráfico por número:</label><select id="chart-number-filter" placeholder="Buscar..." autocomplete="off">
-                <option value="">-- Ver Todo --</option>{% for number in numeros_unicos %}<option value="{{ number }}">
-                  {{ number }}</option>{% endfor %}
-              </select></div>
-            <div class="col-md-6 text-muted text-end"><small>Haz clic en los puntos del gráfico para ver
-                detalles.</small></div>
-          </div>
-          <div class="d-flex justify-content-center gap-3 mb-4 filter-btn-group">
-            <button class="btn btn-sm btn-outline-primary active shadow-sm" id="btn-entrante"
-              onclick="setChartFilter('entrante')"><i class="bi bi-arrow-down"></i> Entrantes</button>
-            <button class="btn btn-sm btn-outline-warning shadow-sm" id="btn-todas" onclick="setChartFilter('todas')"><i
-                class="bi bi-circle-half"></i> Todas</button>
-            <button class="btn btn-sm btn-outline-success shadow-sm" id="btn-saliente"
-              onclick="setChartFilter('saliente')"><i class="bi bi-arrow-up"></i> Salientes</button>
-          </div>
-          <div class="chart-container bg-white border rounded p-2"><canvas id="call-chart"></canvas></div>
-          <hr class="my-5 opacity-25">
-          <h5 class="text-secondary text-center mb-4 text-uppercase fw-bold small ls-1">Gráficos de Ubicación</h5>
-          <div class="row g-4 mb-5">
-            <div class="col-md-6">
-              <div class="card h-100 border p-2 text-center shadow-none">
-                <h6 class="fw-bold my-2 text-primary">Top Origen + Ubicación</h6><img
-                  src="../graphics/top_ubicacion_recibidas.png" class="img-fluid rounded"
-                  onerror="this.style.display='none'">
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="card h-100 border p-2 text-center shadow-none">
-                <h6 class="fw-bold my-2 text-success">Top Destino + Ubicación</h6><img
-                  src="../graphics/top_ubicacion_realizadas.png" class="img-fluid rounded"
-                  onerror="this.style.display='none'">
-              </div>
-            </div>
-          </div>
-          <h5 class="text-secondary text-center mb-4 text-uppercase fw-bold small ls-1">Gráficos de Frecuencia</h5>
-          <div class="row g-4">
-            <div class="col-md-6">
-              <div class="card h-100 border p-2 text-center shadow-none">
-                <h6 class="fw-bold my-2 text-primary">Recibidas</h6><img src="../graphics/top_llamadas_recibidas.png"
-                  class="img-fluid rounded" onerror="this.style.display='none'">
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="card h-100 border p-2 text-center shadow-none">
-                <h6 class="fw-bold my-2 text-success">Realizadas</h6><img src="../graphics/top_llamadas_realizadas.png"
-                  class="img-fluid rounded" onerror="this.style.display='none'">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {% if has_datos_recorrido %}
       <div class="tab-pane fade" id="recorrido">
         <div class="card overflow-hidden">
@@ -625,42 +657,34 @@
       </div>
       {% endif %}
 
-      {% if has_coords %}
-      <div class="tab-pane fade" id="maps">
-        <div class="card overflow-hidden">
-          <div class="map-controls">
-            <div class="row g-3 align-items-end">
-              <div class="col-lg-5"><label class="form-label fw-bold text-dark small text-uppercase"><i
-                    class="bi bi-search"></i> Filtrar Marcadores:</label><input type="text" id="number-filter"
-                  class="form-control" placeholder="Escribe un número..."></div>
-              <div class="col-lg-7"><label class="form-label fw-bold text-dark small text-uppercase d-block">Tipo de
-                  Visualización:</label>
-                <div class="btn-group w-100 shadow-sm">
-                  <button class="btn btn-outline-primary active" onclick="switchMap('agrupado')"
-                    id="btn-map-agrupado"><i class="bi bi-people-fill"></i> Agrupado</button>
-                  <button class="btn btn-outline-danger" onclick="switchMap('calor')" id="btn-map-calor"><i
-                      class="bi bi-fire"></i> Calor</button>
-                </div>
+      {% if adjuntos %}
+      <div class="tab-pane fade" id="documentos">
+        <div class="card p-4">
+          <h3 class="mb-4"><i class="bi bi-folder-fill text-primary"></i> Documentos y Anexos</h3>
+          <div class="d-flex align-items-start">
+            <div class="nav flex-column nav-pills me-3 w-25 border-end pe-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+              {% for pdf in adjuntos %}
+              <button class="nav-link text-start {% if loop.first %}active{% endif %} mb-2"
+                      id="v-pills-{{ loop.index }}-tab" data-bs-toggle="pill"
+                      data-bs-target="#v-pills-{{ loop.index }}" type="button" role="tab"
+                      aria-selected="{% if loop.first %}true{% else %}false{% endif %}">
+                <div class="fw-bold"><i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i> {{ pdf.categoria }}</div>
+                <small class="text-muted d-block text-truncate" style="max-width: 100%;">{{ pdf.nombre }}</small>
+              </button>
+              {% endfor %}
+            </div>
+            <div class="tab-content flex-grow-1" id="v-pills-tabContent" style="height: 850px;">
+              {% for pdf in adjuntos %}
+              <div class="tab-pane fade h-100 {% if loop.first %}show active{% endif %}"
+                   id="v-pills-{{ loop.index }}" role="tabpanel" tabindex="0">
+                <iframe src="{{ pdf.ruta_relativa }}" style="border:1px solid #dee2e6; border-radius:8px; width: 100%; height: 100%;" allowfullscreen></iframe>
               </div>
+              {% endfor %}
             </div>
           </div>
-          <div class="map-display-area"><iframe id="main-map-frame" src="../maps/mapa_agrupado.html"
-              class="w-100 h-100 border-0"></iframe></div>
         </div>
       </div>
       {% endif %}
-
-      {% if adjuntos %}{% for pdf in adjuntos %}
-      <div class="tab-pane fade" id="pdf-{{ loop.index }}">
-        <div class="card p-0 overflow-hidden">
-          <div class="card-header d-flex justify-content-between">
-            <h3><i class="bi bi-paperclip"></i> {{ pdf.categoria }}</h3><span>{{ pdf.nombre }}</span>
-          </div>
-          <div style="height: 850px;"><iframe src="{{ pdf.ruta_relativa }}"
-              style="border:none; width: 100%; height: 100%;" allowfullscreen></iframe></div>
-        </div>
-      </div>
-      {% endfor %}{% endif %}
 
     </div>
   </div>

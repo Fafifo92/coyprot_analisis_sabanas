@@ -120,10 +120,23 @@ function showStickyTooltip(dataIndex, event) {
     `;
 
     if (callsForHour.length > 0) {
+        // Estilos para las filas del tooltip
+        innerHtml += `<style>
+            .tooltip-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;}
+            .tooltip-row:hover { background: rgba(255,255,255,0.1); }
+            .tooltip-header { padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); border-radius: 8px 8px 0 0;}
+            .btn-map-pin { background: rgba(13, 110, 253, 0.2); padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 14px; transition: background 0.2s; border: 1px solid rgba(13,110,253,0.5);}
+            .btn-map-pin:hover { background: rgba(13, 110, 253, 0.5); }
+        </style>`;
+
         // Limitar a mostrar max 50 para no bloquear el navegador si son demasiadas
         callsForHour.slice(0, 50).forEach(call => {
             const fechaObj = new Date(call.fecha_hora);
-            const fechaStr = fechaObj.toISOString().split('T')[0];
+            // Formato de fecha completo incluyendo hora y minutos
+            const fechaHoraFormat = fechaObj.toLocaleString('es-ES', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit'
+            });
             
             // Usamos el dato "numero" que viene del backend
             const nombreDisplay = call.numero || "Desconocido";
@@ -131,24 +144,24 @@ function showStickyTooltip(dataIndex, event) {
             let icon = '';
             if (call.latitud && call.longitud) {
                 icon = `<a href="https://www.google.com/maps?q=${call.latitud},${call.longitud}" 
-                           target="_blank" class="btn-map-pin" title="Ver en Mapa">📍</a>`;
+                           target="_blank" class="btn-map-pin" title="Ver Ubicación Exacta">📍</a>`;
             } else {
-                icon = `<span style="opacity:0.2; cursor:default">📞</span>`;
+                icon = `<span style="opacity:0.2; cursor:default; font-size: 14px;">📞</span>`;
             }
 
             innerHtml += `
                 <div class="tooltip-row">
-                    <div style="flex-grow:1; margin-right:10px;">
-                        <div style="font-weight:600; color:#fff; font-size:11px;">${nombreDisplay}</div>
-                        <div style="font-size:10px; color:#adb5bd;">${fechaStr}</div>
+                    <div style="flex-grow:1; margin-right:15px; min-width: 0;">
+                        <div style="font-weight:600; color:#fff; font-size:12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${nombreDisplay}</div>
+                        <div style="font-size:10.5px; color:#adb5bd; margin-top:2px;">${fechaHoraFormat}</div>
                     </div>
-                    <div>${icon}</div>
+                    <div style="flex-shrink:0;">${icon}</div>
                 </div>
             `;
         });
         
         if(callsForHour.length > 50){
-             innerHtml += `<div class="p-2 text-center text-muted" style="font-size:10px">... y ${callsForHour.length - 50} más</div>`;
+             innerHtml += `<div class="p-2 text-center" style="font-size:11px; color:#8cc3ff; font-weight:600; background:rgba(0,0,0,0.2);">... y ${callsForHour.length - 50} llamadas más en esta hora</div>`;
         }
     } else {
         innerHtml += '<div class="p-3 text-muted text-center">No hay detalles disponibles.</div>';
