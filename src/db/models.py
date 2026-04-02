@@ -18,6 +18,10 @@ class User(Base):
     # Tokens
     tokens_balance = Column(Integer, default=0) # Cuántos proyectos puede crear
 
+    # Configuración de perfil e informe
+    profile_settings = Column(JSON, default={})
+    global_aliases = Column(JSON, default={})
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relaciones

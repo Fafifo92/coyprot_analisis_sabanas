@@ -201,8 +201,11 @@ class ReportGenerator:
             if src.exists():
                 shutil.copy(str(src), str(js_dir / js_file))
 
-        if config.include_letterhead and settings.logo_path.exists():
-            shutil.copy(str(settings.logo_path), str(img_dir / "logo.png"))
+        if config.include_letterhead:
+            if config.logo_type == "custom" and config.custom_logo_path and Path(config.custom_logo_path).exists():
+                shutil.copy(config.custom_logo_path, str(img_dir / "logo.png"))
+            elif settings.logo_path.exists():
+                shutil.copy(str(settings.logo_path), str(img_dir / "logo.png"))
 
         if settings.info_icon_path.exists():
             shutil.copy(str(settings.info_icon_path), str(img_dir / "info.png"))
@@ -398,6 +401,12 @@ class ReportGenerator:
             "lista_departamentos": sorted(dep_mun.keys()),
             "lista_municipios": sorted({m for ms in dep_mun.values() for m in ms}),
             "mapa_dep_mun": dep_mun,
+            "primary_color": config.primary_color,
+            "secondary_color": config.secondary_color,
+            "company_name": config.company_name,
+            "company_address": config.company_address,
+            "company_phone": config.company_phone,
+            "company_email": config.company_email,
         }
 
     def _build_call_tables(

@@ -155,12 +155,34 @@ def analyze_project_task(self, project_id: int):
             db.commit()
 
             logger.info(f"Worker de Celery finalizó proyecto {project_id} (HTML OK).")
+
+            # Telemetría de uso si lo permite
+            from db.models import AuditLog
+            if project.owner and project.owner.profile_settings and project.owner.profile_settings.get("allow_telemetry"):
+                usage_log = AuditLog(
+                    user_id=project.owner_id,
+                    action="TELEMETRY_USAGE",
+                    details=f"[Worker Usage] Project {project_id} analyzed. Total items: {len(df_final)}"
+                )
+                db.add(usage_log)
+                db.commit()
+
             return f"Proyecto {project_id} procesado con HTML interactivo listo."
 
         except Exception as e:
             logger.exception(f"Error procesando proyecto {project_id}")
             project.status = "FAILED"
             project.error_message = str(e)
+
+            from db.models import AuditLog
+            if project.owner and project.owner.profile_settings and project.owner.profile_settings.get("allow_telemetry"):
+                err_log = AuditLog(
+                    user_id=project.owner_id,
+                    action="TELEMETRY_ERROR",
+                    details=f"[Worker Error] Project {project_id} failed during HTML phase. Error: {str(e)[:200]}"
+                )
+                db.add(err_log)
+
             db.commit()
             raise self.retry(exc=e, countdown=60)
 
@@ -251,6 +273,17 @@ def generate_pdf_task(self, project_id: int):
             db.commit()
 
             logger.info(f"Worker de Celery finalizó PDF para proyecto {project_id}.")
+
+            from db.models import AuditLog
+            if project.owner and project.owner.profile_settings and project.owner.profile_settings.get("allow_telemetry"):
+                usage_log = AuditLog(
+                    user_id=project.owner_id,
+                    action="TELEMETRY_USAGE",
+                    details=f"[Worker Usage] PDF generated for Project {project_id}."
+                )
+                db.add(usage_log)
+                db.commit()
+
             return f"Proyecto {project_id} procesado con PDF listo."
 
         except Exception as e:
@@ -258,6 +291,16 @@ def generate_pdf_task(self, project_id: int):
             # Regresamos a COMPLETED_HTML si el PDF falla, para no perder acceso al HTML
             project.status = "COMPLETED_HTML"
             project.error_message = f"Error al generar PDF: {str(e)}"
+
+            from db.models import AuditLog
+            if project.owner and project.owner.profile_settings and project.owner.profile_settings.get("allow_telemetry"):
+                err_log = AuditLog(
+                    user_id=project.owner_id,
+                    action="TELEMETRY_ERROR",
+                    details=f"[Worker Error] Project {project_id} failed during PDF phase. Error: {str(e)[:200]}"
+                )
+                db.add(err_log)
+
             db.commit()
             raise self.retry(exc=e, countdown=60)
 
@@ -276,9 +319,51 @@ def _prepare_report_config(project: Project, db, project_id: int) -> ReportConfi
     db_atts = db.query(ProjectAttachment).filter(ProjectAttachment.project_id == project_id).all()
     pdf_attachments = [PdfAttachment(category=a.category, source_path=Path(a.file_path)) for a in db_atts]
 
+    # Recuperar preferencias de logo y configuración
+    extra_meta = project.extra_metadata or {}
+    report_config_meta = extra_meta.get("report_config", {})
+
+    # La UI ahora guarda preferences on report_config dict
+    include_logo = report_config_meta.get("show_logo", True)
+
+    # Cargar usuario dueño
+    owner = project.owner
+    profile = owner.profile_settings or {} if owner else {}
+
+    logo_type = "none"
+    custom_logo_path = None
+    include_letterhead = False
+
+    if include_logo:
+        include_letterhead = True
+        if profile.get("has_logo"):
+            logo_type = "custom"
+            custom_path_png = Path("uploads") / "users" / str(owner.id) / "logo.png"
+            custom_path_jpg = Path("uploads") / "users" / str(owner.id) / "logo.jpg"
+            if custom_path_png.exists():
+                custom_logo_path = str(custom_path_png)
+            elif custom_path_jpg.exists():
+                custom_logo_path = str(custom_path_jpg)
+            else:
+                logo_type = "coyprot" # Fallback if file missing
+        else:
+            logo_type = "coyprot"
+
+    # Datos de empresa
+    c_name = profile.get("company_name") if report_config_meta.get("show_company", True) else None
+    c_addr = profile.get("address") if report_config_meta.get("show_address", True) else None
+    c_phone = profile.get("phone") if report_config_meta.get("show_phone", True) else None
+    c_email = profile.get("email") if report_config_meta.get("show_email", True) else None
+
+    p_color = profile.get("primary_color", "20306c")
+    s_color = profile.get("secondary_color", "e45c2c")
+    # Ensure # prefix
+    if not p_color.startswith("#"): p_color = f"#{p_color}"
+    if not s_color.startswith("#"): s_color = f"#{s_color}"
+
     return ReportConfig(
         report_name=f"Caso_{safe_case_number}",
-        include_letterhead=True,
+        include_letterhead=include_letterhead,
         upload_ftp=False,
         aliases=final_aliases,
         case_metadata=CaseMetadata(
@@ -289,5 +374,13 @@ def _prepare_report_config(project: Project, db, project_id: int) -> ReportConfi
                 "Periodo Evaluado": project.period or "N/A"
             }
         ),
-        pdf_attachments=pdf_attachments
+        pdf_attachments=pdf_attachments,
+        logo_type=logo_type,
+        custom_logo_path=custom_logo_path,
+        primary_color=p_color,
+        secondary_color=s_color,
+        company_name=c_name,
+        company_address=c_addr,
+        company_phone=c_phone,
+        company_email=c_email
     )

@@ -19,9 +19,15 @@ class UserUpdate(BaseModel):
     tokens_balance: Optional[int] = None
     password: Optional[str] = None # Admin puede forzar reset
 
+class UserSettingsUpdate(BaseModel):
+    profile_settings: Optional[dict] = None
+    global_aliases: Optional[dict] = None
+
 class UserResponse(UserBase):
     id: int
     created_at: datetime
+    profile_settings: Optional[dict] = None
+    global_aliases: Optional[dict] = None
 
     model_config = ConfigDict(from_attributes=True)
 

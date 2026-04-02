@@ -66,24 +66,22 @@ _CONTENT_W = _PAGE_W - _MARGIN_LEFT - _MARGIN_RIGHT  # ~512 pts = ~7.1 in
 class _Sty:
     """Colores y estilos centralizados para el PDF corporativo."""
 
-    BRAND = colors.HexColor(PDF_BRAND_COLOR_HEX)
-    ACCENT = colors.HexColor(PDF_ACCENT_COLOR_HEX)
-    HEADER_BG = colors.HexColor(PDF_BRAND_COLOR_HEX)
-    HEADER_TXT = colors.white
     ALT_ROW = colors.HexColor("#f8f9fa")
     BORDER = colors.HexColor("#dee2e6")
-    LINK = colors.HexColor(PDF_ACCENT_COLOR_HEX)
     LIGHT_GRAY = colors.HexColor("#6c757d")
     KPI_BG = colors.HexColor("#e8f4fd")
 
     @classmethod
-    def styles(cls) -> dict[str, ParagraphStyle]:
+    def styles(cls, primary_color: str, secondary_color: str) -> dict[str, ParagraphStyle]:
         base = getSampleStyleSheet()
+        brand = colors.HexColor(primary_color)
+        accent = colors.HexColor(secondary_color)
+
         return {
             "title": ParagraphStyle(
                 "PTitle", parent=base["Title"],
                 fontSize=20, fontName="Helvetica-Bold",
-                textColor=cls.BRAND, spaceAfter=4, alignment=TA_CENTER,
+                textColor=brand, spaceAfter=4, alignment=TA_CENTER,
             ),
             "subtitle": ParagraphStyle(
                 "PSub", parent=base["Normal"],
@@ -120,7 +118,7 @@ class _Sty:
             "link": ParagraphStyle(
                 "PLink", parent=base["Normal"],
                 fontSize=7, fontName="Helvetica",
-                textColor=cls.LINK, leading=9,
+                textColor=accent, leading=9,
             ),
             "footer": ParagraphStyle(
                 "PFoot", parent=base["Normal"],
@@ -201,8 +199,12 @@ def _coords_paragraph(
 class PdfReportBuilder:
     """Construye un informe PDF forense profesional con ReportLab."""
 
-    def __init__(self) -> None:
-        self._s = _Sty.styles()
+    def __init__(self, config: ReportConfig = None) -> None:
+        self.config = config
+        if config:
+            self._s = _Sty.styles(config.primary_color, config.secondary_color)
+        else:
+            self._s = _Sty.styles(PDF_BRAND_COLOR_HEX, PDF_ACCENT_COLOR_HEX)
 
     def build(
         self,
@@ -214,6 +216,8 @@ class PdfReportBuilder:
         geocoding_service=None,
         progress_callback: Optional[Callable[[int, str], None]] = None,
     ) -> Path:
+        self.config = report_config
+        self._s = _Sty.styles(report_config.primary_color, report_config.secondary_color)
         """Genera el PDF completo.
 
         Args:
@@ -242,8 +246,13 @@ class PdfReportBuilder:
 
         # Determinar logo
         logo_path: Path | None = None
-        if report_config.include_letterhead and settings.logo_path.exists():
-            logo_path = settings.logo_path
+        if report_config.include_letterhead:
+            if report_config.logo_type == "custom" and report_config.custom_logo_path:
+                custom_path = Path(report_config.custom_logo_path)
+                if custom_path.exists():
+                    logo_path = custom_path
+            elif settings.logo_path.exists():
+                logo_path = settings.logo_path
 
         # Construir documento
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -277,7 +286,7 @@ class PdfReportBuilder:
 
         _emit(88, "Construyendo PDF: renderizando documento...")
 
-        footer_fn = partial(self._draw_header_footer, logo_path=logo_path)
+        footer_fn = partial(self._draw_header_footer, logo_path=logo_path, primary_color=report_config.primary_color)
         doc.build(story, onFirstPage=footer_fn, onLaterPages=footer_fn)
         logger.info("PDF generado: %s", output_path)
         return output_path
@@ -737,13 +746,13 @@ class PdfReportBuilder:
 
     @staticmethod
     def _draw_header_footer(
-        canvas, doc, logo_path: Path | None = None,
+        canvas, doc, logo_path: Path | None = None, primary_color: str = PDF_BRAND_COLOR_HEX
     ) -> None:
         """Dibuja header con logo opcional y footer con número de página."""
         canvas.saveState()
 
         # Header: línea superior sutil
-        canvas.setStrokeColor(colors.HexColor(PDF_BRAND_COLOR_HEX))
+        canvas.setStrokeColor(colors.HexColor(primary_color))
         canvas.setLineWidth(1.5)
         y_top = doc.height + doc.topMargin - 10
         canvas.line(doc.leftMargin, y_top, _PAGE_W - doc.rightMargin, y_top)

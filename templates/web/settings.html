@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración - Coyprot SaaS{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto" x-data="settingsData()" x-init="init()">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Configuración de Cuenta</h1>
+        <p class="text-sm text-gray-500">Personaliza la apariencia y los datos de tus informes.</p>
+    </div>
+
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Información de la Empresa</h2>
+
+            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                    <label for="company_name" class="block text-sm font-medium text-gray-700">Nombre de la Empresa</label>
+                    <div class="mt-1">
+                        <input type="text" x-model="settings.company_name" id="company_name" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="address" class="block text-sm font-medium text-gray-700">Dirección</label>
+                    <div class="mt-1">
+                        <input type="text" x-model="settings.address" id="address" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700">Teléfono</label>
+                    <div class="mt-1">
+                        <input type="text" x-model="settings.phone" id="phone" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                    <div class="mt-1">
+                        <input type="email" x-model="settings.email" id="email" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Apariencia del Informe</h2>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Logo de la Empresa</label>
+                <div class="flex items-center space-x-4">
+                    <span class="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100 border border-gray-300 flex-shrink-0">
+                        <svg x-show="!hasLogo" class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <img x-show="hasLogo" :src="logoUrl" alt="Logo" class="h-full w-full object-cover">
+                    </span>
+                    <button type="button" @click="$refs.logoInput.click()" class="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cambiar
+                    </button>
+                    <input type="file" x-ref="logoInput" @change="uploadLogo" accept=".png,.jpg,.jpeg" class="hidden">
+                    <span x-show="isUploadingLogo" class="text-sm text-indigo-600">Subiendo...</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="primary_color" class="block text-sm font-medium text-gray-700">Color Primario (Hex)</label>
+                    <div class="mt-1 flex rounded-md shadow-sm">
+                        <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+                            #
+                        </span>
+                        <input type="text" x-model="settings.primary_color" id="primary_color" placeholder="1d4ed8" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300">
+                    </div>
+                </div>
+                <div>
+                    <label for="secondary_color" class="block text-sm font-medium text-gray-700">Color Secundario (Hex)</label>
+                    <div class="mt-1 flex rounded-md shadow-sm">
+                        <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+                            #
+                        </span>
+                        <input type="text" x-model="settings.secondary_color" id="secondary_color" placeholder="3b82f6" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300">
+                    </div>
+                </div>
+            </div>
+            <p class="mt-2 text-xs text-gray-500">Estos colores se usarán en las gráficas y la estructura del reporte.</p>
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Privacidad y Telemetría</h2>
+
+            <div class="flex items-start">
+                <div class="flex items-center h-5">
+                    <input id="allow_telemetry" x-model="settings.allow_telemetry" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                </div>
+                <div class="ml-3 text-sm">
+                    <label for="allow_telemetry" class="font-medium text-gray-700">Permitir recolección de datos de uso</label>
+                    <p class="text-gray-500">Ayúdanos a mejorar Coyprot permitiendo el registro de errores y métricas anónimas. El administrador podrá consultar estos logs.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex justify-end space-x-3">
+        <button type="button" @click="saveSettings" :disabled="isSaving" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+            <span x-show="!isSaving">Guardar Configuración</span>
+            <span x-show="isSaving">Guardando...</span>
+        </button>
+    </div>
+</div>
+
+<script>
+function settingsData() {
+    return {
+        settings: {
+            company_name: '',
+            address: '',
+            phone: '',
+            email: '',
+            primary_color: '20306c', // Default Coyprot Blue
+            secondary_color: 'e45c2c', // Default Coyprot Orange
+            allow_telemetry: false
+        },
+        isSaving: false,
+        isUploadingLogo: false,
+        hasLogo: false,
+        logoUrl: '',
+
+        async init() {
+            try {
+                const res = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.profile_settings) {
+                        this.settings = { ...this.settings, ...data.profile_settings };
+                    }
+                    if (this.settings.has_logo) {
+                        this.hasLogo = true;
+                        // Use a dummy query param to bypass cache if updated
+                        this.logoUrl = `/static/uploads/users/${data.id}/logo.png?t=${new Date().getTime()}`;
+                    }
+                }
+            } catch (e) {
+                console.error("Error cargando configuración", e);
+            }
+        },
+
+        async saveSettings() {
+            this.isSaving = true;
+            try {
+                const res = await fetch('/api/auth/me/settings', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({ profile_settings: this.settings })
+                });
+
+                if (!res.ok) throw new Error("Error al guardar");
+
+                Swal.fire('Guardado', 'La configuración ha sido actualizada.', 'success');
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            } finally {
+                this.isSaving = false;
+            }
+        },
+
+        async uploadLogo(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            this.isUploadingLogo = true;
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/auth/me/logo', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || "Error al subir el logo");
+                }
+
+                // Also update the flag in profile settings
+                this.settings.has_logo = true;
+                await this.saveSettings();
+
+                // Fetch me again to get ID for URL construct if needed, or just reload page
+                window.location.reload();
+
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            } finally {
+                this.isUploadingLogo = false;
+                event.target.value = ''; // Reset input
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,18 @@
+INFO:     Will watch for changes in these directories: ['/app']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [3383478] using WatchFiles
+Iniciando Servidor Coyprot SaaS en http://127.0.0.1:8000
+INFO:     Started server process [3383984]
+INFO:     Waiting for application startup.
+2026-04-02 02:30:12,488 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/routers/auth.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 02:34:18,888 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3383984]
+INFO:     Started server process [3436074]
+INFO:     Waiting for application startup.
+2026-04-02 02:34:22,648 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
