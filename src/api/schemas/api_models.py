@@ -46,16 +46,18 @@ class ProjectBase(BaseModel):
     case_number: str
     target_phone: str
     target_name: Optional[str] = None
-    period: Optional[str] = None
+    period: Optional[str] = None # Deprecated, kept for backward compat in DB reads, but dynamic in reports
 
-class ProjectCreate(ProjectBase):
+class ProjectCreate(BaseModel):
+    case_number: str
+    target_phone: str
+    target_name: Optional[str] = None
     pass
 
 class ProjectUserUpdate(BaseModel):
     case_number: Optional[str] = None
     target_phone: Optional[str] = None
     target_name: Optional[str] = None
-    period: Optional[str] = None
     aliases: Optional[dict] = None
     extra_metadata: Optional[dict] = None
 

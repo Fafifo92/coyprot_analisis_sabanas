@@ -17,7 +17,6 @@ class ProjectAdminUpdate(BaseModel):
     case_number: Optional[str] = None
     target_phone: Optional[str] = None
     target_name: Optional[str] = None
-    period: Optional[str] = None
     status: Optional[str] = None # Para forzar reinicio (ej: "PENDING_MAPPING")
 
 @router.get("/projects", response_model=List[ProjectResponse])

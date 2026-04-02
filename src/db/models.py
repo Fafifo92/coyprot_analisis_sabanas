@@ -42,7 +42,7 @@ class Project(Base):
     case_number = Column(String, nullable=False)     # Usado para nombrar exportables
     target_phone = Column(String, nullable=False)    # Teléfono objetivo a validar
     target_name = Column(String, nullable=True)
-    period = Column(String, nullable=True)
+    period = Column(String, nullable=True) # Deprecated, left for DB backward compat
 
     # Enriquecimiento y Metadatos Extra
     aliases = Column(JSON, default={})

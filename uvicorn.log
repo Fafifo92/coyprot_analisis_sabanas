@@ -352,3 +352,112 @@ INFO:     Started server process [936932]
 INFO:     Waiting for application startup.
 2026-04-02 11:33:12,946 [INFO] Verificando/Creando tablas de Base de Datos...
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'fix_period.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 12:40:19,187 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [936932]
+INFO:     Started server process [1485665]
+INFO:     Waiting for application startup.
+2026-04-02 12:40:28,187 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/worker/tasks.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 12:42:47,751 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1485665]
+INFO:     Started server process [1515119]
+INFO:     Waiting for application startup.
+2026-04-02 12:42:51,550 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/worker/tasks.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 12:44:08,735 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1515119]
+INFO:     Started server process [1540389]
+INFO:     Waiting for application startup.
+2026-04-02 12:44:12,401 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/schemas/api_models.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 12:48:57,686 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1540389]
+INFO:     Started server process [1593570]
+INFO:     Waiting for application startup.
+2026-04-02 12:49:01,514 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/routers/admin_projects.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 12:52:38,168 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1593570]
+INFO:     Started server process [1642928]
+INFO:     Waiting for application startup.
+2026-04-02 12:52:43,362 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/repositories/project_repository.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 12:55:14,143 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1642928]
+INFO:     Started server process [1672238]
+INFO:     Waiting for application startup.
+2026-04-02 12:55:17,960 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/db/models.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 12:57:40,986 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1672238]
+INFO:     Started server process [1719124]
+INFO:     Waiting for application startup.
+2026-04-02 12:57:45,461 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/reports/builders/map_builder.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 13:15:30,411 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1719124]
+INFO:     Started server process [1965203]
+INFO:     Waiting for application startup.
+2026-04-02 13:15:35,033 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+INFO:     127.0.0.1:50438 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43430 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43430 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56684 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56684 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:34860 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34860 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41892 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41892 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54844 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54844 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54844 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54844 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54858 - "GET /api/projects/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39370 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39370 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39370 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39370 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39382 - "GET /api/projects/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'fix_period.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 14:09:50,171 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1965203]
+INFO:     Started server process [2638137]
+INFO:     Waiting for application startup.
+2026-04-02 14:09:54,374 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.

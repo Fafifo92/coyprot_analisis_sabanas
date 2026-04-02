@@ -113,14 +113,18 @@ class ClusterMapBuilder:
         lat_min, lon_min = clean[COL_LATITUDE].min(), clean[COL_LONGITUDE].min()
         lat_max, lon_max = clean[COL_LATITUDE].max(), clean[COL_LONGITUDE].max()
 
-        sw = [lat_min, lon_min]
-        ne = [lat_max, lon_max]
-
         # Add a tiny padding/max_zoom safeguard if min==max to prevent infinite zoom
+        # Also add a slight padding in general so points are not exactly on the edge
+        padding_lat = max(0.01, (lat_max - lat_min) * 0.05)
+        padding_lon = max(0.01, (lon_max - lon_min) * 0.05)
+
         if lat_min == lat_max and lon_min == lon_max:
             mapa.fit_bounds([[lat_min - 0.01, lon_min - 0.01], [lat_max + 0.01, lon_max + 0.01]])
         else:
-            mapa.fit_bounds([sw, ne])
+            mapa.fit_bounds(
+                [[lat_min - padding_lat, lon_min - padding_lon],
+                 [lat_max + padding_lat, lon_max + padding_lon]]
+            )
 
         mapa.get_root().html.add_child(folium.Element(_CSS_LAYER_CONTROL))
 
@@ -220,10 +224,16 @@ class HeatMapBuilder:
         lat_min, lon_min = clean[COL_LATITUDE].min(), clean[COL_LONGITUDE].min()
         lat_max, lon_max = clean[COL_LATITUDE].max(), clean[COL_LONGITUDE].max()
 
+        padding_lat = max(0.01, (lat_max - lat_min) * 0.05)
+        padding_lon = max(0.01, (lon_max - lon_min) * 0.05)
+
         if lat_min == lat_max and lon_min == lon_max:
             mapa.fit_bounds([[lat_min - 0.01, lon_min - 0.01], [lat_max + 0.01, lon_max + 0.01]])
         else:
-            mapa.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]])
+            mapa.fit_bounds(
+                [[lat_min - padding_lat, lon_min - padding_lon],
+                 [lat_max + padding_lat, lon_max + padding_lon]]
+            )
 
         heat_data = clean[[COL_LATITUDE, COL_LONGITUDE]].values.tolist()
         HeatMap(heat_data, radius=MAP_HEATMAP_RADIUS, blur=MAP_HEATMAP_BLUR).add_to(mapa)
