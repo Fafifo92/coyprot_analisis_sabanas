@@ -108,11 +108,26 @@ class ClusterMapBuilder:
         aliases = aliases or {}
         center = [clean[COL_LATITUDE].mean(), clean[COL_LONGITUDE].mean()]
         mapa = folium.Map(location=center, zoom_start=11, tiles="OpenStreetMap")
+
+        # Fit bounds calculation
+        sw = [clean[COL_LATITUDE].min(), clean[COL_LONGITUDE].min()]
+        ne = [clean[COL_LATITUDE].max(), clean[COL_LONGITUDE].max()]
+        mapa.fit_bounds([sw, ne])
+
         mapa.get_root().html.add_child(folium.Element(_CSS_LAYER_CONTROL))
 
-        cluster_in = MarkerCluster(name="Entrantes (Azul)").add_to(mapa)
-        cluster_out = MarkerCluster(name="Salientes (Verde)").add_to(mapa)
-        cluster_data = MarkerCluster(name="Datos (Morado)").add_to(mapa)
+        cluster_in = None
+        cluster_out = None
+        cluster_data = None
+
+        # Solo inicializamos los clusters si realmente hay datos de ese tipo
+        has_in = (clean[COL_CALL_TYPE].str.lower() == CALL_TYPE_INCOMING).any()
+        has_out = (clean[COL_CALL_TYPE].str.lower() == CALL_TYPE_OUTGOING).any()
+        has_data = clean[COL_CALL_TYPE].str.lower().str.contains("dato").any()
+
+        if has_in: cluster_in = MarkerCluster(name="Entrantes (Azul)").add_to(mapa)
+        if has_out: cluster_out = MarkerCluster(name="Salientes (Verde)").add_to(mapa)
+        if has_data: cluster_data = MarkerCluster(name="Datos (Morado)").add_to(mapa)
 
         for row in clean.itertuples(index=False):
             lat = getattr(row, COL_LATITUDE)
@@ -127,27 +142,32 @@ class ClusterMapBuilder:
                     else f"Antena: {cell}" if cell not in ("nan", "None", "")
                     else "Tráfico de Datos"
                 )
-                cluster, color, icon = cluster_data, "purple", "globe"
+                if cluster_data:
+                    folium.Marker(
+                        [lat, lon],
+                        popup=folium.Popup(f"<b>{label}</b><br>{getattr(row, COL_DATETIME, '')}<br>{call_type}", max_width=300),
+                        icon=folium.Icon(color="purple", icon="globe", prefix="fa"),
+                    ).add_to(cluster_data)
             elif call_type == CALL_TYPE_OUTGOING:
                 num = str(getattr(row, COL_RECEIVER, "N/A"))
                 alias = aliases.get(num, "")
                 label = f"{num} ({alias})" if alias else num
-                cluster, color, icon = cluster_out, "green", "arrow-up"
+                if cluster_out:
+                    folium.Marker(
+                        [lat, lon],
+                        popup=folium.Popup(f"<b>{label}</b><br>{getattr(row, COL_DATETIME, '')}<br>{call_type}", max_width=300),
+                        icon=folium.Icon(color="green", icon="arrow-up", prefix="fa"),
+                    ).add_to(cluster_out)
             else:
                 num = str(getattr(row, COL_ORIGINATOR, "N/A"))
                 alias = aliases.get(num, "")
                 label = f"{num} ({alias})" if alias else num
-                cluster, color, icon = cluster_in, "blue", "arrow-down"
-
-            popup = folium.Popup(
-                f"<b>{label}</b><br>{getattr(row, COL_DATETIME, '')}<br>{call_type}",
-                max_width=300,
-            )
-            folium.Marker(
-                [lat, lon],
-                popup=popup,
-                icon=folium.Icon(color=color, icon=icon, prefix="fa"),
-            ).add_to(cluster)
+                if cluster_in:
+                    folium.Marker(
+                        [lat, lon],
+                        popup=folium.Popup(f"<b>{label}</b><br>{getattr(row, COL_DATETIME, '')}<br>{call_type}", max_width=300),
+                        icon=folium.Icon(color="blue", icon="arrow-down", prefix="fa"),
+                    ).add_to(cluster_in)
 
         folium.LayerControl().add_to(mapa)
         output_path.parent.mkdir(parents=True, exist_ok=True)

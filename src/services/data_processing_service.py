@@ -243,8 +243,8 @@ class DataProcessingService:
         # Detectar horarios y ubicaciones atípicas para analítica avanzada
         logger.info("Detectando parámetros analíticos avanzados...")
         if COL_DATETIME in df.columns:
-            # Día: 06:00 a 17:59, Noche: 18:00 a 05:59
-            df["is_night"] = df[COL_DATETIME].dt.hour.between(18, 23) | df[COL_DATETIME].dt.hour.between(0, 5)
+            # Día: 07:00 a 23:59, Noche: 00:00 a 06:59 (después de las 12am y antes de las 7am)
+            df["is_night"] = df[COL_DATETIME].dt.hour.between(0, 6)
 
         if COL_LATITUDE in df.columns and COL_LONGITUDE in df.columns:
             df = self._detect_atypical_locations(df)
@@ -318,8 +318,10 @@ class DataProcessingService:
         municipio o coordenada específica. Si una ubicación representa menos del
         5% de la actividad, se marca como atípica. Si usa coordenadas exactas, se
         redondean (aprox ~1km cuadrado) para agrupar ubicaciones cercanas.
+        También asigna un "location_group" para que el ReportGenerator pueda separarlas.
         """
         df["is_atypical"] = False
+        df["location_group"] = ""
         if df.empty:
             return df
 
@@ -327,9 +329,8 @@ class DataProcessingService:
         has_municipality = "municipio" in df.columns and df["municipio"].notna().any()
 
         if has_municipality:
-            # Agrupar por municipio (útil cuando son sábanas con DB de celdas)
+            df["location_group"] = df["municipio"]
             counts = df["municipio"].value_counts(normalize=True)
-            # Definimos atípico si la frecuencia es menor al 5%
             atypical_munis = counts[counts < 0.05].index
             df.loc[df["municipio"].isin(atypical_munis), "is_atypical"] = True
         else:
@@ -338,15 +339,14 @@ class DataProcessingService:
             if not valid_coords_mask.any():
                 return df
 
-            df.loc[valid_coords_mask, "coord_cluster"] = (
+            df.loc[valid_coords_mask, "location_group"] = (
                 df.loc[valid_coords_mask, COL_LATITUDE].round(2).astype(str) + "_" +
                 df.loc[valid_coords_mask, COL_LONGITUDE].round(2).astype(str)
             )
 
-            counts = df["coord_cluster"].value_counts(normalize=True)
+            counts = df["location_group"].value_counts(normalize=True)
             atypical_clusters = counts[counts < 0.05].index
-            df.loc[df["coord_cluster"].isin(atypical_clusters), "is_atypical"] = True
-            df.drop(columns=["coord_cluster"], inplace=True)
+            df.loc[df["location_group"].isin(atypical_clusters), "is_atypical"] = True
 
         return df
 

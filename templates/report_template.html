@@ -387,58 +387,79 @@
           <div class="chart-container bg-white border rounded p-2"><canvas id="call-chart"></canvas></div>
         </div>
 
-        {% if has_coords %}
+        {% if has_day_map or has_night_map %}
         <!-- Mapas Analíticos de Resumen -->
         <h4 class="text-secondary mb-3 mt-5 border-bottom pb-2"><i class="bi bi-compass"></i> Patrones de Ubicación de Objetivos</h4>
         <div class="row g-4 mb-4">
+          {% if has_day_map %}
           <div class="col-md-6">
             <div class="card h-100 shadow-sm">
                <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
                  <h5 class="fw-bold text-dark m-0"><i class="bi bi-brightness-high text-warning"></i> Zonas Frecuentes (Día)</h5>
-                 <p class="text-muted small m-0 mt-1">Ubicaciones inferidas durante horario laboral (06:00 - 18:00).</p>
+                 <p class="text-muted small m-0 mt-1">Ubicaciones inferidas durante horario diurno (07:00 - 23:59).</p>
                </div>
                <div class="card-body p-0">
                   <div style="height: 350px; width: 100%;">
                      <!-- Mostrar mapa general con filtro nocturno=falso -->
-                     <iframe src="../maps/mapa_calor.html?is_night=false" class="w-100 h-100 border-0"></iframe>
+                     <iframe src="../maps/mapa_dia.html" class="w-100 h-100 border-0"></iframe>
                   </div>
                </div>
             </div>
           </div>
+          {% endif %}
 
+          {% if has_night_map %}
           <div class="col-md-6">
             <div class="card h-100 shadow-sm">
                <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
                  <h5 class="fw-bold text-dark m-0"><i class="bi bi-moon-stars text-indigo-500"></i> Zonas Frecuentes (Noche)</h5>
-                 <p class="text-muted small m-0 mt-1">Ubicaciones inferidas durante horario nocturno (18:00 - 06:00).</p>
+                 <p class="text-muted small m-0 mt-1">Ubicaciones inferidas durante horario nocturno (00:00 - 06:59).</p>
                </div>
                <div class="card-body p-0">
                   <div style="height: 350px; width: 100%;">
-                     <iframe src="../maps/mapa_calor.html?is_night=true" class="w-100 h-100 border-0"></iframe>
+                     <iframe src="../maps/mapa_noche.html" class="w-100 h-100 border-0"></iframe>
                   </div>
                </div>
             </div>
           </div>
+          {% endif %}
         </div>
 
         {% if has_atypical_locations %}
-        <div class="card shadow-sm border-danger border-opacity-25 mb-4">
-           <div class="card-header bg-danger bg-opacity-10 pt-3 pb-2">
-             <h5 class="fw-bold text-danger m-0"><i class="bi bi-exclamation-triangle-fill"></i> Alerta: Ubicaciones y Conexiones Atípicas</h5>
-             <p class="text-danger opacity-75 small m-0 mt-1">Se han detectado ubicaciones que el objetivo frecuentó menos del 5% del tiempo en la sabana de datos/llamadas (posibles viajes o desvíos inusuales).</p>
+        <h4 class="text-danger mb-3 mt-5 border-bottom border-danger border-opacity-25 pb-2"><i class="bi bi-exclamation-triangle-fill"></i> Advertencia: Ubicaciones y Conexiones Atípicas</h4>
+        <p class="text-muted small mb-4">Con base en los datos de llamadas y conexiones a internet, se han detectado los siguientes sectores que el objetivo frecuentó menos del 5% del tiempo total evaluado. Estas ubicaciones podrían representar viajes, desvíos inusuales o lugares de interés secundario.</p>
+
+        <div class="row g-4 mb-4">
+           {% for at_map in atypical_maps %}
+           <div class="col-md-6">
+               <div class="card shadow-sm border-danger border-opacity-25 h-100">
+                  <div class="card-header bg-danger bg-opacity-10 pt-3 pb-2 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold text-danger m-0">Sector Atípico {{ loop.index }}</h6>
+                    <span class="badge bg-danger rounded-pill">{{ at_map.count }} Registros</span>
+                  </div>
+                  <div class="card-body p-0">
+                     <div style="height: 300px; width: 100%;">
+                        <iframe src="../maps/{{ at_map.file }}" class="w-100 h-100 border-0"></iframe>
+                     </div>
+                  </div>
+                  <div class="card-footer bg-white text-muted small p-3" style="max-height: 120px; overflow-y: auto;">
+                      <strong>Fechas/Horas de detección:</strong><br>
+                      <ul class="mb-0 ps-3 mt-1">
+                          {% for date_str in at_map.dates %}
+                              <li>{{ date_str }}</li>
+                          {% endfor %}
+                      </ul>
+                  </div>
+               </div>
            </div>
-           <div class="card-body p-0">
-              <div style="height: 400px; width: 100%;">
-                 <iframe src="../maps/mapa_agrupado.html?is_atypical=true" class="w-100 h-100 border-0"></iframe>
-              </div>
-           </div>
+           {% endfor %}
         </div>
         {% endif %}
         {% endif %}
 
-        <h4 class="text-secondary mb-3 mt-5 border-bottom pb-2"><i class="bi bi-telephone-inbound"></i> Rankings de Comunicación</h4>
+        <h4 class="text-secondary mb-3 mt-5 border-bottom pb-2"><i class="bi bi-telephone-inbound"></i> Rankings de Comunicación (Top Frecuentes)</h4>
         <div class="row g-4 mb-4">
-          <!-- Left out existing tables to keep them, just wrapping under the new heading -->
+          <!-- TOP FRECUENTES -->
           <div class="col-md-6">
             <div class="card h-100">
               <div class="card-header border-0 pb-0 pt-4 px-4 bg-white">
@@ -492,6 +513,63 @@
             </div>
           </div>
         </div>
+
+        <h4 class="text-secondary mb-3 mt-5 border-bottom pb-2"><i class="bi bi-telephone-minus"></i> Rankings de Comunicación (Menos Frecuentes)</h4>
+        <div class="row g-4 mb-4">
+          <!-- MENOS FRECUENTES -->
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header border-0 pb-0 pt-4 px-4 bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="fw-bold text-primary m-0">📉 Quienes Menos Llaman</h5><span
+                    class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">Entrantes</span>
+                </div>
+              </div>
+              <div class="card-body px-0">
+                <table class="table table-hover table-striped mb-0 table-top align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="ps-4">Número / Alias</th>
+                      <th class="text-end pe-4">Freq.</th>
+                    </tr>
+                  </thead>
+                  <tbody>{% for item in bottom_entrantes %}<tr>
+                      <td class="ps-4 fw-medium text-dark">{{ item.nombre }}</td>
+                      <td class="text-end pe-4 fw-bold text-primary">{{ item.frecuencia }}</td>
+                    </tr>{% else %}<tr>
+                      <td colspan="2" class="text-center py-4 text-muted">No hay datos.</td>
+                    </tr>{% endfor %}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card h-100">
+              <div class="card-header border-0 pb-0 pt-4 px-4 bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5 class="fw-bold text-success m-0">📵 Los Menos Llamados</h5><span
+                    class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Salientes</span>
+                </div>
+              </div>
+              <div class="card-body px-0">
+                <table class="table table-hover table-striped mb-0 table-top align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="ps-4">Número / Alias</th>
+                      <th class="text-end pe-4">Freq.</th>
+                    </tr>
+                  </thead>
+                  <tbody>{% for item in bottom_salientes %}<tr>
+                      <td class="ps-4 fw-medium text-dark">{{ item.nombre }}</td>
+                      <td class="text-end pe-4 fw-bold text-success">{{ item.frecuencia }}</td>
+                    </tr>{% else %}<tr>
+                      <td colspan="2" class="text-center py-4 text-muted">No hay datos.</td>
+                    </tr>{% endfor %}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {% if llamadas_entrantes %}
@@ -501,11 +579,11 @@
             <h3 class="mb-0"><i class="bi bi-box-arrow-in-down text-primary"></i> Detalle: Llamadas Entrantes</h3>
           </div>
 
-          {% if has_coords %}
+          {% if has_entrantes_map %}
           <div class="mb-4">
               <h5 class="fw-bold text-primary mb-3">📍 Mapa de Llamadas Entrantes</h5>
               <div class="map-display-area" style="height: 500px;">
-                  <iframe src="../maps/mapa_agrupado.html?type=entrante" class="w-100 h-100 border-0"></iframe>
+                  <iframe src="../maps/mapa_entrantes.html" class="w-100 h-100 border-0"></iframe>
               </div>
           </div>
           {% endif %}
@@ -525,7 +603,7 @@
               <span class="filter-label">Depto:</span>
               <select id="dep-ent" class="select-input" onchange="updateMuni('ent')">
                 <option value="">(Todos)</option>
-                {% for dep in lista_departamentos %}<option value="{{ dep }}">{{ dep }}</option>{% endfor %}
+                {% for dep in lista_departamentos_ent %}<option value="{{ dep }}">{{ dep }}</option>{% endfor %}
               </select>
             </div>
             <div class="filter-group">
@@ -576,11 +654,11 @@
             <h3 class="mb-0"><i class="bi bi-box-arrow-up text-success"></i> Detalle: Llamadas Salientes</h3>
           </div>
 
-          {% if has_coords %}
+          {% if has_salientes_map %}
           <div class="mb-4">
               <h5 class="fw-bold text-success mb-3">📍 Mapa de Llamadas Salientes</h5>
               <div class="map-display-area" style="height: 500px;">
-                  <iframe src="../maps/mapa_agrupado.html?type=saliente" class="w-100 h-100 border-0"></iframe>
+                  <iframe src="../maps/mapa_salientes.html" class="w-100 h-100 border-0"></iframe>
               </div>
           </div>
           {% endif %}
@@ -599,7 +677,7 @@
               <span class="filter-label">Depto:</span>
               <select id="dep-sal" class="select-input" onchange="updateMuni('sal')">
                 <option value="">(Todos)</option>
-                {% for dep in lista_departamentos %}<option value="{{ dep }}">{{ dep }}</option>{% endfor %}
+                {% for dep in lista_departamentos_sal %}<option value="{{ dep }}">{{ dep }}</option>{% endfor %}
               </select>
             </div>
             <div class="filter-group">
@@ -691,7 +769,8 @@
 
   <script>
     // --- DATOS SEGUROS PARA JS ---
-    const MAPA_DEP_MUN = {{ mapa_dep_mun | tojson | default ('{}') }};
+    const MAPA_DEP_MUN_ENT = {{ mapa_dep_mun_ent | tojson | default ('{}') }};
+    const MAPA_DEP_MUN_SAL = {{ mapa_dep_mun_sal | tojson | default ('{}') }};
 
     // Función de actualización de municipios en cascada
     function updateMuni(type) {
@@ -700,12 +779,14 @@
       const deptoSel = $(depId).val();
       const munSelect = $(munId);
 
+      const MAPA_USA = type === 'ent' ? MAPA_DEP_MUN_ENT : MAPA_DEP_MUN_SAL;
+
       munSelect.empty();
       munSelect.append('<option value="">(Todo)</option>');
 
-      if (deptoSel && MAPA_DEP_MUN[deptoSel]) {
+      if (deptoSel && MAPA_USA[deptoSel]) {
         // Aseguramos que se itera sobre un array limpio
-        const municipios = Array.isArray(MAPA_DEP_MUN[deptoSel]) ? MAPA_DEP_MUN[deptoSel] : [];
+        const municipios = Array.isArray(MAPA_USA[deptoSel]) ? MAPA_USA[deptoSel] : [];
         municipios.forEach(m => {
           munSelect.append(`<option value="${m}">${m}</option>`);
         });

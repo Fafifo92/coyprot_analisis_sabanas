@@ -121,7 +121,7 @@ class ReportGenerator:
 
             # 4. Generar mapas
             _emit(20, "Generando mapas...")
-            has_coords, has_route = self._build_maps(df_calls, df_data, dirs["maps"], config)
+            has_coords, has_route, atypical_maps, map_flags = self._build_maps(df_calls, df_data, df, dirs["maps"], config)
 
             # 5. Generar gráficas
             _emit(45, "Generando gráficas...")
@@ -134,7 +134,7 @@ class ReportGenerator:
             # 7. Preparar contexto del template
             _emit(75, "Preparando informe...")
             context = self._build_template_context(
-                df_calls, config, has_coords, has_route, attachments
+                df_calls, config, has_coords, has_route, attachments, atypical_maps, map_flags
             )
 
             # 8. Renderizar HTML
@@ -216,35 +216,72 @@ class ReportGenerator:
         self,
         df_calls: pd.DataFrame,
         df_data: pd.DataFrame,
+        df_all: pd.DataFrame,
         maps_dir: Path,
         config: ReportConfig,
-    ) -> tuple[bool, bool]:
+    ) -> tuple[bool, bool, list[dict], dict[str, bool]]:
         has_coords = (
-            COL_LATITUDE in df_calls.columns
-            and df_calls[COL_LATITUDE].notna().any()
-        )
-        has_data_coords = (
-            not df_data.empty
-            and COL_LATITUDE in df_data.columns
-            and df_data[COL_LATITUDE].notna().any()
+            COL_LATITUDE in df_all.columns
+            and df_all[COL_LATITUDE].notna().any()
         )
         has_route = False
+        atypical_maps = []
+        map_flags = {
+            "has_entrantes_map": False,
+            "has_salientes_map": False,
+            "has_day_map": False,
+            "has_night_map": False
+        }
 
-        if not has_coords and not has_data_coords:
-            return False, False
+        if not has_coords:
+            return False, False, [], map_flags
 
-        if has_coords:
-            try:
-                self._cluster_map.build(
-                    df_calls,
-                    maps_dir / MAP_FILE_CLUSTER,
-                    aliases=config.aliases,
-                )
-                self._heat_map.build(df_calls, maps_dir / MAP_FILE_HEATMAP)
-            except Exception as exc:
-                logger.error("Error generando mapas de llamadas: %s", exc)
+        try:
+            # Independent maps for incoming and outgoing
+            df_in = df_calls[df_calls[COL_CALL_TYPE] == CALL_TYPE_INCOMING]
+            df_out = df_calls[df_calls[COL_CALL_TYPE] == CALL_TYPE_OUTGOING]
 
-        if has_data_coords:
+            if not df_in.empty and COL_LATITUDE in df_in.columns and df_in[COL_LATITUDE].notna().any():
+                self._cluster_map.build(df_in, maps_dir / "mapa_entrantes.html", aliases=config.aliases)
+                map_flags["has_entrantes_map"] = True
+            if not df_out.empty and COL_LATITUDE in df_out.columns and df_out[COL_LATITUDE].notna().any():
+                self._cluster_map.build(df_out, maps_dir / "mapa_salientes.html", aliases=config.aliases)
+                map_flags["has_salientes_map"] = True
+
+            # Map for Day and Night (using all data including internet connections)
+            if "is_night" in df_all.columns:
+                df_night = df_all[df_all["is_night"] == True]
+                df_day = df_all[df_all["is_night"] == False]
+
+                if not df_day.empty and COL_LATITUDE in df_day.columns and df_day[COL_LATITUDE].notna().any():
+                    self._heat_map.build(df_day, maps_dir / "mapa_dia.html")
+                    map_flags["has_day_map"] = True
+                if not df_night.empty and COL_LATITUDE in df_night.columns and df_night[COL_LATITUDE].notna().any():
+                    self._heat_map.build(df_night, maps_dir / "mapa_noche.html")
+                    map_flags["has_night_map"] = True
+
+            # Atypical Locations Maps
+            if "is_atypical" in df_all.columns and df_all["is_atypical"].any():
+                atypical_df = df_all[df_all["is_atypical"] == True]
+                groups = atypical_df.groupby("location_group")
+
+                for i, (group_name, group_data) in enumerate(groups):
+                    if not group_data.empty and COL_LATITUDE in group_data.columns and group_data[COL_LATITUDE].notna().any():
+                        filename = f"mapa_atipico_{i}.html"
+                        # Include event count and specific dates for the template
+                        dates = group_data[COL_DATETIME].dt.strftime('%Y-%m-%d %H:%M').unique().tolist()
+                        atypical_maps.append({
+                            "name": str(group_name),
+                            "file": filename,
+                            "count": len(group_data),
+                            "dates": dates[:10] + (["..."] if len(dates) > 10 else [])
+                        })
+                        self._cluster_map.build(group_data, maps_dir / filename, aliases=config.aliases)
+
+        except Exception as exc:
+            logger.error("Error generando mapas estáticos interactivos: %s", exc)
+
+        if not df_data.empty and COL_LATITUDE in df_data.columns and df_data[COL_LATITUDE].notna().any():
             try:
                 self._route_map.build(
                     df_data,
@@ -255,7 +292,7 @@ class ReportGenerator:
             except Exception as exc:
                 logger.error("Error generando mapa de recorrido: %s", exc)
 
-        return has_coords, has_route
+        return has_coords, has_route, atypical_maps, map_flags
 
     # ── Gráficas ──────────────────────────────────────────────────────────────
 
@@ -361,7 +398,13 @@ class ReportGenerator:
         has_coords: bool,
         has_route: bool,
         attachments: list[dict],
+        atypical_maps: list[dict] = None,
+        map_flags: dict[str, bool] = None
     ) -> dict:
+        if atypical_maps is None:
+            atypical_maps = []
+        if map_flags is None:
+            map_flags = {}
         aliases = config.aliases
 
         unique_nums: set[str] = set()
@@ -372,22 +415,22 @@ class ReportGenerator:
         total = len(df_calls)
         avg = total / len(unique_nums) if unique_nums else 0.0
 
-        top_in = self._top_n(
-            df_calls[df_calls[COL_CALL_TYPE] == CALL_TYPE_INCOMING],
-            COL_ORIGINATOR,
-            aliases,
-        )
-        top_out = self._top_n(
-            df_calls[df_calls[COL_CALL_TYPE] == CALL_TYPE_OUTGOING],
-            COL_RECEIVER,
-            aliases,
-        )
+        df_in = df_calls[df_calls[COL_CALL_TYPE] == CALL_TYPE_INCOMING]
+        df_out = df_calls[df_calls[COL_CALL_TYPE] == CALL_TYPE_OUTGOING]
 
-        calls_in, calls_out, geo_map = self._build_call_tables(df_calls, aliases, has_coords)
+        top_in = self._top_n(df_in, COL_ORIGINATOR, aliases)
+        top_out = self._top_n(df_out, COL_RECEIVER, aliases)
+        bottom_in = self._top_n(df_in, COL_ORIGINATOR, aliases, ascending=True)
+        bottom_out = self._top_n(df_out, COL_RECEIVER, aliases, ascending=True)
 
-        dep_mun: dict[str, list[str]] = {}
-        for dep, muni_set in geo_map.items():
-            dep_mun[dep] = sorted(muni_set)
+        calls_in, calls_out, geo_map_in, geo_map_out = self._build_call_tables(df_calls, aliases, has_coords)
+
+        dep_mun_ent: dict[str, list[str]] = {}
+        dep_mun_sal: dict[str, list[str]] = {}
+        for dep, muni_set in geo_map_in.items():
+            dep_mun_ent[dep] = sorted(muni_set)
+        for dep, muni_set in geo_map_out.items():
+            dep_mun_sal[dep] = sorted(muni_set)
 
         return {
             "total_llamadas": total,
@@ -398,15 +441,23 @@ class ReportGenerator:
             "numeros_unicos": sorted(config.display_name(n) for n in unique_nums),
             "top_entrantes": top_in,
             "top_salientes": top_out,
+            "bottom_entrantes": bottom_in,
+            "bottom_salientes": bottom_out,
             "incluir_membrete": config.include_letterhead,
             "adjuntos": attachments,
             "datos_generales": config.case_metadata.to_dict(),
             "has_coords": has_coords,
             "has_datos_recorrido": has_route,
-            "lista_departamentos": sorted(dep_mun.keys()),
-            "lista_municipios": sorted({m for ms in dep_mun.values() for m in ms}),
-            "mapa_dep_mun": dep_mun,
-            "has_atypical_locations": "is_atypical" in df_calls.columns and df_calls["is_atypical"].any(),
+            "atypical_maps": atypical_maps, # defined explicitly via locals or passed as arg
+            "lista_departamentos_ent": sorted(dep_mun_ent.keys()),
+            "lista_departamentos_sal": sorted(dep_mun_sal.keys()),
+            "mapa_dep_mun_ent": dep_mun_ent,
+            "mapa_dep_mun_sal": dep_mun_sal,
+            "has_atypical_locations": len(atypical_maps) > 0,
+            "has_entrantes_map": map_flags.get("has_entrantes_map", False),
+            "has_salientes_map": map_flags.get("has_salientes_map", False),
+            "has_day_map": map_flags.get("has_day_map", False),
+            "has_night_map": map_flags.get("has_night_map", False),
             "primary_color": config.primary_color,
             "secondary_color": config.secondary_color,
             "company_name": config.company_name,
@@ -420,10 +471,11 @@ class ReportGenerator:
         df: pd.DataFrame,
         aliases: dict[str, str],
         has_coords: bool,
-    ) -> tuple[dict, dict, dict[str, set]]:
+    ) -> tuple[dict, dict, dict[str, set], dict[str, set]]:
         calls_in: dict = {}
         calls_out: dict = {}
-        geo_map: dict[str, set] = {}
+        geo_map_in: dict[str, set] = {}
+        geo_map_out: dict[str, set] = {}
 
         for row in df.itertuples(index=False):
             call_type = getattr(row, COL_CALL_TYPE, "")
@@ -442,7 +494,10 @@ class ReportGenerator:
                 coords_str = f"{lat}, {lon}"
                 depto, muni = self._geo.get_location(float(lat), float(lon))
                 if depto not in ("Desconocido",) and muni not in ("Desconocido",):
-                    geo_map.setdefault(depto, set()).add(muni)
+                    if call_type == CALL_TYPE_INCOMING:
+                        geo_map_in.setdefault(depto, set()).add(muni)
+                    elif call_type == CALL_TYPE_OUTGOING:
+                        geo_map_out.setdefault(depto, set()).add(muni)
 
             dt = getattr(row, COL_DATETIME, None)
             info = {
@@ -458,16 +513,19 @@ class ReportGenerator:
             elif call_type == CALL_TYPE_INCOMING:
                 calls_in.setdefault(o_disp, {"llamadas": []})["llamadas"].append(info)
 
-        return calls_in, calls_out, geo_map
+        return calls_in, calls_out, geo_map_in, geo_map_out
 
     @staticmethod
     def _top_n(
-        df: pd.DataFrame, col: str, aliases: dict[str, str], n: int = TOP_N_CALLS
+        df: pd.DataFrame, col: str, aliases: dict[str, str], n: int = TOP_N_CALLS, ascending: bool = False
     ) -> list[dict]:
         if df.empty or col not in df.columns:
             return []
         result = []
-        for num, count in df[col].value_counts().head(n).items():
+        counts = df[col].value_counts(ascending=ascending)
+        # Handle cases where there might be 0 counts causing issues, just take the top/bottom n
+        for num, count in counts.head(n).items():
+            if pd.isna(num) or num == "" or count == 0: continue
             alias = aliases.get(str(num))
             display = f"{num} ({alias})" if alias else str(num)
             result.append({"nombre": display, "frecuencia": count})
