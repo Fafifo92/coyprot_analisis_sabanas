@@ -110,9 +110,17 @@ class ClusterMapBuilder:
         mapa = folium.Map(location=center, zoom_start=11, tiles="OpenStreetMap")
 
         # Fit bounds calculation
-        sw = [clean[COL_LATITUDE].min(), clean[COL_LONGITUDE].min()]
-        ne = [clean[COL_LATITUDE].max(), clean[COL_LONGITUDE].max()]
-        mapa.fit_bounds([sw, ne])
+        lat_min, lon_min = clean[COL_LATITUDE].min(), clean[COL_LONGITUDE].min()
+        lat_max, lon_max = clean[COL_LATITUDE].max(), clean[COL_LONGITUDE].max()
+
+        sw = [lat_min, lon_min]
+        ne = [lat_max, lon_max]
+
+        # Add a tiny padding/max_zoom safeguard if min==max to prevent infinite zoom
+        if lat_min == lat_max and lon_min == lon_max:
+            mapa.fit_bounds([[lat_min - 0.01, lon_min - 0.01], [lat_max + 0.01, lon_max + 0.01]])
+        else:
+            mapa.fit_bounds([sw, ne])
 
         mapa.get_root().html.add_child(folium.Element(_CSS_LAYER_CONTROL))
 
@@ -207,6 +215,16 @@ class HeatMapBuilder:
 
         center = [clean[COL_LATITUDE].mean(), clean[COL_LONGITUDE].mean()]
         mapa = folium.Map(location=center, zoom_start=11, tiles="OpenStreetMap")
+
+        # Fit bounds calculation
+        lat_min, lon_min = clean[COL_LATITUDE].min(), clean[COL_LONGITUDE].min()
+        lat_max, lon_max = clean[COL_LATITUDE].max(), clean[COL_LONGITUDE].max()
+
+        if lat_min == lat_max and lon_min == lon_max:
+            mapa.fit_bounds([[lat_min - 0.01, lon_min - 0.01], [lat_max + 0.01, lon_max + 0.01]])
+        else:
+            mapa.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]])
+
         heat_data = clean[[COL_LATITUDE, COL_LONGITUDE]].values.tolist()
         HeatMap(heat_data, radius=MAP_HEATMAP_RADIUS, blur=MAP_HEATMAP_BLUR).add_to(mapa)
         output_path.parent.mkdir(parents=True, exist_ok=True)

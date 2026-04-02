@@ -278,6 +278,9 @@ class ReportGenerator:
                         })
                         self._cluster_map.build(group_data, maps_dir / filename, aliases=config.aliases)
 
+                # Sort atypical maps from least records to most records
+                atypical_maps.sort(key=lambda x: x["count"])
+
         except Exception as exc:
             logger.error("Error generando mapas estáticos interactivos: %s", exc)
 
@@ -413,15 +416,25 @@ class ReportGenerator:
                 unique_nums.update(df_calls[col].dropna().astype(str).unique())
 
         total = len(df_calls)
-        avg = total / len(unique_nums) if unique_nums else 0.0
 
         df_in = df_calls[df_calls[COL_CALL_TYPE] == CALL_TYPE_INCOMING]
         df_out = df_calls[df_calls[COL_CALL_TYPE] == CALL_TYPE_OUTGOING]
 
-        top_in = self._top_n(df_in, COL_ORIGINATOR, aliases)
-        top_out = self._top_n(df_out, COL_RECEIVER, aliases)
-        bottom_in = self._top_n(df_in, COL_ORIGINATOR, aliases, ascending=True)
-        bottom_out = self._top_n(df_out, COL_RECEIVER, aliases, ascending=True)
+        total_entrantes = len(df_in)
+        total_salientes = len(df_out)
+
+        # Calculate daily average instead of per-number average
+        unique_days = 1
+        if not df_calls.empty and COL_DATETIME in df_calls.columns:
+            days = df_calls[COL_DATETIME].dt.date.nunique()
+            unique_days = days if days > 0 else 1
+
+        avg = total / unique_days
+
+        top_in = self._top_n(df_in, COL_ORIGINATOR, aliases, n=10)
+        top_out = self._top_n(df_out, COL_RECEIVER, aliases, n=10)
+        bottom_in = self._top_n(df_in, COL_ORIGINATOR, aliases, n=10, ascending=True)
+        bottom_out = self._top_n(df_out, COL_RECEIVER, aliases, n=10, ascending=True)
 
         calls_in, calls_out, geo_map_in, geo_map_out = self._build_call_tables(df_calls, aliases, has_coords)
 
@@ -434,6 +447,8 @@ class ReportGenerator:
 
         return {
             "total_llamadas": total,
+            "total_entrantes": total_entrantes,
+            "total_salientes": total_salientes,
             "total_numeros": len(unique_nums),
             "promedio_llamadas": round(avg, 2),
             "llamadas_entrantes": calls_in,
