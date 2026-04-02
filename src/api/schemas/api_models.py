@@ -28,6 +28,7 @@ class UserResponse(UserBase):
     created_at: datetime
     profile_settings: Optional[dict] = None
     global_aliases: Optional[dict] = None
+    projects_created: Optional[int] = 0
 
     model_config = ConfigDict(from_attributes=True)
 

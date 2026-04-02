@@ -77,8 +77,7 @@ class _Sty:
     @classmethod
     def styles(cls, primary_color: str, secondary_color: str) -> dict[str, ParagraphStyle]:
         base = getSampleStyleSheet()
-        cls.BRAND = colors.HexColor(primary_color)
-        brand = cls.BRAND
+        brand = colors.HexColor(primary_color)
         accent = colors.HexColor(secondary_color)
 
         return {
@@ -95,12 +94,12 @@ class _Sty:
             "h2": ParagraphStyle(
                 "PH2", parent=base["Heading2"],
                 fontSize=14, fontName="Helvetica-Bold",
-                textColor=cls.BRAND, spaceBefore=18, spaceAfter=8,
+                textColor=brand, spaceBefore=18, spaceAfter=8,
             ),
             "h3": ParagraphStyle(
                 "PH3", parent=base["Heading3"],
                 fontSize=11, fontName="Helvetica-Bold",
-                textColor=cls.BRAND, spaceBefore=10, spaceAfter=4,
+                textColor=brand, spaceBefore=10, spaceAfter=4,
             ),
             "body": ParagraphStyle(
                 "PBody", parent=base["Normal"],
@@ -117,7 +116,7 @@ class _Sty:
             "cell_header": ParagraphStyle(
                 "PCellH", parent=base["Normal"],
                 fontSize=8, fontName="Helvetica-Bold", leading=10,
-                textColor=colors.white,
+                textColor=colors.HexColor("#343a40"),
             ),
             "link": ParagraphStyle(
                 "PLink", parent=base["Normal"],
@@ -137,7 +136,7 @@ class _Sty:
             "kpi_value": ParagraphStyle(
                 "PKpi", parent=base["Normal"],
                 fontSize=16, fontName="Helvetica-Bold",
-                textColor=cls.BRAND, alignment=TA_CENTER,
+                textColor=brand, alignment=TA_CENTER,
             ),
             "kpi_label": ParagraphStyle(
                 "PKpiL", parent=base["Normal"],
@@ -151,7 +150,7 @@ def _table_base_style() -> list:
     """Comandos base de estilo para tablas de datos."""
     return [
         ("BACKGROUND", (0, 0), (-1, 0), _Sty.HEADER_BG),
-        ("TEXTCOLOR", (0, 0), (-1, 0), _Sty.HEADER_TXT),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#343a40")), # Forced dark text for visibility
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, 0), 8),
         ("ALIGN", (0, 0), (-1, 0), "CENTER"),
@@ -323,7 +322,7 @@ class PdfReportBuilder:
         elems.append(Paragraph(escape(config.report_name), self._s["subtitle"]))
         elems.append(Spacer(1, 8))
         elems.append(HRFlowable(
-            width="80%", thickness=1.5, color=_Sty.BRAND,
+            width="80%", thickness=1.5, color=colors.HexColor(config.primary_color),
             spaceAfter=20, hAlign="CENTER",
         ))
 

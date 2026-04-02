@@ -161,53 +161,48 @@
                                 <span x-text="formatStatus(project.status)"></span>
                             </span>
 
-                            <!-- Botón Iniciar Análisis -->
-                            <button @click="startAnalysis"
-                                    x-show="(project.status === 'PENDING_MAPPING' || project.status === 'FAILED') && mappedFilesCount > 0"
-                                    class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" aria-label="Iniciar Análisis Geográfico">
-                                <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Iniciar Análisis Geográfico
-                            </button>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <!-- Botón Iniciar Análisis -->
+                                <button @click="startAnalysis"
+                                        x-show="(project.status === 'PENDING_MAPPING' || project.status === 'FAILED') && mappedFilesCount > 0"
+                                        class="inline-flex items-center px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all" aria-label="Iniciar Análisis Geográfico">
+                                    <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Iniciar Análisis Geográfico
+                                </button>
 
-                            <!-- Botón Descargar Resultados y FTP -->
-                            <div class="flex items-center space-x-2" x-show="project.status === 'COMPLETED_HTML' || project.status === 'COMPLETED_ALL'">
                                 <button @click="uploadToFtp"
-                                        x-show="!project.result_ftp_url"
-                                        class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" title="Subir a servidor público y crear link de caso" aria-label="Subir a Nube (FTP)">
+                                        x-show="(project.status === 'COMPLETED_HTML' || project.status === 'COMPLETED_ALL') && !project.result_ftp_url"
+                                        class="inline-flex items-center px-4 py-2.5 bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 text-sm font-medium rounded-lg shadow-sm transition-all" title="Subir a servidor público y crear link de caso" aria-label="Subir a Nube (FTP)">
                                     <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                    Subir a Nube (FTP)
+                                    Subir a Nube
                                 </button>
 
                                 <a :href="project.result_ftp_url" target="_blank"
                                         x-show="project.result_ftp_url"
-                                        class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" title="Visitar link online del caso">
+                                        class="inline-flex items-center px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all" title="Visitar link online del caso">
                                     <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                                    Enlace Online Público
+                                    Ver Informe en Línea
                                 </a>
-                            </div>
 
-                            <div class="flex items-center space-x-2" x-show="project.status === 'COMPLETED_HTML'">
                                 <button @click="downloadFile('html')"
-                                        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" aria-label="Descargar HTML Interactivo">
+                                        x-show="project.status === 'COMPLETED_HTML' || project.status === 'COMPLETED_ALL'"
+                                        class="inline-flex items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all" aria-label="Descargar HTML Interactivo">
                                     <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                                    Descargar HTML Interactivo
+                                    Descargar Base HTML
                                 </button>
 
                                 <button @click="generatePdf"
-                                        class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" aria-label="Generar PDF (Forensico)">
+                                        x-show="project.status === 'COMPLETED_HTML'"
+                                        class="inline-flex items-center px-4 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium rounded-lg shadow-sm transition-all" aria-label="Generar PDF (Forensico)">
                                     <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    Generar PDF (Forensico)
+                                    Construir PDF Forense
                                 </button>
-                            </div>
 
-                            <div class="flex items-center space-x-2" x-show="project.status === 'COMPLETED_ALL'">
-                                <button @click="downloadFile('html')"
-                                        class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" aria-label="Descargar HTML">
-                                    Descargar HTML
-                                </button>
                                 <button @click="downloadFile('pdf')"
-                                        class="inline-flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" aria-label="Descargar PDF">
-                                    Descargar PDF
+                                        x-show="project.status === 'COMPLETED_ALL'"
+                                        class="inline-flex items-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all" aria-label="Descargar PDF">
+                                    <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    Descargar PDF Listo
                                 </button>
                             </div>
                         </div>

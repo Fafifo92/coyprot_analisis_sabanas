@@ -18,7 +18,18 @@ async def list_users(
     admin: User = Depends(get_current_admin)
 ):
     user_repo = UserRepository(db)
-    return await user_repo.get_all(skip=skip, limit=limit)
+    users = await user_repo.get_all(skip=skip, limit=limit)
+
+    from sqlalchemy.future import select
+    from sqlalchemy import func
+    from db.models import Project
+
+    # Enhance users with project count directly in the response
+    for user in users:
+        result = await db.execute(select(func.count(Project.id)).filter(Project.owner_id == user.id))
+        setattr(user, "projects_created", result.scalar() or 0)
+
+    return users
 
 @router.post("/users", response_model=UserResponse)
 async def create_user(
@@ -80,6 +91,33 @@ async def soft_delete_user(
 
     await db.commit()
     return None
+
+@router.get("/global_aliases", response_model=dict)
+async def get_master_aliases(
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin)
+):
+    """Obtiene la agenda global de la cuenta admin (usada como master)."""
+    return admin.global_aliases or {}
+
+@router.post("/global_aliases")
+async def save_master_aliases(
+    aliases: dict,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin)
+):
+    """Guarda/actualiza la agenda global de la cuenta admin (master)."""
+    from sqlalchemy.orm.attributes import flag_modified
+
+    current_aliases = admin.global_aliases or {}
+    current_aliases.update(aliases)
+    admin.global_aliases = current_aliases
+
+    flag_modified(admin, "global_aliases")
+    db.add(admin)
+    await db.commit()
+
+    return {"message": "Agenda master actualizada"}
 
 @router.get("/audit", response_model=List[AuditLogResponse])
 async def list_audit_logs(
