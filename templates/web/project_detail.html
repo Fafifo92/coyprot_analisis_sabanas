@@ -310,7 +310,7 @@
                                                                                     <select x-model="file.mappings[sheetName].mapping[field.key]" class="block w-full pl-3 pr-8 py-2 text-sm bg-white border border-gray-300 rounded-lg shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 appearance-none disabled:opacity-60 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500" :disabled="file.status === 'MAPPED'">
                                                                                         <option value="">-- Seleccionar --</option>
                                                                                         <template x-for="col in cols" :key="col">
-                                                                                            <option :value="col" x-text="col"></option>
+                                                                                            <option :value="col" x-text="col" :selected="file.mappings[sheetName].mapping[field.key] === col"></option>
                                                                                         </template>
                                                                                     </select>
                                                                                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500" x-show="file.status !== 'MAPPED'">
@@ -910,6 +910,43 @@
                             Swal.fire('Atención', `La hoja ${sheetName} requiere al menos Fecha y Originador mapeados.`, 'warning');
                             this.savingMapping = false;
                             return;
+                        }
+
+                        // Check for duplicate assignments
+                        const assignedColumns = Object.values(config.mapping).filter(v => v !== '');
+                        const uniqueAssignments = new Set(assignedColumns);
+                        if (assignedColumns.length !== uniqueAssignments.size) {
+                            const duplicates = assignedColumns.filter((item, index) => assignedColumns.indexOf(item) !== index);
+                            const confirmDuplicate = await Swal.fire({
+                                title: 'Advertencia de Mapeo Múltiple',
+                                text: `En la hoja ${sheetName}, has asignado la misma columna "${duplicates[0]}" a varios campos. ¿Estás seguro de continuar?`,
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Sí, continuar',
+                                cancelButtonText: 'Revisar'
+                            });
+                            if (!confirmDuplicate.isConfirmed) {
+                                this.savingMapping = false;
+                                return;
+                            }
+                        }
+
+                        // Check for empty fields
+                        const requiredKeys = ['fecha_hora', 'originador', 'receptor', 'tipo_llamada', 'duracion', 'celda']; // Assuming these are the main ones
+                        const emptyFields = requiredKeys.filter(k => !config.mapping[k] && config.sheet_type === 'Llamadas');
+                        if (emptyFields.length > 0) {
+                             const confirmEmpty = await Swal.fire({
+                                title: 'Campos sin mapear',
+                                text: `En la hoja ${sheetName}, dejaste campos importantes en blanco (ej. ${emptyFields.join(', ')}). ¿Estás seguro de dejarlos en blanco?`,
+                                icon: 'info',
+                                showCancelButton: true,
+                                confirmButtonText: 'Sí, dejar en blanco',
+                                cancelButtonText: 'Completar'
+                            });
+                            if (!confirmEmpty.isConfirmed) {
+                                this.savingMapping = false;
+                                return;
+                            }
                         }
 
                         configs.push({

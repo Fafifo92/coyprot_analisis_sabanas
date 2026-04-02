@@ -1,3 +1,23 @@
 INFO:     Will watch for changes in these directories: ['/app']
-ERROR:    [Errno 98] Address already in use
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [3907857] using WatchFiles
 Iniciando Servidor Coyprot SaaS en http://127.0.0.1:8000
+INFO:     Started server process [3908403]
+INFO:     Waiting for application startup.
+2026-04-02 19:06:26,663 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+INFO:     127.0.0.1:36106 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36106 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36106 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36106 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52118 - "GET /api/projects/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38944 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38944 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38944 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38944 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38956 - "GET /api/projects/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33038 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33038 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33038 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33040 - "GET /api/projects/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33038 - "GET /api/auth/me HTTP/1.1" 200 OK
