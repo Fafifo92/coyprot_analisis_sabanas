@@ -28,6 +28,17 @@
   <script src="../static/assets_js/interactive_charts.js"></script>
 
   <style>
+    :root {
+      --primary-color: {{ primary_color | default('#20306c') }};
+      --secondary-color: {{ secondary_color | default('#e45c2c') }};
+    }
+    .text-primary { color: var(--primary-color) !important; }
+    .bg-primary { background-color: var(--primary-color) !important; }
+    .btn-primary {
+      background-color: var(--primary-color) !important;
+      border-color: var(--primary-color) !important;
+    }
+
     body {
       background-color: #f4f6f8;
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -260,8 +271,17 @@
       <img src="../static/assets_img/logo.png" class="logo-img" onerror="this.style.display='none'">
       <div class="text-center">
         <h2 class="m-0 text-primary fw-bold" style="letter-spacing: -0.5px;">Informe de Análisis de Comunicaciones</h2>
+        {% if company_name or company_address or company_phone or company_email %}
+        <div class="text-muted" style="font-size: 0.85rem; margin-top: 5px;">
+          {% if company_name %}<strong>{{ company_name }}</strong><br>{% endif %}
+          {% if company_address %}<span>{{ company_address }}</span> | {% endif %}
+          {% if company_phone %}<span>Tel: {{ company_phone }}</span> | {% endif %}
+          {% if company_email %}<span>Email: {{ company_email }}</span>{% endif %}
+        </div>
+        {% else %}
         <small class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Generado
           Automáticamente</small>
+        {% endif %}
       </div>
       <img src="../static/assets_img/info.png" class="logo-img" onerror="this.style.display='none'">
     </div>

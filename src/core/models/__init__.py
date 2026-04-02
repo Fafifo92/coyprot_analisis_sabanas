@@ -111,6 +111,16 @@ class ReportConfig:
     aliases: dict[str, str] = field(default_factory=dict)
     case_metadata: CaseMetadata = field(default_factory=CaseMetadata.with_defaults)
     pdf_attachments: list[PdfAttachment] = field(default_factory=list)
+    logo_type: str = "coyprot" # none, coyprot, custom
+    custom_logo_path: Optional[str] = None
+
+    # Configuraciones visuales de la cuenta / empresa
+    primary_color: str = "#20306c"
+    secondary_color: str = "#e45c2c"
+    company_name: Optional[str] = None
+    company_address: Optional[str] = None
+    company_phone: Optional[str] = None
+    company_email: Optional[str] = None
 
     @property
     def safe_name(self) -> str:

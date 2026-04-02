@@ -31,7 +31,13 @@ async def lifespan(app: FastAPI):
             for col in ["result_ftp_url", "aliases", "extra_metadata"]:
                 try:
                     await conn.execute(text(f"ALTER TABLE projects ADD COLUMN {col} VARCHAR"))
-                    logger.info(f"Migración aplicada: Columna '{col}' agregada.")
+                    logger.info(f"Migración aplicada: Columna '{col}' agregada a projects.")
+                except Exception as e:
+                    pass
+            for col in ["profile_settings", "global_aliases"]:
+                try:
+                    await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} JSON"))
+                    logger.info(f"Migración aplicada: Columna '{col}' agregada a users.")
                 except Exception as e:
                     pass
 

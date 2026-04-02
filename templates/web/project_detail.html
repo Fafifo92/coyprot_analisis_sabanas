@@ -229,6 +229,10 @@
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                                     3. Documentación (PDFs)
                                 </button>
+                                <button @click="mainTab = 'config'" :class="mainTab === 'config' ? 'border-indigo-500 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-4 px-1 border-b-2 text-sm font-medium flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    4. Configuración
+                                </button>
                             </nav>
                         </div>
 
@@ -347,12 +351,18 @@
 
                             <!-- TAB 2: ALIAS -->
                             <div x-show="mainTab === 'alias'">
-                                <div class="mb-4 flex justify-between items-end">
+                                <div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                                     <div>
                                         <h2 class="text-lg font-bold text-gray-900">Enriquecimiento de Agenda (Alias)</h2>
                                         <p class="text-sm text-gray-500 mt-1">Asigna nombres legibles a los números telefónicos clave. Serán visibles en los gráficos y PDF.</p>
                                     </div>
-                                    <button @click="saveProjectMetadata()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors" x-show="uniqueNumbers.length > 0">Guardar Agenda</button>
+                                    <div class="flex flex-col sm:flex-row items-center gap-2" x-show="uniqueNumbers.length > 0">
+                                        <div class="flex items-center">
+                                            <input id="save_to_global_aliases" type="checkbox" x-model="saveToGlobalAliases" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                            <label for="save_to_global_aliases" class="ml-2 block text-sm text-gray-900">Guardar también en mi cuenta global</label>
+                                        </div>
+                                        <button @click="saveProjectMetadata()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">Guardar Agenda</button>
+                                    </div>
                                 </div>
 
                                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4" x-show="uniqueNumbers.length === 0">
@@ -378,6 +388,65 @@
                                             </template>
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+
+                            <!-- TAB 3: ADJUNTOS PDF -->
+                            <!-- TAB 4: CONFIGURACIÓN -->
+                            <div x-show="mainTab === 'config'">
+                                <div class="mb-4">
+                                    <h2 class="text-lg font-bold text-gray-900">Configuración del Informe</h2>
+                                    <p class="text-sm text-gray-500 mt-1">Selecciona qué detalles de tu cuenta (configurados en tu perfil) quieres incluir en este reporte.</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-xl border border-gray-200 p-6 max-w-2xl">
+                                    <div class="space-y-4">
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="show_logo" type="checkbox" x-model="projectConfig.show_logo" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="show_logo" class="font-medium text-gray-700">Incluir Logo</label>
+                                                <p class="text-gray-500">Muestra el logo configurado en tu perfil de usuario.</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="show_company" type="checkbox" x-model="projectConfig.show_company" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="show_company" class="font-medium text-gray-700">Incluir Nombre de la Empresa</label>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="show_address" type="checkbox" x-model="projectConfig.show_address" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="show_address" class="font-medium text-gray-700">Incluir Dirección</label>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="show_phone" type="checkbox" x-model="projectConfig.show_phone" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="show_phone" class="font-medium text-gray-700">Incluir Teléfono</label>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input id="show_email" type="checkbox" x-model="projectConfig.show_email" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="show_email" class="font-medium text-gray-700">Incluir Correo Electrónico</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-6">
+                                        <button @click="saveProjectConfig" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+                                            Guardar Configuración
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -450,6 +519,14 @@
                 files: [], // Cada file = {id, filename, detected_sheets, status, activeTab, mappings}
                 uploading: false,
                 savingMapping: false,
+                saveToGlobalAliases: false,
+                projectConfig: {
+                    show_logo: true,
+                    show_company: true,
+                    show_address: true,
+                    show_phone: true,
+                    show_email: true
+                },
 
                 // Tabs
                 mainTab: 'data',
@@ -545,6 +622,28 @@
                     }
                 },
 
+                async saveProjectConfig() {
+                    try {
+                        let extraMeta = this.project.extra_metadata || {};
+                        extraMeta.report_config = this.projectConfig;
+
+                        const res = await fetch(`/api/projects/${this.projectId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                            },
+                            body: JSON.stringify({ extra_metadata: extraMeta })
+                        });
+
+                        if (!res.ok) throw new Error("Error al guardar configuración");
+
+                        Swal.fire('Guardado', 'La configuración del reporte fue guardada exitosamente.', 'success');
+                    } catch (e) {
+                        Swal.fire('Error', e.message, 'error');
+                    }
+                },
+
                 async fetchProject() {
                     try {
                         const res = await fetch(`/api/projects/${this.projectId}`, {
@@ -552,9 +651,24 @@
                         });
                         this.project = await res.json();
 
+                        // Cargar config guardada
+                        if(this.project.extra_metadata && this.project.extra_metadata.report_config) {
+                            this.projectConfig = { ...this.projectConfig, ...this.project.extra_metadata.report_config };
+                        }
+
                         // Cargar aliases guardados en BD a la vista reactiva
                         if(this.project.aliases) {
                             this.aliases = { ...this.project.aliases };
+                        }
+
+                        // Fusionar con aliases globales (autocompletado básico invisible o para mostrar nombres si no están en project.aliases)
+                        const meRes = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` } });
+                        if(meRes.ok) {
+                            const me = await meRes.json();
+                            if(me.global_aliases) {
+                                // Mantenemos los alias del proyecto como prioridad, y rellenamos huecos con los globales
+                                this.aliases = { ...me.global_aliases, ...this.aliases };
+                            }
                         }
 
                         // Si ya está mapeado, descargar lista de PDFs
@@ -586,7 +700,7 @@
                         // Limpiar alias en blanco
                         const cleanAliases = {};
                         for(let k in this.aliases) {
-                            if(this.aliases[k].trim() !== '') cleanAliases[k] = this.aliases[k].trim();
+                            if(this.aliases[k] && this.aliases[k].trim() !== '') cleanAliases[k] = this.aliases[k].trim();
                         }
 
                         const res = await fetch(`/api/projects/${this.projectId}`, {
@@ -598,8 +712,21 @@
                             body: JSON.stringify({ aliases: cleanAliases })
                         });
 
-                        if(!res.ok) throw new Error("Error al guardar alias");
-                        Swal.fire('Guardado', 'Los Alias y Metadatos se han guardado exitosamente.', 'success');
+                        if(!res.ok) throw new Error("Error al guardar alias en el proyecto");
+
+                        if (this.saveToGlobalAliases) {
+                            const meRes = await fetch('/api/auth/me/settings', {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                                },
+                                body: JSON.stringify({ global_aliases: cleanAliases })
+                            });
+                            if (!meRes.ok) throw new Error("Error al guardar en agenda global");
+                        }
+
+                        Swal.fire('Guardado', 'Los Alias se han guardado exitosamente.', 'success');
                     } catch(e) {
                         Swal.fire('Error', e.message, 'error');
                     }
@@ -894,6 +1021,9 @@
 
                     if (result.isConfirmed) {
                         try {
+                            Swal.fire({ title: 'Iniciando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                            // Trigger analysis
                             const res = await fetch(`/api/projects/${this.projectId}/analyze`, {
                                 method: 'POST',
                                 headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
