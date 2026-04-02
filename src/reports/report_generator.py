@@ -334,6 +334,9 @@ class ReportGenerator:
 
             dt = getattr(row, COL_DATETIME, None)
 
+            is_night = bool(getattr(row, "is_night", False))
+            is_atypical = bool(getattr(row, "is_atypical", False))
+
             call_data.setdefault(display, []).append({
                 "numero": display,
                 "fecha_hora": dt.isoformat() if pd.notna(dt) else "",
@@ -341,6 +344,8 @@ class ReportGenerator:
                 "tipo_llamada": call_type,
                 "latitud": float(lat) if lat is not None and pd.notna(lat) else None,
                 "longitud": float(lon) if lon is not None and pd.notna(lon) else None,
+                "is_night": is_night,
+                "is_atypical": is_atypical
             })
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -401,6 +406,7 @@ class ReportGenerator:
             "lista_departamentos": sorted(dep_mun.keys()),
             "lista_municipios": sorted({m for ms in dep_mun.values() for m in ms}),
             "mapa_dep_mun": dep_mun,
+            "has_atypical_locations": "is_atypical" in df_calls.columns and df_calls["is_atypical"].any(),
             "primary_color": config.primary_color,
             "secondary_color": config.secondary_color,
             "company_name": config.company_name,
