@@ -86,6 +86,25 @@ class ClusterMapBuilder:
         if clean.empty:
             return
 
+        # Support query string JS filtering inside Folium template later
+        _HTML_JS_FILTER = """
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const params = new URLSearchParams(window.location.search);
+                const isNight = params.get('is_night');
+                const isAtypical = params.get('is_atypical');
+                const callType = params.get('type'); // entrante | saliente
+
+                // Note: True dynamic filtering on static Folium output without a backend
+                // is complex. But we can hide specific clusters if a global map type is forced.
+                // In future versions, we replace this fully with raw Leaflet JS.
+                if (callType === 'entrante') {
+                   // ...
+                }
+            });
+        </script>
+        """
+
         aliases = aliases or {}
         center = [clean[COL_LATITUDE].mean(), clean[COL_LONGITUDE].mean()]
         mapa = folium.Map(location=center, zoom_start=11, tiles="OpenStreetMap")
@@ -132,7 +151,29 @@ class ClusterMapBuilder:
 
         folium.LayerControl().add_to(mapa)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        mapa.save(str(output_path))
+
+        # Add basic client-side JS filter handling to the raw HTML output
+        html_out = mapa.get_root().render()
+
+        js_filter = """
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const params = new URLSearchParams(window.location.search);
+            const isNightStr = params.get('is_night');
+            const isAtypicalStr = params.get('is_atypical');
+            const mapType = params.get('type');
+            const filterNumber = params.get('filter');
+
+            // Folium static outputs aren't easily filtered natively without hacking Leaflet.
+            // For now, this placeholder enables the UI logic to not crash and we'll implement
+            // the full JS filter logic in the final Astro frontend phase.
+            console.log("Map Loaded. Applied filters (Client Side Rendering in progress):",
+               {isNight: isNightStr, isAtypical: isAtypicalStr, type: mapType, number: filterNumber});
+        });
+        </script>
+        """
+        html_out = html_out.replace("</body>", f"{js_filter}</body>")
+        output_path.write_text(html_out, encoding="utf-8")
 
 
 class HeatMapBuilder:

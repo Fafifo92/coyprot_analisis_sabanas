@@ -128,3 +128,63 @@ INFO:     Started server process [111938]
 INFO:     Waiting for application startup.
 2026-04-02 06:13:20,877 [INFO] Verificando/Creando tablas de Base de Datos...
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/services/data_processing_service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 09:36:50,648 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [111938]
+WARNING:  WatchFiles detected changes in 'src/services/data_processing_service.py'. Reloading...
+INFO:     Started server process [325420]
+INFO:     Waiting for application startup.
+2026-04-02 09:36:59,244 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 09:36:59,369 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [325420]
+INFO:     Started server process [328143]
+INFO:     Waiting for application startup.
+2026-04-02 09:37:03,529 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/reports/report_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 09:38:21,459 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [328143]
+WARNING:  WatchFiles detected changes in 'src/reports/report_generator.py'. Reloading...
+INFO:     Started server process [350967]
+INFO:     Waiting for application startup.
+2026-04-02 09:38:25,514 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 09:38:25,626 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [350967]
+INFO:     Started server process [351642]
+INFO:     Waiting for application startup.
+2026-04-02 09:38:29,641 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/reports/builders/map_builder.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 09:51:37,178 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [351642]
+WARNING:  WatchFiles detected changes in 'src/reports/builders/map_builder.py'. Reloading...
+INFO:     Started server process [496037]
+INFO:     Waiting for application startup.
+2026-04-02 09:51:41,100 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-02 09:51:41,211 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [496037]
+INFO:     Started server process [498089]
+INFO:     Waiting for application startup.
+2026-04-02 09:51:45,052 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.

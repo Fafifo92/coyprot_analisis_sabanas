@@ -48,29 +48,23 @@ window.switchMap = function(type) {
 
 // --- Función Auxiliar: Actualizar el Iframe ---
 function updateMapUrl() {
-    const iframe = document.getElementById('main-map-frame');
-    if (!iframe) return;
+    const iframes = document.querySelectorAll('.map-display-area iframe');
+    if (!iframes.length) return;
 
     const filterInput = document.getElementById("number-filter");
     const busqueda = filterInput ? filterInput.value.trim() : "";
 
-    // Construir la URL base según el tipo seleccionado actualmente
-    // Los archivos esperados son: mapa_agrupado.html, mapa_rutas.html, mapa_calor.html
-    let baseUrl = `../maps/mapa_${currentMapType}.html`;
-
-    // Lógica para enviar el filtro al mapa (si el mapa tuviera JS interno para leerlo)
-    // Aunque Folium es estático, mantenemos la estructura URL por si agregas lógica custom después.
-    if (busqueda) {
-        // Intentar limpiar el input: Si es "300123 (Juan)", nos quedamos con "300123"
-        const match = busqueda.match(/^([\d+]+)/); 
-        const numeroLimpio = match ? match[1] : busqueda;
+    iframes.forEach(iframe => {
+        let currentSrc = new URL(iframe.src);
         
-        // Añadimos el parámetro (útil si inspeccionas la URL o si inyectas JS en el futuro)
-        baseUrl += `?filter=${encodeURIComponent(numeroLimpio)}`;
+        if (busqueda) {
+            const match = busqueda.match(/^([\d+]+)/);
+            const numeroLimpio = match ? match[1] : busqueda;
+            currentSrc.searchParams.set("filter", numeroLimpio);
+        } else {
+            currentSrc.searchParams.delete("filter");
+        }
         
-        console.log(`🔍 Buscando en mapa: ${numeroLimpio} (Modo: ${currentMapType})`);
-    }
-
-    // Asignar la nueva URL al iframe provoca la recarga
-    iframe.src = baseUrl;
+        iframe.src = currentSrc.toString();
+    });
 }

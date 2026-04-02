@@ -240,6 +240,15 @@ class DataProcessingService:
         if COL_CALL_TYPE in df.columns:
             df[COL_CALL_TYPE] = df[COL_CALL_TYPE].apply(self._normalize_call_type)
 
+        # Detectar horarios y ubicaciones atípicas para analítica avanzada
+        logger.info("Detectando parámetros analíticos avanzados...")
+        if COL_DATETIME in df.columns:
+            # Día: 06:00 a 17:59, Noche: 18:00 a 05:59
+            df["is_night"] = df[COL_DATETIME].dt.hour.between(18, 23) | df[COL_DATETIME].dt.hour.between(0, 5)
+
+        if COL_LATITUDE in df.columns and COL_LONGITUDE in df.columns:
+            df = self._detect_atypical_locations(df)
+
         discarded = original_rows - len(df)
         if discarded > 0:
             logger.warning("Filas descartadas (fecha inválida): %d", discarded)
@@ -300,6 +309,46 @@ class DataProcessingService:
         """Divide el DataFrame en llamadas y datos de internet."""
         mask = df[COL_CALL_TYPE].astype(str).str.upper().str.contains("DATO")
         return df[~mask].copy(), df[mask].copy()
+
+    # ── Cálculos Analíticos (Avanzados) ───────────────────────────────────────
+
+    def _detect_atypical_locations(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calcula ubicaciones atípicas basándose en la frecuencia de aparición de un
+        municipio o coordenada específica. Si una ubicación representa menos del
+        5% de la actividad, se marca como atípica. Si usa coordenadas exactas, se
+        redondean (aprox ~1km cuadrado) para agrupar ubicaciones cercanas.
+        """
+        df["is_atypical"] = False
+        if df.empty:
+            return df
+
+        # Determinar nivel de agrupación (Municipio > Coordenadas Redondeadas)
+        has_municipality = "municipio" in df.columns and df["municipio"].notna().any()
+
+        if has_municipality:
+            # Agrupar por municipio (útil cuando son sábanas con DB de celdas)
+            counts = df["municipio"].value_counts(normalize=True)
+            # Definimos atípico si la frecuencia es menor al 5%
+            atypical_munis = counts[counts < 0.05].index
+            df.loc[df["municipio"].isin(atypical_munis), "is_atypical"] = True
+        else:
+            # Agrupar por coordenadas redondeadas a 2 decimales (aprox ~1km radius)
+            valid_coords_mask = df[COL_LATITUDE].notna() & df[COL_LONGITUDE].notna()
+            if not valid_coords_mask.any():
+                return df
+
+            df.loc[valid_coords_mask, "coord_cluster"] = (
+                df.loc[valid_coords_mask, COL_LATITUDE].round(2).astype(str) + "_" +
+                df.loc[valid_coords_mask, COL_LONGITUDE].round(2).astype(str)
+            )
+
+            counts = df["coord_cluster"].value_counts(normalize=True)
+            atypical_clusters = counts[counts < 0.05].index
+            df.loc[df["coord_cluster"].isin(atypical_clusters), "is_atypical"] = True
+            df.drop(columns=["coord_cluster"], inplace=True)
+
+        return df
 
     # ── Helpers privados ──────────────────────────────────────────────────────
 
