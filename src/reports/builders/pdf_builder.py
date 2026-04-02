@@ -70,11 +70,15 @@ class _Sty:
     BORDER = colors.HexColor("#dee2e6")
     LIGHT_GRAY = colors.HexColor("#6c757d")
     KPI_BG = colors.HexColor("#e8f4fd")
+    BRAND = colors.HexColor(PDF_BRAND_COLOR_HEX)
+    HEADER_BG = colors.HexColor("#f8f9fa")
+    HEADER_TXT = colors.HexColor("#6c757d")
 
     @classmethod
     def styles(cls, primary_color: str, secondary_color: str) -> dict[str, ParagraphStyle]:
         base = getSampleStyleSheet()
-        brand = colors.HexColor(primary_color)
+        cls.BRAND = colors.HexColor(primary_color)
+        brand = cls.BRAND
         accent = colors.HexColor(secondary_color)
 
         return {

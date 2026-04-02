@@ -346,8 +346,10 @@ def _prepare_report_config(project: Project, db, project_id: int) -> ReportConfi
                 custom_logo_path = str(custom_path_jpg)
             else:
                 logo_type = "coyprot" # Fallback if file missing
-        else:
+        elif owner and owner.is_admin:
             logo_type = "coyprot"
+        else:
+            logo_type = "none"
 
     # Datos de empresa
     c_name = profile.get("company_name") if report_config_meta.get("show_company", True) else None

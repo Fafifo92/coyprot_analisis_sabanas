@@ -268,6 +268,7 @@
 
     {% if incluir_membrete %}
     <div class="header-images">
+      <!-- Logo Principal: Logo personalizado del usuario (si hay) o Logo Coyprot si es admin. Ocultar si no hay. -->
       <img src="../static/assets_img/logo.png" class="logo-img" onerror="this.style.display='none'">
       <div class="text-center">
         <h2 class="m-0 text-primary fw-bold" style="letter-spacing: -0.5px;">Informe de Análisis de Comunicaciones</h2>
@@ -283,7 +284,8 @@
           Automáticamente</small>
         {% endif %}
       </div>
-      <img src="../static/assets_img/info.png" class="logo-img" onerror="this.style.display='none'">
+      <!-- Lado derecho: Espacio en blanco o logo secundario estático -->
+      <div style="width: 65px;"></div>
     </div>
     {% else %}
     <h1 class="text-center mb-5 text-primary fw-bold">📊 Informe de Análisis de Llamadas</h1>
