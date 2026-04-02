@@ -17,7 +17,7 @@
         <!-- Sidebar -->
         <aside class="w-64 bg-gray-900 shadow-xl hidden sm:flex flex-col">
             <div class="h-16 flex items-center justify-center bg-gray-800 border-b border-gray-700">
-                <span class="text-white text-xl font-bold uppercase tracking-wider">Coyprot SaaS</span>
+                <span class="text-white text-xl font-bold tracking-wider" x-text="isAdmin ? 'Coyprot' : (companyName || 'C. Analyzer')"></span>
             </div>
 
             <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -359,7 +359,7 @@
                                     <div class="flex flex-col sm:flex-row items-center gap-2" x-show="uniqueNumbers.length > 0">
                                         <div class="flex items-center">
                                             <input id="save_to_global_aliases" type="checkbox" x-model="saveToGlobalAliases" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                            <label for="save_to_global_aliases" class="ml-2 block text-sm text-gray-900">Guardar también en mi cuenta global</label>
+                                            <label for="save_to_global_aliases" class="ml-2 block text-sm text-gray-900">Guardar números y nombres en la Agenda Global para autocompletar en el futuro</label>
                                         </div>
                                         <button @click="saveProjectMetadata()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">Guardar Agenda</button>
                                     </div>
@@ -543,6 +543,7 @@
                 isAdmin: localStorage.getItem('is_admin') === 'true',
                 tokensBalance: '0',
                 projectsCreated: 0,
+                companyName: '',
 
                 isEditModalOpen: false,
                 savingProjectData: false,
@@ -577,6 +578,9 @@
                             const data = await res.json();
                             this.tokensBalance = data.tokens_balance;
                             this.projectsCreated = data.projects_created;
+                            if (data.profile_settings && data.profile_settings.company_name) {
+                                this.companyName = data.profile_settings.company_name;
+                            }
                         }
                     } catch(e) {}
                 },

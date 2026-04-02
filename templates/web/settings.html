@@ -17,28 +17,28 @@
                 <div class="sm:col-span-2">
                     <label for="company_name" class="block text-sm font-medium text-gray-700">Nombre de la Empresa</label>
                     <div class="mt-1">
-                        <input type="text" x-model="settings.company_name" id="company_name" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <input type="text" x-model="settings.company_name" id="company_name" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2">
                     </div>
                 </div>
 
                 <div>
                     <label for="address" class="block text-sm font-medium text-gray-700">Dirección</label>
                     <div class="mt-1">
-                        <input type="text" x-model="settings.address" id="address" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <input type="text" x-model="settings.address" id="address" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2">
                     </div>
                 </div>
 
                 <div>
                     <label for="phone" class="block text-sm font-medium text-gray-700">Teléfono</label>
                     <div class="mt-1">
-                        <input type="text" x-model="settings.phone" id="phone" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <input type="text" x-model="settings.phone" id="phone" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2">
                     </div>
                 </div>
 
                 <div class="sm:col-span-2">
                     <label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
                     <div class="mt-1">
-                        <input type="email" x-model="settings.email" id="email" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <input type="email" x-model="settings.email" id="email" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2">
                     </div>
                 </div>
             </div>
@@ -49,44 +49,83 @@
         <div class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">Apariencia del Informe</h2>
 
-            <div class="mb-4">
+            <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Logo de la Empresa</label>
                 <div class="flex items-center space-x-4">
-                    <span class="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100 border border-gray-300 flex-shrink-0">
-                        <svg x-show="!hasLogo" class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                    <span class="inline-block h-16 w-16 rounded-full overflow-hidden bg-gray-100 border border-gray-300 flex-shrink-0 flex items-center justify-center">
+                        <svg x-show="!hasLogo" class="h-8 w-8 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        <img x-show="hasLogo" :src="logoUrl" alt="Logo" class="h-full w-full object-cover">
+                        <img x-show="hasLogo" :src="logoUrl" alt="Logo" class="h-full w-full object-contain">
                     </span>
-                    <button type="button" @click="$refs.logoInput.click()" class="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Cambiar
+                    <button type="button" @click="$refs.logoInput.click()" class="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        Cambiar Logo
                     </button>
                     <input type="file" x-ref="logoInput" @change="uploadLogo" accept=".png,.jpg,.jpeg" class="hidden">
-                    <span x-show="isUploadingLogo" class="text-sm text-indigo-600">Subiendo...</span>
+                    <span x-show="isUploadingLogo" class="text-sm text-indigo-600 font-medium">Subiendo...</span>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                    <label for="primary_color" class="block text-sm font-medium text-gray-700">Color Primario (Hex)</label>
-                    <div class="mt-1 flex rounded-md shadow-sm">
-                        <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                            #
-                        </span>
-                        <input type="text" x-model="settings.primary_color" id="primary_color" placeholder="1d4ed8" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300">
+                    <label for="primary_color" class="block text-sm font-medium text-gray-700 mb-1">Color Primario</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="color" x-model="colorPickerPrimary" @input="updateHexFromPicker('primary')" class="h-10 w-10 p-1 rounded border border-gray-300 cursor-pointer">
+                        <div class="flex rounded-md shadow-sm flex-1">
+                            <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">#</span>
+                            <input type="text" x-model="settings.primary_color" @input="updatePickerFromHex('primary')" id="primary_color" placeholder="20306c" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 uppercase">
+                        </div>
                     </div>
                 </div>
                 <div>
-                    <label for="secondary_color" class="block text-sm font-medium text-gray-700">Color Secundario (Hex)</label>
-                    <div class="mt-1 flex rounded-md shadow-sm">
-                        <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                            #
-                        </span>
-                        <input type="text" x-model="settings.secondary_color" id="secondary_color" placeholder="3b82f6" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300">
+                    <label for="secondary_color" class="block text-sm font-medium text-gray-700 mb-1">Color Secundario</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="color" x-model="colorPickerSecondary" @input="updateHexFromPicker('secondary')" class="h-10 w-10 p-1 rounded border border-gray-300 cursor-pointer">
+                        <div class="flex rounded-md shadow-sm flex-1">
+                            <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">#</span>
+                            <input type="text" x-model="settings.secondary_color" @input="updatePickerFromHex('secondary')" id="secondary_color" placeholder="e45c2c" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 uppercase">
+                        </div>
                     </div>
                 </div>
             </div>
             <p class="mt-2 text-xs text-gray-500">Estos colores se usarán en las gráficas y la estructura del reporte.</p>
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Agenda Global de Alias</h2>
+            <p class="text-sm text-gray-500 mb-4">Números guardados globalmente para autocompletar en tus proyectos.</p>
+
+            <div class="overflow-y-auto max-h-60 border border-gray-200 rounded-md">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2">Número</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2">Alias</th>
+                            <th scope="col" class="relative px-6 py-3"><span class="sr-only">Eliminar</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="(alias, number) in globalAliases" :key="number">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 font-mono" x-text="number"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <input type="text" x-model="globalAliases[number]" class="w-full border-0 border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:ring-0 sm:text-sm px-0 py-1 transition-colors">
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button type="button" @click="removeAlias(number)" class="text-red-600 hover:text-red-900" aria-label="Eliminar alias">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+                        <tr x-show="Object.keys(globalAliases).length === 0">
+                            <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No hay alias guardados en tu agenda global.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -122,14 +161,39 @@ function settingsData() {
             address: '',
             phone: '',
             email: '',
-            primary_color: '20306c', // Default Coyprot Blue
-            secondary_color: 'e45c2c', // Default Coyprot Orange
+            primary_color: '20306c',
+            secondary_color: 'e45c2c',
             allow_telemetry: false
         },
+        globalAliases: {},
+        colorPickerPrimary: '#20306c',
+        colorPickerSecondary: '#e45c2c',
         isSaving: false,
         isUploadingLogo: false,
         hasLogo: false,
         logoUrl: '',
+
+        updateHexFromPicker(type) {
+            if (type === 'primary') {
+                this.settings.primary_color = this.colorPickerPrimary.replace('#', '');
+            } else {
+                this.settings.secondary_color = this.colorPickerSecondary.replace('#', '');
+            }
+        },
+
+        updatePickerFromHex(type) {
+            if (type === 'primary') {
+                let hex = this.settings.primary_color;
+                if(hex.length === 6) this.colorPickerPrimary = '#' + hex;
+            } else {
+                let hex = this.settings.secondary_color;
+                if(hex.length === 6) this.colorPickerSecondary = '#' + hex;
+            }
+        },
+
+        removeAlias(number) {
+            delete this.globalAliases[number];
+        },
 
         async init() {
             try {
@@ -140,11 +204,18 @@ function settingsData() {
                     const data = await res.json();
                     if (data.profile_settings) {
                         this.settings = { ...this.settings, ...data.profile_settings };
+                        this.updatePickerFromHex('primary');
+                        this.updatePickerFromHex('secondary');
+                    }
+                    if (data.global_aliases) {
+                        this.globalAliases = { ...data.global_aliases };
                     }
                     if (this.settings.has_logo) {
                         this.hasLogo = true;
-                        // Use a dummy query param to bypass cache if updated
-                        this.logoUrl = `/static/uploads/users/${data.id}/logo.png?t=${new Date().getTime()}`;
+                        // Mount uses /uploads directly in main.py, so point there:
+                        // Also since users folder is inside uploads:
+                        // We need to serve the uploads folder correctly.
+                        this.logoUrl = `/uploads/users/${data.id}/logo.png?t=${new Date().getTime()}`;
                     }
                 }
             } catch (e) {
@@ -161,7 +232,10 @@ function settingsData() {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                     },
-                    body: JSON.stringify({ profile_settings: this.settings })
+                    body: JSON.stringify({
+                        profile_settings: this.settings,
+                        global_aliases: this.globalAliases
+                    })
                 });
 
                 if (!res.ok) throw new Error("Error al guardar");
