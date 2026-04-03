@@ -41,3 +41,53 @@ INFO:     Started server process [917372]
 INFO:     Waiting for application startup.
 2026-04-03 04:27:26,347 [INFO] Verificando/Creando tablas de Base de Datos...
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/schemas/api_models.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 06:54:56,104 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [917372]
+INFO:     Started server process [1735117]
+INFO:     Waiting for application startup.
+2026-04-03 06:55:03,546 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/routers/ftp.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 07:04:22,125 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1735117]
+INFO:     Started server process [1875906]
+INFO:     Waiting for application startup.
+2026-04-03 07:04:27,277 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'test_min_length.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 07:07:41,664 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1875906]
+INFO:     Started server process [1919020]
+INFO:     Waiting for application startup.
+2026-04-03 07:07:45,427 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 07:14:09,992 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1919020]
+INFO:     Started server process [2018605]
+INFO:     Waiting for application startup.
+2026-04-03 07:14:13,777 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/routers/auth.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 07:24:14,802 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2018605]
+INFO:     Started server process [2142045]
+INFO:     Waiting for application startup.
+2026-04-03 07:24:18,548 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.

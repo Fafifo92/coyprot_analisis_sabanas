@@ -1,9 +1,9 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from typing import Optional
 
 class UserBase(BaseModel):
-    username: str
+    username: str = Field(..., min_length=8, description="El nombre de usuario debe tener al menos 8 caracteres")
     is_admin: bool = False
     is_active: bool = True
     must_change_password: bool = True

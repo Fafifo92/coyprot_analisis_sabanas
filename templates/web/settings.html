@@ -203,6 +203,22 @@ function settingsData() {
         hasLogo: false,
         logoUrl: '',
 
+        async loadSecureLogo() {
+            try {
+                const res = await fetch('/api/auth/me/logo', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                });
+                if (res.ok) {
+                    const blob = await res.blob();
+                    this.logoUrl = URL.createObjectURL(blob);
+                } else {
+                    this.hasLogo = false;
+                }
+            } catch (e) {
+                console.error("Error loading secure logo", e);
+            }
+        },
+
         updateHexFromPicker(type) {
             if (type === 'primary') {
                 this.settings.primary_color = this.colorPickerPrimary.replace('#', '');
@@ -257,10 +273,8 @@ function settingsData() {
                     }
                     if (this.settings.has_logo) {
                         this.hasLogo = true;
-                        // Mount uses /uploads directly in main.py, so point there:
-                        // Also since users folder is inside uploads:
-                        // We need to serve the uploads folder correctly.
-                        this.logoUrl = `/uploads/users/${data.id}/logo.png?t=${new Date().getTime()}`;
+                        // Load image securely via blob fetching
+                        this.loadSecureLogo();
                     }
                 }
             } catch (e) {
@@ -330,8 +344,8 @@ function settingsData() {
                 this.settings.has_logo = true;
                 await this.saveSettings();
 
-                // Fetch me again to get ID for URL construct if needed, or just reload page
-                window.location.reload();
+                this.loadSecureLogo();
+                Swal.fire("Éxito", "Logo actualizado correctamente", "success");
 
             } catch (error) {
                 Swal.fire('Error', error.message, 'error');

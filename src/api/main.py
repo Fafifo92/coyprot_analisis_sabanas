@@ -67,7 +67,6 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 import os
 os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Registramos routers
 app.include_router(pages.router, tags=["Web"])
