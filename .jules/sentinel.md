@@ -1,4 +1,4 @@
-## 2025-01-20 - Restrict Permissive CORS
-**Vulnerability:** The application was using an overly permissive CORS policy (`allow_origins=["*"]`) in `src/api/main.py`. This is a significant security risk for APIs, as it allows any website to make cross-origin requests to the API and read the responses, potentially bypassing the Same-Origin Policy and exposing sensitive user data if authentication cookies or credentials are used.
-**Learning:** Hardcoding `["*"]` in CORS middleware during development often slips into production. It's crucial to make such settings configurable via environment variables from the start.
-**Prevention:** Always define `ALLOWED_ORIGINS` in the configuration settings (e.g., `src/config/api_settings.py`) with secure defaults (like `["http://localhost"]`) and override them using `.env` files in production environments. Never commit `allow_origins=["*"]` to the main branch.
+## 2024-05-24 - Prevent Path Traversal
+**Vulnerability:** When uploading files, trusting `file.filename` directly from the request can lead to path traversal if the filename contains `../` sequences, allowing attackers to overwrite arbitrary files on the server.
+**Learning:** This is a common attack vector in Python web frameworks (FastAPI/Flask) where uploaded files are written to the filesystem.
+**Prevention:** Always use `Path(file.filename).name` (or `os.path.basename`) to extract only the actual filename and strip away any directory traversal components before saving to the filesystem.
