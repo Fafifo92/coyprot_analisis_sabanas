@@ -278,8 +278,8 @@ class ReportGenerator:
                         })
                         self._cluster_map.build(group_data, maps_dir / filename, aliases=config.aliases)
 
-                # Sort atypical maps from least records to most records
-                atypical_maps.sort(key=lambda x: x["count"])
+                # Sort atypical maps from most records to least records (descending)
+                atypical_maps.sort(key=lambda x: x["count"], reverse=True)
 
         except Exception as exc:
             logger.error("Error generando mapas estáticos interactivos: %s", exc)

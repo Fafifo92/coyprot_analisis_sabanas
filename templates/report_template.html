@@ -337,11 +337,11 @@
                   <div class="row text-center g-3">
                     <div class="col-4">
                       <div class="p-2 bg-light rounded">
-                        <div class="h3 fw-bold text-primary mb-0">{{ total_llamadas }}</div><small
+                        <div class="h3 fw-bold text-dark mb-0">{{ total_llamadas }}</div><small
                           class="text-muted text-uppercase d-block" style="font-size: 0.7rem;">Eventos</small>
                         <div class="d-flex justify-content-center gap-2 mt-1">
-                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size: 0.65rem;" title="Entrantes"><i class="bi bi-arrow-down"></i> {{ total_entrantes }}</span>
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 0.65rem;" title="Salientes"><i class="bi bi-arrow-up"></i> {{ total_salientes }}</span>
+                            <span class="badge bg-primary text-white" style="font-size: 0.65rem;" title="Entrantes"><i class="bi bi-arrow-down"></i> {{ total_entrantes }}</span>
+                            <span class="badge bg-success text-white" style="font-size: 0.65rem;" title="Salientes"><i class="bi bi-arrow-up"></i> {{ total_salientes }}</span>
                         </div>
                       </div>
                     </div>
@@ -431,10 +431,10 @@
 
         {% if has_atypical_locations %}
         <div class="accordion mb-4" id="accordionAtypical">
-          <div class="accordion-item border-danger border-opacity-25 shadow-sm">
+          <div class="accordion-item border-info border-opacity-25 shadow-sm">
             <h2 class="accordion-header" id="headingAtypical">
-              <button class="accordion-button collapsed bg-danger bg-opacity-10 text-danger fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAtypical" aria-expanded="false" aria-controls="collapseAtypical">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i> Advertencia: Ver Ubicaciones y Conexiones Atípicas
+              <button class="accordion-button collapsed bg-info bg-opacity-10 text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAtypical" aria-expanded="false" aria-controls="collapseAtypical">
+                <i class="bi bi-compass-fill me-2 text-info"></i> Explorar Ubicaciones y Conexiones Atípicas
               </button>
             </h2>
             <div id="collapseAtypical" class="accordion-collapse collapse" aria-labelledby="headingAtypical" data-bs-parent="#accordionAtypical">
@@ -446,8 +446,8 @@
                    <div class="col-md-6">
                        <div class="card shadow-sm border-danger border-opacity-25 h-100 mb-0">
                           <div class="card-header bg-white pt-3 pb-2 d-flex justify-content-between align-items-center">
-                            <h6 class="fw-bold text-danger m-0">Sector {{ loop.index }}</h6>
-                            <span class="badge bg-danger rounded-pill">{{ at_map.count }} Registros</span>
+                            <h6 class="fw-bold text-secondary m-0">Sector {{ loop.index }}</h6>
+                            <span class="badge bg-secondary rounded-pill">{{ at_map.count }} Registros</span>
                           </div>
                           <div class="card-body p-0">
                              <div style="height: 300px; width: 100%;">
@@ -878,22 +878,32 @@
 
       // Listener para redimensionar los mapas cuando se abre la pestaña
       {% if has_coords %}
+      // Recargar iframes de los mapas cuando se cambia de pestaña para que Folium y Leaflet recalcule el tamaño y el bounds
       const tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
       tabs.forEach(t => {
         t.addEventListener('shown.bs.tab', function (e) {
           const targetId = e.target.dataset.bsTarget;
 
-          // Si es el mapa de recorrido (Plotly)
-          if (targetId === '#recorrido') {
-            const iframe = document.querySelector('#recorrido iframe');
-            if (iframe) iframe.src = iframe.src; // Forzar recarga para ajustar tamaño
+          if (targetId) {
+            const tabContainer = document.querySelector(targetId);
+            if (tabContainer) {
+              const iframes = tabContainer.querySelectorAll('iframe');
+              iframes.forEach(iframe => {
+                iframe.src = iframe.src;
+              });
+            }
           }
+        });
+      });
 
-          // Si son los mapas generales (Folium)
-          if (targetId === '#maps') {
-            const iframe = document.getElementById('main-map-frame');
-            if (iframe) iframe.src = iframe.src;
-          }
+      // Recargar iframes cuando se abre un acordeón (ej: mapas atípicos)
+      const accordions = document.querySelectorAll('.accordion-collapse');
+      accordions.forEach(acc => {
+        acc.addEventListener('shown.bs.collapse', function (e) {
+            const iframes = e.target.querySelectorAll('iframe');
+            iframes.forEach(iframe => {
+              iframe.src = iframe.src;
+            });
         });
       });
       {% endif %}
