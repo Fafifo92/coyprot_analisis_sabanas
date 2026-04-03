@@ -53,17 +53,18 @@ async def upload_attachment(
     if project.status in ["PROCESSING", "GENERATING_HTML", "GENERATING_PDF"]:
         raise HTTPException(status_code=400, detail="No puedes adjuntar archivos mientras se genera el reporte.")
 
+    safe_filename = Path(file.filename).name
     project_dir = UPLOAD_DIR / str(project_id) / "attachments"
     project_dir.mkdir(parents=True, exist_ok=True)
 
-    file_path = project_dir / file.filename
+    file_path = project_dir / safe_filename
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    new_att = await project_repo.create_attachment(project.id, file.filename, str(file_path), category)
+    new_att = await project_repo.create_attachment(project.id, safe_filename, str(file_path), category)
 
     audit_repo = AuditRepository(db)
-    await audit_repo.log_action(current_user.id, "UPLOAD_ATTACHMENT", f"Uploaded PDF {file.filename} as {category} for project {project_id}")
+    await audit_repo.log_action(current_user.id, "UPLOAD_ATTACHMENT", f"Uploaded PDF {safe_filename} as {category} for project {project_id}")
 
     await db.commit()
     await db.refresh(new_att)

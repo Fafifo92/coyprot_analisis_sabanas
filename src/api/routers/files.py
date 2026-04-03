@@ -80,7 +80,7 @@ async def upload_file(
     await project_repo.update(project, {"status": "PENDING_MAPPING"})
 
     audit_repo = AuditRepository(db)
-    await audit_repo.log_action(current_user.id, "UPLOAD_FILE", f"Uploaded {file.filename} to project {project_id}")
+    await audit_repo.log_action(current_user.id, "UPLOAD_FILE", f"Uploaded {safe_filename} to project {project_id}")
 
     await db.commit()
     await db.refresh(new_file)
