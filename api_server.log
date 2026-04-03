@@ -31,3 +31,13 @@ INFO:     127.0.0.1:48834 - "POST /api/auth/login HTTP/1.1" 200 OK
 INFO:     127.0.0.1:48834 - "GET /dashboard HTTP/1.1" 200 OK
 INFO:     127.0.0.1:48834 - "GET /api/auth/me HTTP/1.1" 200 OK
 INFO:     127.0.0.1:48846 - "GET /api/projects/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'src/reports/report_generator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 04:27:16,263 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3908403]
+INFO:     Started server process [917372]
+INFO:     Waiting for application startup.
+2026-04-03 04:27:26,347 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
