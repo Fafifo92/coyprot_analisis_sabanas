@@ -346,11 +346,16 @@
                                     </div>
                                 </div>
 
-                                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4" x-show="uniqueNumbers.length === 0">
+                                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4" x-show="uniqueNumbers.length === 0 && !loadingAliases">
                                     <p class="text-sm text-gray-600 text-center py-4">Sube y mapea al menos un archivo para poder asignar Alias a los números encontrados, o <button @click="fetchUniqueNumbers()" class="text-indigo-600 underline">recarga la lista</button>.</p>
                                 </div>
 
-                                <div class="overflow-y-auto max-h-[600px] bg-white border border-gray-200 rounded-lg shadow-inner" x-show="uniqueNumbers.length > 0">
+                                <div class="bg-white p-8 rounded-lg border border-gray-200 mb-4 flex flex-col items-center justify-center" x-show="loadingAliases">
+                                    <svg class="animate-spin h-10 w-10 text-indigo-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <p class="text-sm text-gray-600 text-center font-medium">Buscando números únicos en los archivos mapeados...</p>
+                                </div>
+
+                                <div class="overflow-y-auto max-h-[600px] bg-white border border-gray-200 rounded-lg shadow-inner" x-show="uniqueNumbers.length > 0 && !loadingAliases">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead class="bg-gray-100 sticky top-0">
                                             <tr>
@@ -662,7 +667,10 @@
                     }
                 },
 
+                loadingAliases: false,
+
                 async fetchUniqueNumbers() {
+                    this.loadingAliases = true;
                     try {
                         const res = await fetch(`/api/projects/${this.projectId}/numbers`, {
                             headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
@@ -676,7 +684,11 @@
                                 if(!this.aliases[n]) this.aliases[n] = '';
                             }
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error('Error fetching aliases:', e);
+                    } finally {
+                        this.loadingAliases = false;
+                    }
                 },
 
                 async saveProjectMetadata() {
@@ -922,13 +934,16 @@
                             }
                         }
 
-                        // Check for empty fields
-                        const requiredKeys = ['fecha_hora', 'originador', 'receptor', 'tipo_llamada', 'duracion', 'celda']; // Assuming these are the main ones
-                        const emptyFields = requiredKeys.filter(k => !config.mapping[k] && config.sheet_type !== 'Ignorar');
+                        // Check for empty fields dynamically based on sheet_type
+                        const expectedFieldGroups = this.getRequiredFields(config.sheet_type);
+                        const expectedKeys = expectedFieldGroups.flatMap(group => group.fields.map(f => f.key));
+
+                        const emptyFields = expectedKeys.filter(k => !config.mapping[k] && config.sheet_type !== 'Ignorar');
                         if (emptyFields.length > 0) {
+                             const emptyLabels = expectedFieldGroups.flatMap(g => g.fields).filter(f => emptyFields.includes(f.key)).map(f => f.label);
                              const confirmEmpty = await Swal.fire({
                                 title: 'Campos sin mapear',
-                                text: `En la hoja ${sheetName}, dejaste campos importantes en blanco (ej. ${emptyFields.join(', ')}). ¿Estás seguro de dejarlos en blanco?`,
+                                text: `En la hoja ${sheetName}, dejaste campos importantes en blanco (ej. ${emptyLabels.join(', ')}). ¿Estás seguro de dejarlos en blanco?`,
                                 icon: 'info',
                                 showCancelButton: true,
                                 confirmButtonText: 'Sí, dejar en blanco',

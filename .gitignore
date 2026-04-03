@@ -37,3 +37,10 @@ htmlcov/
 # ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# Local Runtime Files
+coyprot_api.db
+*.log
+api_output.log
+api_server.log
+uvicorn.log
