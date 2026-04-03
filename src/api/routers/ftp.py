@@ -19,8 +19,9 @@ async def upload_project_to_ftp(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Verificar proyecto y dueño
-    result = await db.execute(select(Project).filter(Project.id == project_id))
+    from sqlalchemy.orm import selectinload
+    # Verificar proyecto y dueño, incluyendo la info del usuario
+    result = await db.execute(select(Project).options(selectinload(Project.owner)).filter(Project.id == project_id))
     project = result.scalars().first()
 
     if not project:
@@ -43,8 +44,10 @@ async def upload_project_to_ftp(
         import re
         safe_case_number = re.sub(r'[<>:"/\\|?*]', '_', str(project.case_number))
 
-        # User prefix logic (first 5 characters of username)
-        user_prefix = current_user.username[:5].lower()
+        # User prefix logic (ftp_prefix explicitly set, else first 5 chars of username)
+        # Using project owner's prefix because an admin might upload it on their behalf
+        owner_prefix = project.owner.ftp_prefix if (project.owner and project.owner.ftp_prefix) else current_user.username[:5]
+        user_prefix = owner_prefix.lower()
         folder_name = f"reports-casp/{user_prefix}/Caso_{safe_case_number}"
 
         uploader = UploadService()

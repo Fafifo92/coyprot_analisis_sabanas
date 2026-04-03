@@ -25,6 +25,7 @@ class UserRepository:
         new_user = User(
             username=user_in["username"],
             hashed_password=hashed_password,
+            ftp_prefix=user_in.get("ftp_prefix"),
             is_admin=user_in.get("is_admin", False),
             tokens_balance=user_in.get("tokens_balance", 0),
             must_change_password=True,

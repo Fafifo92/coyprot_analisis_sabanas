@@ -40,6 +40,11 @@ async def lifespan(app: FastAPI):
                     logger.info(f"Migración aplicada: Columna '{col}' agregada a users.")
                 except Exception as e:
                     pass
+            try:
+                await conn.execute(text("ALTER TABLE users ADD COLUMN ftp_prefix VARCHAR(5)"))
+                logger.info("Migración aplicada: Columna 'ftp_prefix' agregada a users.")
+            except Exception as e:
+                pass
 
     yield
 

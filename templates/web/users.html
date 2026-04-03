@@ -93,6 +93,11 @@
                         </div>
 
                         <div>
+                            <label class="block text-sm font-medium text-gray-700">Iniciales Subcarpeta FTP</label>
+                            <input type="text" x-model="formUser.ftp_prefix" required minlength="5" maxlength="5" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="Ej. ABCDE">
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-700">Contraseña <span x-show="isEditing" class="text-xs text-gray-500 font-normal">(Dejar en blanco para no cambiar)</span></label>
                             <input type="password" x-model="formUser.password" :required="!isEditing" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                         </div>
@@ -135,7 +140,7 @@
             isModalOpen: false,
             isEditing: false,
             saving: false,
-            formUser: { id: null, username: '', password: '', is_admin: false, tokens_balance: 0 },
+            formUser: { id: null, username: '', ftp_prefix: '', password: '', is_admin: false, tokens_balance: 0 },
 
             init() {
                 this.fetchUsers();
@@ -158,7 +163,7 @@
 
             openModal() {
                 this.isEditing = false;
-                this.formUser = { id: null, username: '', password: '', is_admin: false, tokens_balance: 0 };
+                this.formUser = { id: null, username: '', ftp_prefix: '', password: '', is_admin: false, tokens_balance: 0 };
                 this.isModalOpen = true;
             },
 
@@ -167,6 +172,7 @@
                 this.formUser = {
                     id: user.id,
                     username: user.username,
+                    ftp_prefix: user.ftp_prefix || user.username.substring(0, 5).toUpperCase(),
                     password: '',
                     is_admin: user.is_admin,
                     tokens_balance: user.tokens_balance
