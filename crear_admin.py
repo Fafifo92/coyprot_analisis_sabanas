@@ -25,6 +25,7 @@ async def create_superadmin():
         new_admin = User(
             username=admin_username,
             hashed_password=get_password_hash(admin_password),
+            ftp_prefix="ADMIN",
             is_admin=True,
             is_active=True,
             must_change_password=False,

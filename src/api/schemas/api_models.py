@@ -3,16 +3,20 @@ from datetime import datetime
 from typing import Optional
 
 class UserBase(BaseModel):
-    username: str = Field(..., min_length=8, description="El nombre de usuario debe tener al menos 8 caracteres")
+    username: str
+    ftp_prefix: Optional[str] = Field(None, max_length=5, description="Firma de 5 letras para la carpeta FTP")
     is_admin: bool = False
     is_active: bool = True
     must_change_password: bool = True
     tokens_balance: int = 0
 
 class UserCreate(UserBase):
+    username: str = Field(..., min_length=8, description="El nombre de usuario debe tener al menos 8 caracteres")
     password: str
+    ftp_prefix: str = Field(..., min_length=5, max_length=5, description="Exactamente 5 letras")
 
 class UserUpdate(BaseModel):
+    ftp_prefix: Optional[str] = Field(None, min_length=5, max_length=5)
     is_admin: Optional[bool] = None
     is_active: Optional[bool] = None
     must_change_password: Optional[bool] = None

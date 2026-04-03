@@ -91,3 +91,94 @@ INFO:     Started server process [2142045]
 INFO:     Waiting for application startup.
 2026-04-03 07:24:18,548 [INFO] Verificando/Creando tablas de Base de Datos...
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/schemas/api_models.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 08:42:51,464 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2142045]
+INFO:     Started server process [2714321]
+INFO:     Waiting for application startup.
+2026-04-03 08:42:59,570 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/db/models.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 08:44:32,620 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2714321]
+INFO:     Started server process [2740940]
+INFO:     Waiting for application startup.
+2026-04-03 08:44:36,863 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/schemas/api_models.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 08:47:16,075 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2740940]
+INFO:     Started server process [2766195]
+INFO:     Waiting for application startup.
+2026-04-03 08:47:20,139 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'crear_admin.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 08:51:26,642 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2766195]
+INFO:     Started server process [2817397]
+INFO:     Waiting for application startup.
+2026-04-03 08:51:30,499 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/routers/ftp.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 08:58:55,480 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2817397]
+INFO:     Started server process [2901996]
+INFO:     Waiting for application startup.
+2026-04-03 08:59:01,970 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/routers/ftp.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 09:01:54,596 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2901996]
+INFO:     Started server process [2931947]
+INFO:     Waiting for application startup.
+2026-04-03 09:01:58,595 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/repositories/user_repository.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 09:14:31,915 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2931947]
+INFO:     Started server process [3058136]
+INFO:     Waiting for application startup.
+2026-04-03 09:14:35,752 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/api/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 09:17:17,206 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3058136]
+INFO:     Started server process [3087182]
+INFO:     Waiting for application startup.
+2026-04-03 09:17:22,038 [INFO] Verificando/Creando tablas de Base de Datos...
+2026-04-03 09:17:22,246 [INFO] Migración aplicada: Columna 'ftp_prefix' agregada a users.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'test_min_length.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-04-03 09:25:39,913 [INFO] Cerrando conexiones...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3087182]
+INFO:     Started server process [3190493]
+INFO:     Waiting for application startup.
+2026-04-03 09:25:44,166 [INFO] Verificando/Creando tablas de Base de Datos...
+INFO:     Application startup complete.

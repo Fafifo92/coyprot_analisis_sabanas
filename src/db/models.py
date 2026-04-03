@@ -10,6 +10,9 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
 
+    # Identificador único para el directorio de subida FTP (5 caracteres ej. "ABCDE")
+    ftp_prefix = Column(String(5), nullable=True)
+
     # Roles y Permisos
     is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True) # Para soft-delete / bloqueo
