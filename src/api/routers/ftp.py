@@ -42,7 +42,10 @@ async def upload_project_to_ftp(
         html_dir = Path(project.result_html_path).parent.parent
         import re
         safe_case_number = re.sub(r'[<>:"/\\|?*]', '_', str(project.case_number))
-        folder_name = f"Caso_{safe_case_number}"
+
+        # User prefix logic (first 5 characters of username)
+        user_prefix = current_user.username[:5].lower()
+        folder_name = f"reports-casp/{user_prefix}/Caso_{safe_case_number}"
 
         uploader = UploadService()
         url = uploader.upload(html_dir, folder_name)

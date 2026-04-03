@@ -164,3 +164,25 @@ async def upload_my_logo(
         shutil.copyfileobj(file.file, buffer)
 
     return {"message": "Logo subido exitosamente", "filename": safe_filename}
+
+from fastapi.responses import FileResponse
+
+@router.get("/me/logo")
+async def get_my_logo(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Endpoint para obtener el logo del usuario.
+    Se usa para evitar exponer todo el directorio /uploads públicamente.
+    """
+    user_dir = Path("uploads") / "users" / str(current_user.id)
+
+    png_path = user_dir / "logo.png"
+    jpg_path = user_dir / "logo.jpg"
+
+    if png_path.exists():
+        return FileResponse(png_path)
+    elif jpg_path.exists():
+        return FileResponse(jpg_path)
+
+    raise HTTPException(status_code=404, detail="No se encontró un logo personalizado")
