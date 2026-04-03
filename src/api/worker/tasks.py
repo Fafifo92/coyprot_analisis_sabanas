@@ -6,7 +6,7 @@ from celery import shared_task
 
 # SQLAlchemy (Síncrono para Celery Workers es más seguro y fácil que async)
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, selectinload
 
 from config.api_settings import get_api_settings
 from config.settings import settings as app_settings
@@ -23,7 +23,8 @@ settings = get_api_settings()
 # Engine Síncrono exclusivo para el Worker
 SYNC_DB_URL = settings.DATABASE_URL.replace("postgresql+asyncpg", "postgresql").replace("sqlite+aiosqlite", "sqlite")
 sync_engine = create_engine(SYNC_DB_URL, connect_args={"check_same_thread": False} if "sqlite" in SYNC_DB_URL else {})
-SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
+# expire_on_commit=False prevents pre-loaded relationships from being cleared after db.commit()
+SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=sync_engine)
 
 def normalize_colombian_phone(phone_str: str) -> str:
     """
@@ -71,7 +72,12 @@ def analyze_project_task(self, project_id: int):
     logger.info(f"Worker de Celery inició análisis (Fase HTML) para el Proyecto ID: {project_id}")
 
     with SyncSessionLocal() as db:
-        project = db.query(Project).filter(Project.id == project_id).first()
+        project = (
+            db.query(Project)
+            .options(selectinload(Project.files), selectinload(Project.attachments), selectinload(Project.owner))
+            .filter(Project.id == project_id)
+            .first()
+        )
         if not project:
             logger.error(f"Proyecto {project_id} no existe en la BD.")
             return "Project not found"
@@ -81,7 +87,8 @@ def analyze_project_task(self, project_id: int):
         db.commit()
 
         try:
-            files = db.query(ProjectFile).filter(ProjectFile.project_id == project_id).all()
+            # Optimized: Use pre-loaded files instead of separate query (N+1)
+            files = project.files
 
             data_svc = DataProcessingService()
             geo_svc = GeocodingService.from_paths(
@@ -195,7 +202,12 @@ def generate_pdf_task(self, project_id: int):
     logger.info(f"Worker de Celery inició generación de PDF para el Proyecto ID: {project_id}")
 
     with SyncSessionLocal() as db:
-        project = db.query(Project).filter(Project.id == project_id).first()
+        project = (
+            db.query(Project)
+            .options(selectinload(Project.attachments), selectinload(Project.owner))
+            .filter(Project.id == project_id)
+            .first()
+        )
         if not project:
             return "Project not found"
 
@@ -316,9 +328,11 @@ def _prepare_report_config(project: Project, db, project_id: int, df_all=None) -
     if project.aliases:
         final_aliases.update(project.aliases)
 
-    # Recuperar y mapear adjuntos de la DB a PdfAttachment models
-    db_atts = db.query(ProjectAttachment).filter(ProjectAttachment.project_id == project_id).all()
-    pdf_attachments = [PdfAttachment(category=a.category, source_path=Path(a.file_path)) for a in db_atts]
+    # Optimized: Use pre-loaded attachments from the project object (Avoids extra query)
+    pdf_attachments = [
+        PdfAttachment(category=a.category, source_path=Path(a.file_path))
+        for a in project.attachments
+    ]
 
     # Recuperar preferencias de logo y configuración
     extra_meta = project.extra_metadata or {}
