@@ -12,6 +12,7 @@ import unicodedata
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 from config.constants import MIN_MUNICIPALITY_NAME_LEN, UNKNOWN_LOCATION
@@ -100,19 +101,31 @@ class MunicipalityRepository:
             & (self._df["Longitud"].between(lon - 1, lon + 1))
         ]
         search = bbox if not bbox.empty else self._df
+        if search.empty:
+            return UNKNOWN_LOCATION, UNKNOWN_LOCATION
 
-        best_dist = float("inf")
-        best_depto = UNKNOWN_LOCATION
-        best_muni = UNKNOWN_LOCATION
+        # Vectorized Haversine calculation for performance boost
+        lats2 = np.radians(search["Latitud"].values)
+        lons2 = np.radians(search["Longitud"].values)
+        lat1_rad = math.radians(lat)
+        lon1_rad = math.radians(lon)
 
-        for row in search.itertuples(index=False):
-            dist = _haversine_km(lat, lon, row.Latitud, row.Longitud)
-            if dist < best_dist:
-                best_dist = dist
-                best_depto = row.Departamento
-                best_muni = row.Municipio
+        dlat = lats2 - lat1_rad
+        dlon = lons2 - lon1_rad
 
-        return best_depto, best_muni
+        a = (
+            np.sin(dlat / 2) ** 2
+            + math.cos(lat1_rad) * np.cos(lats2) * np.sin(dlon / 2) ** 2
+        )
+        # Handle potential invalid values (though rare in this dataset)
+        a = np.clip(a, 0, 1)
+        distances = 6371.0 * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+        # Find the index of the minimum distance (ignoring NaNs if present)
+        idx_min = np.nanargmin(distances)
+        best_row = search.iloc[idx_min]
+
+        return str(best_row["Departamento"]), str(best_row["Municipio"])
 
     def find_by_name(self, name: str) -> Optional[tuple[str, float, float]]:
         """
