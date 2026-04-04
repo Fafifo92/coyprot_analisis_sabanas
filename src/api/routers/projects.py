@@ -32,14 +32,17 @@ async def create_project(
     user_repo = UserRepository(db)
 
     # Validar que el usuario tenga tokens suficientes (si no es admin)
+    # Por defecto, crear un proyecto cuesta 1 token (reporte HTML gratis)
+    required_tokens = 1
+
     if not current_user.is_admin:
-        if current_user.tokens_balance <= 0:
+        if current_user.tokens_balance < required_tokens:
             raise HTTPException(
                 status_code=403,
-                detail="No tienes suficientes tokens para crear un nuevo proyecto/caso."
+                detail=f"Necesitas al menos {required_tokens} token(s) para crear un nuevo caso de investigación."
             )
         # Descontar token
-        await user_repo.update(current_user, {"tokens_balance": current_user.tokens_balance - 1})
+        await user_repo.update(current_user, {"tokens_balance": current_user.tokens_balance - required_tokens})
 
     project_repo = ProjectRepository(db)
     new_project = await project_repo.create(current_user.id, project_in.model_dump())
@@ -72,9 +75,13 @@ async def update_project(
     if not current_user.is_admin and project.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to edit this project")
 
-    # Solo bloquear la edición si el proyecto está activamente procesándose
+    # Bloquear la edición de metadata básica si el proyecto está procesando
+    # OJO: Permitimos la edición del pdf_draft siempre y cuando no esté generando el PDF en ese exacto milisegundo
     if project.status in ["PROCESSING", "QUEUED", "QUEUED_PDF", "GENERATING_HTML", "GENERATING_PDF"]:
-        raise HTTPException(status_code=400, detail="Cannot edit project while it is actively processing.")
+        # Only block if they are trying to change core data, allow pdf_draft updates
+        update_data = project_in.model_dump(exclude_unset=True)
+        if any(key in update_data for key in ["case_number", "target_phone", "target_name", "aliases", "column_mapping"]):
+            raise HTTPException(status_code=400, detail="No se pueden editar los detalles centrales del caso mientras se procesa. Espere a que termine.")
 
     update_data = project_in.model_dump(exclude_unset=True)
     project = await project_repo.update(project, update_data)

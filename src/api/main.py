@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
         # Parche de migración manual para SQLite local del usuario
         # Añade la nueva columna 'result_ftp_url' si no existía antes de la Fase 3.
         if get_api_settings().DATABASE_URL.startswith("sqlite"):
-            for col in ["result_ftp_url", "aliases", "extra_metadata"]:
+            for col in ["result_ftp_url", "aliases", "extra_metadata", "pdf_draft", "custom_metadata"]:
                 try:
                     await conn.execute(text(f"ALTER TABLE projects ADD COLUMN {col} VARCHAR"))
                     logger.info(f"Migración aplicada: Columna '{col}' agregada a projects.")

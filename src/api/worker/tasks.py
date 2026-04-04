@@ -282,6 +282,28 @@ def generate_pdf_task(self, project_id: int):
 
             project.result_pdf_path = str(pdf_path)
             project.status = "COMPLETED_ALL"
+
+            # --- Fase 4: Auto Upload PDF to FTP if FTP is configured ---
+            try:
+                from config.settings import settings
+                from services.upload_service import UploadService
+                if settings.ftp_configured() and project.owner:
+                    # User prefix logic (ftp_prefix explicitly set, else first 5 chars of username)
+                    owner_prefix = project.owner.ftp_prefix if project.owner.ftp_prefix else project.owner.username[:5]
+                    user_prefix = owner_prefix.lower()
+                    folder_name = f"reports-casp/{user_prefix}/Caso_{report_cfg.safe_name}"
+
+                    uploader = UploadService()
+                    # Subimos solo el PDF (no todo el html_dir) porque HTML ya se subió manual o se ignora,
+                    # o podemos subir el dir completo si queremos asegurar todo.
+                    # Aquí la directriz es subir el PDF al FTP.
+                    # upload_file sube un archivo a la carpeta remota
+                    url = uploader.upload_file(pdf_path, f"{folder_name}/reports")
+                    logger.info(f"Auto-upload PDF al FTP exitoso: {url}")
+            except Exception as ftp_e:
+                logger.warning(f"No se pudo auto-subir el PDF al FTP: {ftp_e}")
+                project.error_message = f"PDF generado, pero falló auto-subida FTP: {ftp_e}"
+
             db.commit()
 
             logger.info(f"Worker de Celery finalizó PDF para proyecto {project_id}.")
@@ -386,19 +408,24 @@ def _prepare_report_config(project: Project, db, project_id: int, df_all=None) -
             max_date = dates.max().strftime("%Y-%m-%d")
             period_str = f"{min_date} a {max_date}"
 
+    metadata_fields = {
+        "Número de Caso": project.case_number,
+        "Teléfono Objetivo": project.target_phone,
+        "Nombre/Alias": project.target_name or "N/A",
+        "Periodo Evaluado": period_str
+    }
+
+    if project.custom_metadata:
+        for k, v in project.custom_metadata.items():
+            metadata_fields[k] = v
+
     return ReportConfig(
         report_name=f"Caso_{safe_case_number}",
         include_letterhead=include_letterhead,
         upload_ftp=False,
         aliases=final_aliases,
-        case_metadata=CaseMetadata(
-            fields={
-                "Número de Caso": project.case_number,
-                "Teléfono Objetivo": project.target_phone,
-                "Nombre/Alias": project.target_name or "N/A",
-                "Periodo Evaluado": period_str
-            }
-        ),
+        pdf_draft=project.pdf_draft or [],
+        case_metadata=CaseMetadata(fields=metadata_fields),
         pdf_attachments=pdf_attachments,
         logo_type=logo_type,
         custom_logo_path=custom_logo_path,

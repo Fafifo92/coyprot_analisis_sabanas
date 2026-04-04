@@ -9,6 +9,7 @@ from api.worker.tasks import analyze_project_task, generate_pdf_task
 from config.api_settings import get_api_settings
 from api.repositories.project_repository import ProjectRepository
 from api.repositories.audit_repository import AuditRepository
+from api.repositories.user_repository import UserRepository
 
 api_settings = get_api_settings()
 
@@ -79,6 +80,7 @@ async def generate_pdf(
     current_user: User = Depends(get_current_user)
 ):
     project_repo = ProjectRepository(db)
+    user_repo = UserRepository(db)
     project = await project_repo.get_by_id(project_id)
 
     if not project:
@@ -89,6 +91,16 @@ async def generate_pdf(
 
     if project.status not in ["COMPLETED_HTML", "COMPLETED_ALL", "FAILED"]:
         raise HTTPException(status_code=400, detail="Debe finalizar el análisis HTML primero para generar el PDF.")
+
+    # Deduct 2 tokens for PDF Generation
+    required_tokens = 2
+    if not current_user.is_admin:
+        if current_user.tokens_balance < required_tokens:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Necesitas al menos {required_tokens} token(s) para exportar el informe PDF personalizado."
+            )
+        await user_repo.update(current_user, {"tokens_balance": current_user.tokens_balance - required_tokens})
 
     await project_repo.update(project, {"status": "QUEUED_PDF"})
 
