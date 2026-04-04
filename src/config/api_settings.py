@@ -10,6 +10,9 @@ class ApiSettings(BaseSettings):
     # Base de Datos
     DATABASE_URL: str = Field(default="sqlite+aiosqlite:///./coyprot_api.db")
 
+    # CORS
+    ALLOWED_ORIGINS: list[str] = Field(default=["*"])
+
     # Seguridad JWT
     SECRET_KEY: str = Field(...)
     ALGORITHM: str = Field(default="HS256")

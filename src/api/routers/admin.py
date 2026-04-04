@@ -24,10 +24,19 @@ async def list_users(
     from sqlalchemy import func
     from db.models import Project
 
+    if not users:
+        return []
+
+    user_ids = [u.id for u in users]
+
+    # Single grouped query to fetch project counts for all fetched users
+    counts_stmt = select(Project.owner_id, func.count(Project.id)).filter(Project.owner_id.in_(user_ids)).group_by(Project.owner_id)
+    counts_result = await db.execute(counts_stmt)
+    project_counts = {owner_id: count for owner_id, count in counts_result.all()}
+
     # Enhance users with project count directly in the response
     for user in users:
-        result = await db.execute(select(func.count(Project.id)).filter(Project.owner_id == user.id))
-        setattr(user, "projects_created", result.scalar() or 0)
+        setattr(user, "projects_created", project_counts.get(user.id, 0))
 
     return users
 
