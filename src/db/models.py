@@ -56,6 +56,10 @@ class Project(Base):
     status = Column(String, default="PENDING_FILES")
     error_message = Column(Text, nullable=True)
 
+    # Configuraciones de Reporte Personalizado
+    pdf_draft = Column(JSON, nullable=True)     # Borrador interactivo de bloques
+    custom_metadata = Column(JSON, default={})  # Campos extra configurables (Cédula, IMEI, etc)
+
     # Exportables (Links o Paths)
     result_html_path = Column(String, nullable=True)
     result_pdf_path = Column(String, nullable=True)

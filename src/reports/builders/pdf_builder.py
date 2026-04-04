@@ -274,17 +274,26 @@ class PdfReportBuilder:
         _emit(58, "Construyendo PDF: portada...")
         story.extend(self._cover(report_config, df_calls, df_data, logo_path))
         story.append(PageBreak())
-        _emit(60, "Construyendo PDF: resumen...")
-        story.extend(self._summary(df_calls, report_config))
-        story.append(PageBreak())
-        _emit(62, "Construyendo PDF: gráficos...")
-        story.extend(self._charts(base_dir / "graphics"))
-        _emit(65, "Construyendo PDF: tablas entrantes...")
-        story.extend(self._call_tables(df_calls, report_config, "entrante"))
-        _emit(75, "Construyendo PDF: tablas salientes...")
-        story.extend(self._call_tables(df_calls, report_config, "saliente"))
-        _emit(85, "Construyendo PDF: mapas...")
-        story.extend(self._maps_section(base_dir, pdf_config))
+
+        if report_config.pdf_draft and len(report_config.pdf_draft) > 0:
+            _emit(60, "Construyendo PDF: Procesando bloques personalizados...")
+            for i, block in enumerate(report_config.pdf_draft):
+                _emit(60 + min(25, int(i / len(report_config.pdf_draft) * 25)), f"Construyendo bloque: {block.get('title', 'Bloque')}...")
+                story.extend(self._render_block(block, df_calls, df_data, base_dir, report_config))
+        else:
+            # Fallback legacy builder if no blocks
+            _emit(60, "Construyendo PDF: resumen...")
+            story.extend(self._summary(df_calls, report_config))
+            story.append(PageBreak())
+            _emit(62, "Construyendo PDF: gráficos...")
+            story.extend(self._charts(base_dir / "graphics"))
+            _emit(65, "Construyendo PDF: tablas entrantes...")
+            story.extend(self._call_tables(df_calls, report_config, "entrante"))
+            _emit(75, "Construyendo PDF: tablas salientes...")
+            story.extend(self._call_tables(df_calls, report_config, "saliente"))
+            _emit(85, "Construyendo PDF: mapas...")
+            story.extend(self._maps_section(base_dir, pdf_config))
+
         story.extend(self._notes(report_config, pdf_config))
 
         _emit(88, "Construyendo PDF: renderizando documento...")
@@ -787,3 +796,121 @@ class PdfReportBuilder:
         )
 
         canvas.restoreState()
+
+    def _render_block(self, block: dict, df_calls: pd.DataFrame, df_data: pd.DataFrame, base_dir: Path, config: ReportConfig) -> list:
+        elems = []
+        btype = block.get('type')
+        title = block.get('title')
+
+        if title:
+            elems.append(Paragraph(escape(title), self._s["h2"]))
+
+        if btype == 'TEXT':
+            content = block.get('content', '')
+            for line in content.split('\n'):
+                if line.strip():
+                    elems.append(Paragraph(escape(line), self._s["body"]))
+            elems.append(Spacer(1, 12))
+
+        elif btype == 'MAP':
+            # To render an actual map we would use Plotly Kaleido again based on filters
+            # For this MVP phase, we will display an informative text that the dynamic map is queued,
+            # Or render the existing maps if conditions are met. True dynamic kaleido is complex for the PDF engine inline.
+            # We'll render a placeholder or existing map based on type.
+            elems.append(Paragraph("<i>[Generación dinámica de mapa solicitada. Incluyendo mapa de ubicaciones general por defecto.]</i>", self._s["note"]))
+            loc_map = base_dir / PDF_MAP_DIR_NAME / "mapa_ubicaciones.png"
+            if loc_map.exists():
+                try:
+                    img = Image(str(loc_map), width=6.5 * inch, height=4.3 * inch)
+                    img.hAlign = "CENTER"
+                    elems.append(img)
+                    elems.append(Spacer(1, 8))
+                except Exception:
+                    pass
+            elems.append(PageBreak())
+
+        elif btype == 'TABLE':
+            t_type = block.get('table_type')
+            filters = block.get('filters', {})
+            if t_type == 'FREQUENCIES':
+                # Similar to existing summary frequencies
+                top_n = min(100, int(filters.get('top_n', 10)))
+                # Render incoming
+                if not df_calls.empty and COL_CALL_TYPE in df_calls.columns:
+                    df_in = df_calls[df_calls[COL_CALL_TYPE].str.lower() == CALL_TYPE_INCOMING.lower()]
+                    df_out = df_calls[df_calls[COL_CALL_TYPE].str.lower() == CALL_TYPE_OUTGOING.lower()]
+
+                    elems.append(Paragraph(f"Top {top_n} Frecuencias Entrantes", self._s["h3"]))
+                    if not df_in.empty and COL_ORIGINATOR in df_in.columns:
+                        top_in = df_in[COL_ORIGINATOR].value_counts().head(top_n)
+                        rows = [[Paragraph("<b>Número (Alias)</b>", self._s["cell_header"]), Paragraph("<b>Frecuencia</b>", self._s["cell_header"])]]
+                        for num, count in top_in.items():
+                            disp = config.display_name(num)
+                            rows.append([Paragraph(escape(disp), self._s["cell"]), Paragraph(str(count), self._s["cell"])])
+                        if len(rows) > 1:
+                            t = Table(rows, colWidths=[4 * inch, 1.5 * inch])
+                            t.setStyle(TableStyle(_table_base_style() + _alt_rows(len(rows)-1)))
+                            elems.append(t)
+                            elems.append(Spacer(1, 12))
+
+                    elems.append(Paragraph(f"Top {top_n} Frecuencias Salientes", self._s["h3"]))
+                    if not df_out.empty and COL_RECEIVER in df_out.columns:
+                        top_out = df_out[COL_RECEIVER].value_counts().head(top_n)
+                        rows = [[Paragraph("<b>Número (Alias)</b>", self._s["cell_header"]), Paragraph("<b>Frecuencia</b>", self._s["cell_header"])]]
+                        for num, count in top_out.items():
+                            disp = config.display_name(num)
+                            rows.append([Paragraph(escape(disp), self._s["cell"]), Paragraph(str(count), self._s["cell"])])
+                        if len(rows) > 1:
+                            t = Table(rows, colWidths=[4 * inch, 1.5 * inch])
+                            t.setStyle(TableStyle(_table_base_style() + _alt_rows(len(rows)-1)))
+                            elems.append(t)
+                            elems.append(Spacer(1, 12))
+
+            elif t_type == 'RAW_LOGS':
+                # Render filtered table
+                spec_num = str(filters.get('specific_number', '')).strip()
+                df_filtered = df_calls.copy()
+                if spec_num and not df_filtered.empty:
+                    mask = (df_filtered[COL_ORIGINATOR].astype(str).str.contains(spec_num, na=False)) | \
+                           (df_filtered[COL_RECEIVER].astype(str).str.contains(spec_num, na=False))
+                    df_filtered = df_filtered[mask]
+
+                if df_filtered.empty:
+                    elems.append(Paragraph("No hay registros para este filtro.", self._s["note"]))
+                else:
+                    elems.append(Paragraph(f"Registros Detallados (Total: {len(df_filtered)})", self._s["h3"]))
+                    header = [
+                        Paragraph("<b>Fecha/Hora</b>", self._s["cell_header"]),
+                        Paragraph("<b>Tipo</b>", self._s["cell_header"]),
+                        Paragraph("<b>Originador</b>", self._s["cell_header"]),
+                        Paragraph("<b>Receptor</b>", self._s["cell_header"]),
+                        Paragraph("<b>Dur.(s)</b>", self._s["cell_header"]),
+                    ]
+                    rows = [header]
+
+                    df_sorted = df_filtered.sort_values(COL_DATETIME) if COL_DATETIME in df_filtered.columns else df_filtered
+
+                    for row in df_sorted.head(500).itertuples(index=False): # Limit 500 per block max
+                        dt = getattr(row, COL_DATETIME, None)
+                        dt_str = dt.strftime("%Y-%m-%d %H:%M") if pd.notna(dt) else str(dt)
+                        call_type = getattr(row, COL_CALL_TYPE, "")
+                        orig = config.display_name(getattr(row, COL_ORIGINATOR, ""))
+                        rec = config.display_name(getattr(row, COL_RECEIVER, ""))
+                        dur = getattr(row, "duracion", 0)
+
+                        rows.append([
+                            Paragraph(escape(dt_str), self._s["cell"]),
+                            Paragraph(escape(str(call_type)), self._s["cell"]),
+                            Paragraph(escape(str(orig)), self._s["cell"]),
+                            Paragraph(escape(str(rec)), self._s["cell"]),
+                            Paragraph(str(dur), self._s["cell"])
+                        ])
+
+                    t = Table(rows, colWidths=[1.3 * inch, 0.9 * inch, 1.5 * inch, 1.5 * inch, 0.5 * inch])
+                    t.setStyle(TableStyle(_table_base_style() + _alt_rows(len(rows)-1)))
+                    elems.append(t)
+                    if len(df_filtered) > 500:
+                        elems.append(Paragraph("<i>(Se muestran solo los primeros 500 registros)</i>", self._s["note"]))
+                    elems.append(PageBreak())
+
+        return elems

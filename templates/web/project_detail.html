@@ -691,6 +691,100 @@
                     }
                 },
 
+                addCustomMetadata() {
+                    if (this.newMetaKey.trim() && this.newMetaVal.trim()) {
+                        this.customMetadata[this.newMetaKey.trim()] = this.newMetaVal.trim();
+                        this.newMetaKey = '';
+                        this.newMetaVal = '';
+                    }
+                },
+
+                deleteCustomMetadata(key) {
+                    delete this.customMetadata[key];
+                },
+
+                addPdfBlock(type) {
+                    let block = { type: type, title: '' };
+                    if (type === 'TEXT') {
+                        block.content = '';
+                    } else if (type === 'MAP') {
+                        block.filters = { start_date: '', end_date: '', event_type: 'ALL', draw_route: false };
+                    } else if (type === 'TABLE') {
+                        block.table_type = 'FREQUENCIES';
+                        block.filters = { specific_number: '', top_n: 10 };
+                    }
+                    this.pdfDraft.push(block);
+                },
+
+                removePdfBlock(index) {
+                    this.pdfDraft.splice(index, 1);
+                },
+
+                movePdfBlock(index, offset) {
+                    const newIndex = index + offset;
+                    if (newIndex >= 0 && newIndex < this.pdfDraft.length) {
+                        const temp = this.pdfDraft[index];
+                        this.pdfDraft[index] = this.pdfDraft[newIndex];
+                        this.pdfDraft[newIndex] = temp;
+                    }
+                },
+
+                async savePdfDraft() {
+                    try {
+                        const payload = { pdf_draft: this.pdfDraft };
+                        const res = await fetch(`/api/projects/${this.projectId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!res.ok) throw new Error('Error al guardar borrador del PDF');
+                        Swal.toast({title: 'Borrador Guardado', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false});
+                    } catch (e) {
+                        Swal.fire('Error', e.message, 'error');
+                    }
+                },
+
+                async generateCustomPdf() {
+                    const result = await Swal.fire({
+                        title: 'Exportar Informe PDF',
+                        text: "Esta acción generará el informe según los bloques de tu borrador y descontará 2 Tokens. ¿Estás seguro?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'Sí, generar (-2 Tokens)',
+                        cancelButtonText: 'Cancelar'
+                    });
+
+                    if (result.isConfirmed) {
+                        try {
+                            Swal.fire({ title: 'Generando PDF (Puede tardar)...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                            // Ensure the latest draft is saved first
+                            await fetch(`/api/projects/${this.projectId}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
+                                body: JSON.stringify({ pdf_draft: this.pdfDraft })
+                            });
+
+                            const res = await fetch(`/api/projects/${this.projectId}/generate-pdf`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                            });
+
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.detail || 'Error iniciando generación');
+
+                            Swal.fire('En proceso', 'El informe se está generando. Verás el enlace disponible pronto.', 'success');
+                            this.fetchProject();
+                        } catch (e) {
+                            Swal.fire('Error', e.message, 'error');
+                        }
+                    }
+                },
+
                 async saveProjectMetadata() {
                     try {
                         // Limpiar alias en blanco
@@ -699,31 +793,40 @@
                             if(this.aliases[k] && this.aliases[k].trim() !== '') cleanAliases[k] = this.aliases[k].trim();
                         }
 
+                        const payload = {
+                            aliases: cleanAliases,
+                            custom_metadata: this.customMetadata,
+                            extra_metadata: {
+                                report_config: this.projectConfig
+                            }
+                        };
+
                         const res = await fetch(`/api/projects/${this.projectId}`, {
                             method: 'PATCH',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                             },
-                            body: JSON.stringify({ aliases: cleanAliases })
+                            body: JSON.stringify(payload)
                         });
 
-                        if(!res.ok) throw new Error("Error al guardar alias en el proyecto");
+                        if (!res.ok) throw new Error('Error al guardar datos');
 
-                        if (this.saveToGlobalAliases) {
-                            const meRes = await fetch('/api/auth/me/settings', {
-                                method: 'PATCH',
+                        if (this.saveToGlobalAliases && Object.keys(cleanAliases).length > 0) {
+                            // Subir a globales
+                            await fetch('/api/admin/global_aliases', {
+                                method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                                 },
-                                body: JSON.stringify({ global_aliases: cleanAliases })
+                                body: JSON.stringify({ updates: cleanAliases })
                             });
-                            if (!meRes.ok) throw new Error("Error al guardar en agenda global");
                         }
 
-                        Swal.fire('Guardado', 'Los Alias se han guardado exitosamente.', 'success');
-                    } catch(e) {
+                        Swal.toast({title: 'Guardado correctamente', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false});
+
+                    } catch (e) {
                         Swal.fire('Error', e.message, 'error');
                     }
                 },

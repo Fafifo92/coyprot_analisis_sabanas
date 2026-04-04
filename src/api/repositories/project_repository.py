@@ -38,7 +38,8 @@ class ProjectRepository:
             owner_id=owner_id,
             case_number=project_data["case_number"],
             target_phone=project_data["target_phone"],
-            target_name=project_data.get("target_name")
+            target_name=project_data.get("target_name"),
+            custom_metadata=project_data.get("custom_metadata", {})
         )
         self.db.add(new_project)
         await self.db.flush()

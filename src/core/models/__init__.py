@@ -114,6 +114,9 @@ class ReportConfig:
     logo_type: str = "coyprot" # none, coyprot, custom
     custom_logo_path: Optional[str] = None
 
+    # Custom PDF structure
+    pdf_draft: list[dict] = field(default_factory=list)
+
     # Configuraciones visuales de la cuenta / empresa
     primary_color: str = "#20306c"
     secondary_color: str = "#e45c2c"

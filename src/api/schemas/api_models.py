@@ -51,11 +51,14 @@ class ProjectBase(BaseModel):
     target_phone: str
     target_name: Optional[str] = None
     period: Optional[str] = None # Deprecated, kept for backward compat in DB reads, but dynamic in reports
+    pdf_draft: Optional[list] = None
+    custom_metadata: Optional[dict] = None
 
 class ProjectCreate(BaseModel):
     case_number: str
     target_phone: str
     target_name: Optional[str] = None
+    custom_metadata: Optional[dict] = None
     pass
 
 class ProjectUserUpdate(BaseModel):
@@ -64,6 +67,8 @@ class ProjectUserUpdate(BaseModel):
     target_name: Optional[str] = None
     aliases: Optional[dict] = None
     extra_metadata: Optional[dict] = None
+    pdf_draft: Optional[list] = None
+    custom_metadata: Optional[dict] = None
 
 class ProjectResponse(ProjectBase):
     id: int
