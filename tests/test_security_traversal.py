@@ -31,18 +31,25 @@ def mock_project():
     project.status = "PENDING_FILES"
     return project
 
-@patch("api.routers.attachments.get_current_user")
-@patch("api.routers.attachments.get_db")
+from api.services.security import get_current_user
+from db.session import get_db
+
 @patch("api.routers.attachments.ProjectRepository")
 @patch("api.routers.attachments.AuditRepository")
-def test_upload_attachment_path_traversal(mock_audit_repo_cls, mock_project_repo_cls, mock_get_db, mock_get_current_user, client, mock_user, mock_project):
+def test_upload_attachment_path_traversal(mock_audit_repo_cls, mock_project_repo_cls, client, mock_user, mock_project):
     # Setup mocks
-    mock_get_current_user.return_value = mock_user
-    mock_get_db.return_value = AsyncMock()
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+    app.dependency_overrides[get_db] = lambda: AsyncMock()
 
     mock_project_repo = mock_project_repo_cls.return_value
+    mock_attachment = MagicMock()
+    mock_attachment.id = 1
+    mock_attachment.filename = "passwd.pdf"
+    mock_attachment.file_path = "/fake/path/passwd.pdf"
+    mock_attachment.category = "test_category"
+
     mock_project_repo.get_by_id = AsyncMock(return_value=mock_project)
-    mock_project_repo.create_attachment = AsyncMock()
+    mock_project_repo.create_attachment = AsyncMock(return_value=mock_attachment)
 
     mock_audit_repo = mock_audit_repo_cls.return_value
     mock_audit_repo.log_action = AsyncMock()

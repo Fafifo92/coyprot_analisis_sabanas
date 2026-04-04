@@ -10,7 +10,7 @@
             <h1 class="text-2xl font-bold text-gray-900">Proyectos de Análisis</h1>
             <p class="text-sm text-gray-500 mt-1">Accede a tus casos recientes o crea uno nuevo.</p>
         </div>
-        <button @click="openModal" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+        <button @click="openModal" aria-label="Nuevo Proyecto" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
             <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             <span x-show="!$parent.isAdmin">Nuevo Proyecto (Consume 1 Token)</span>
             <span x-show="$parent.isAdmin">Nuevo Proyecto</span>
