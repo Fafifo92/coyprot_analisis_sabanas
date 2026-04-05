@@ -805,7 +805,25 @@ class PdfReportBuilder:
         if title:
             elems.append(Paragraph(escape(title), self._s["h2"]))
 
-        if btype == 'TEXT':
+        if btype == 'CASE_METADATA':
+            if config.case_metadata.fields:
+                t_data = []
+                for k, v in config.case_metadata.fields.items():
+                    if v:
+                        t_data.append([Paragraph(escape(k), self._s["cell_bold"]), Paragraph(escape(v), self._s["cell"])])
+                if t_data:
+                    t = Table(t_data, colWidths=[1.5 * inch, 4 * inch], style=TableStyle([
+                        ("GRID", (0, 0), (-1, -1), 0.5, _Sty.BORDER),
+                        ("BACKGROUND", (0, 0), (0, -1), _Sty.ALT_ROW),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("TOPPADDING", (0, 0), (-1, -1), 5),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ]))
+                    elems.append(t)
+            elems.append(Spacer(1, 16))
+
+        elif btype == 'TEXT':
             content = block.get('content', '')
             for line in content.split('\n'):
                 if line.strip():
@@ -813,10 +831,6 @@ class PdfReportBuilder:
             elems.append(Spacer(1, 12))
 
         elif btype == 'MAP':
-            # To render an actual map we would use Plotly Kaleido again based on filters
-            # For this MVP phase, we will display an informative text that the dynamic map is queued,
-            # Or render the existing maps if conditions are met. True dynamic kaleido is complex for the PDF engine inline.
-            # We'll render a placeholder or existing map based on type.
             elems.append(Paragraph("<i>[Generación dinámica de mapa solicitada. Incluyendo mapa de ubicaciones general por defecto.]</i>", self._s["note"]))
             loc_map = base_dir / PDF_MAP_DIR_NAME / "mapa_ubicaciones.png"
             if loc_map.exists():
@@ -830,73 +844,114 @@ class PdfReportBuilder:
             elems.append(PageBreak())
 
         elif btype == 'TABLE':
-            t_type = block.get('table_type')
-            filters = block.get('filters', {})
-            if t_type == 'FREQUENCIES':
-                # Similar to existing summary frequencies
-                top_n = min(100, int(filters.get('top_n', 10)))
-                # Render incoming
-                if not df_calls.empty and COL_CALL_TYPE in df_calls.columns:
-                    df_in = df_calls[df_calls[COL_CALL_TYPE].str.lower() == CALL_TYPE_INCOMING.lower()]
-                    df_out = df_calls[df_calls[COL_CALL_TYPE].str.lower() == CALL_TYPE_OUTGOING.lower()]
+            t_type = block.get('table_type', 'TOP_FREQUENT')
+            df_filtered = df_calls.copy()
 
-                    elems.append(Paragraph(f"Top {top_n} Frecuencias Entrantes", self._s["h3"]))
-                    if not df_in.empty and COL_ORIGINATOR in df_in.columns:
-                        top_in = df_in[COL_ORIGINATOR].value_counts().head(top_n)
-                        rows = [[Paragraph("<b>Número (Alias)</b>", self._s["cell_header"]), Paragraph("<b>Frecuencia</b>", self._s["cell_header"])]]
-                        for num, count in top_in.items():
-                            disp = config.display_name(num)
-                            rows.append([Paragraph(escape(disp), self._s["cell"]), Paragraph(str(count), self._s["cell"])])
-                        if len(rows) > 1:
-                            t = Table(rows, colWidths=[4 * inch, 1.5 * inch])
-                            t.setStyle(TableStyle(_table_base_style() + _alt_rows(len(rows)-1)))
-                            elems.append(t)
-                            elems.append(Spacer(1, 12))
+            # Date filtering
+            f_start = block.get('filter_start')
+            f_end = block.get('filter_end')
+            if f_start and not df_filtered.empty and COL_DATETIME in df_filtered.columns:
+                try:
+                    df_filtered = df_filtered[pd.to_datetime(df_filtered[COL_DATETIME]) >= pd.to_datetime(f_start)]
+                except: pass
+            if f_end and not df_filtered.empty and COL_DATETIME in df_filtered.columns:
+                try:
+                    df_filtered = df_filtered[pd.to_datetime(df_filtered[COL_DATETIME]) <= pd.to_datetime(f_end)]
+                except: pass
 
-                    elems.append(Paragraph(f"Top {top_n} Frecuencias Salientes", self._s["h3"]))
-                    if not df_out.empty and COL_RECEIVER in df_out.columns:
-                        top_out = df_out[COL_RECEIVER].value_counts().head(top_n)
-                        rows = [[Paragraph("<b>Número (Alias)</b>", self._s["cell_header"]), Paragraph("<b>Frecuencia</b>", self._s["cell_header"])]]
-                        for num, count in top_out.items():
-                            disp = config.display_name(num)
-                            rows.append([Paragraph(escape(disp), self._s["cell"]), Paragraph(str(count), self._s["cell"])])
-                        if len(rows) > 1:
-                            t = Table(rows, colWidths=[4 * inch, 1.5 * inch])
-                            t.setStyle(TableStyle(_table_base_style() + _alt_rows(len(rows)-1)))
+            # Direction filtering
+            f_direction = block.get('filter_direction', 'ALL') # ALL, INCOMING, OUTGOING
+            if f_direction == 'INCOMING' and not df_filtered.empty and COL_CALL_TYPE in df_filtered.columns:
+                df_filtered = df_filtered[df_filtered[COL_CALL_TYPE].str.lower() == CALL_TYPE_INCOMING.lower()]
+            elif f_direction == 'OUTGOING' and not df_filtered.empty and COL_CALL_TYPE in df_filtered.columns:
+                df_filtered = df_filtered[df_filtered[COL_CALL_TYPE].str.lower() == CALL_TYPE_OUTGOING.lower()]
+
+            if t_type == 'TOP_FREQUENT' or t_type == 'TOP_LEAST_FREQUENT':
+                top_n = min(100, int(block.get('top_n', 10)))
+                if df_filtered.empty or COL_ORIGINATOR not in df_filtered.columns:
+                    elems.append(Paragraph("No hay registros para este filtro.", self._s["note"]))
+                else:
+                    # Contamos ambos o solo el originator? Para ser exactos dependemos de si es entrante o saliente
+                    # Simplificación: contamos los originators (que sería quien llama) y receivers (quien recibe) combinados
+                    # O si filtramos salientes, el que más llamaron es el receptor.
+                    target_col = COL_RECEIVER if f_direction == 'OUTGOING' else COL_ORIGINATOR
+                    counts = df_filtered[target_col].value_counts()
+
+                    if t_type == 'TOP_LEAST_FREQUENT':
+                        counts = counts.sort_values(ascending=True)
+                    top = counts.head(top_n).items()
+
+                    if counts.empty:
+                        elems.append(Paragraph("No hay registros para este filtro.", self._s["note"]))
+                    else:
+                        t_data = [[Paragraph("<b>Pos</b>", self._s["cell_header"]), Paragraph("<b>Número / Alias</b>", self._s["cell_header"]), Paragraph("<b>Llamadas</b>", self._s["cell_header"])]]
+                        for i, (num, count) in enumerate(top, 1):
+                            disp = config.display_name(str(num))
+                            t_data.append([Paragraph(str(i), self._s["cell"]), Paragraph(escape(disp), self._s["cell"]), Paragraph(str(count), self._s["cell"])])
+
+                        t = Table(t_data, colWidths=[40, 200, 80])
+                        t.setStyle(TableStyle(_table_base_style() + _alt_rows(len(t_data)-1)))
+                        elems.append(t)
+
+            elif t_type == 'HOURLY_GENERAL' or t_type == 'HOURLY_TARGET':
+                df_filtered = df_filtered.copy()
+                if not df_filtered.empty and COL_DATETIME in df_filtered.columns:
+                    df_filtered['hour'] = pd.to_datetime(df_filtered[COL_DATETIME]).dt.hour
+
+                    if t_type == 'HOURLY_TARGET':
+                        target = block.get('target_number')
+                        if target:
+                            df_filtered = df_filtered[(df_filtered[COL_ORIGINATOR] == target) | (df_filtered[COL_RECEIVER] == target)]
+
+                    if df_filtered.empty:
+                        elems.append(Paragraph("No hay registros para este filtro.", self._s["note"]))
+                    else:
+                        hourly_counts = df_filtered['hour'].value_counts().sort_index()
+                        t_data = [[Paragraph("<b>Hora del Día</b>", self._s["cell_header"]), Paragraph("<b>Cantidad de Llamadas</b>", self._s["cell_header"])]]
+                        for hour, count in hourly_counts.items():
+                            time_str = f"{int(hour):02d}:00 - {int(hour):02d}:59"
+                            t_data.append([Paragraph(time_str, self._s["cell"]), Paragraph(str(count), self._s["cell"])])
+
+                        if len(t_data) > 1:
+                            t = Table(t_data, colWidths=[150, 150])
+                            t.setStyle(TableStyle(_table_base_style() + _alt_rows(len(t_data)-1)))
                             elems.append(t)
-                            elems.append(Spacer(1, 12))
+                        else:
+                            elems.append(Paragraph("No hay registros para este filtro.", self._s["note"]))
+                else:
+                    elems.append(Paragraph("No hay registros para este filtro.", self._s["note"]))
 
             elif t_type == 'RAW_LOGS':
-                # Render filtered table
-                spec_num = str(filters.get('specific_number', '')).strip()
-                df_filtered = df_calls.copy()
+                limit = min(500, int(block.get('top_n', 100))) # Usar top_n como limit para simplificar UI
+
+                spec_num = str(block.get('target_number', '')).strip()
                 if spec_num and not df_filtered.empty:
                     mask = (df_filtered[COL_ORIGINATOR].astype(str).str.contains(spec_num, na=False)) | \
                            (df_filtered[COL_RECEIVER].astype(str).str.contains(spec_num, na=False))
                     df_filtered = df_filtered[mask]
 
-                if df_filtered.empty:
-                    elems.append(Paragraph("No hay registros para este filtro.", self._s["note"]))
+                df_to_render = df_filtered.head(limit)
+                if df_to_render.empty:
+                    elems.append(Paragraph("No hay registros que mostrar.", self._s["note"]))
                 else:
-                    elems.append(Paragraph(f"Registros Detallados (Total: {len(df_filtered)})", self._s["h3"]))
-                    header = [
+                    rows = [[
                         Paragraph("<b>Fecha/Hora</b>", self._s["cell_header"]),
                         Paragraph("<b>Tipo</b>", self._s["cell_header"]),
                         Paragraph("<b>Originador</b>", self._s["cell_header"]),
                         Paragraph("<b>Receptor</b>", self._s["cell_header"]),
                         Paragraph("<b>Dur.(s)</b>", self._s["cell_header"]),
-                    ]
-                    rows = [header]
+                    ]]
 
-                    df_sorted = df_filtered.sort_values(COL_DATETIME) if COL_DATETIME in df_filtered.columns else df_filtered
+                    df_sorted = df_to_render.sort_values(COL_DATETIME) if COL_DATETIME in df_to_render.columns else df_to_render
 
-                    for row in df_sorted.head(500).itertuples(index=False): # Limit 500 per block max
-                        dt = getattr(row, COL_DATETIME, None)
-                        dt_str = dt.strftime("%Y-%m-%d %H:%M") if pd.notna(dt) else str(dt)
-                        call_type = getattr(row, COL_CALL_TYPE, "")
+                    for row in df_sorted.itertuples(index=False):
                         orig = config.display_name(getattr(row, COL_ORIGINATOR, ""))
                         rec = config.display_name(getattr(row, COL_RECEIVER, ""))
                         dur = getattr(row, "duracion", 0)
+                        call_type = getattr(row, COL_CALL_TYPE, "")
+
+                        dt_val = getattr(row, COL_DATETIME, None)
+                        dt_str = dt_val.strftime("%Y-%m-%d %H:%M:%S") if pd.notna(dt_val) else ""
 
                         rows.append([
                             Paragraph(escape(dt_str), self._s["cell"]),

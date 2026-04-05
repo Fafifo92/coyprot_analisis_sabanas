@@ -97,6 +97,32 @@
                                 <input type="text" x-model="formProject.target_name" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                             </div>
 
+                            <div class="pt-4 mt-4 border-t border-gray-200">
+                                <h3 class="text-md font-bold text-gray-800 mb-4">Ficha Técnica (Metadata del PDF)</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Cliente</label>
+                                        <input type="text" x-model="formMetadata.Cliente" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Ciudad</label>
+                                        <input type="text" x-model="formMetadata.Ciudad" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Teléfono Análisis</label>
+                                        <input type="text" x-model="formMetadata.Teléfono" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Caso / Expediente</label>
+                                        <input type="text" x-model="formMetadata.Caso" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700">Periodo</label>
+                                        <input type="text" x-model="formMetadata.Periodo" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="Ej: Del 01 al 31 de Enero de 2024">
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense pt-4 border-t border-gray-200">
                                 <button type="submit" :disabled="savingProjectData" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none sm:col-start-2 sm:text-sm">
                                     <span x-text="savingProjectData ? 'Guardando...' : 'Guardar Cambios'"></span>
@@ -219,7 +245,7 @@
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                                     3. Documentación (PDFs)
                                 </button>
-                                <button @click="mainTab = 'pdf_builder'" :class="mainTab === 'pdf_builder' ? 'border-indigo-500 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-4 px-1 border-b-2 text-sm font-medium flex items-center">
+                                <button @click="if(project.status !== 'PENDING_FILES' && project.status !== 'PENDING_MAPPING') mainTab = 'pdf_builder'; else Swal.fire('Aviso', 'Procesa los archivos primero', 'info')" :class="[mainTab === 'pdf_builder' ? 'border-indigo-500 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300', (project.status === 'PENDING_FILES' || project.status === 'PENDING_MAPPING') ? 'opacity-50 cursor-not-allowed' : '']" class="whitespace-nowrap py-4 px-1 border-b-2 text-sm font-medium flex items-center transition-opacity">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     4. Builder PDF
                                 </button>
@@ -489,78 +515,141 @@
 
                             <!-- TAB 4: PDF BUILDER -->
                             <div x-show="mainTab === 'pdf_builder'" style="display: none;">
-                                <div class="bg-white shadow rounded-lg border border-gray-200 p-6">
+                                <div class="bg-white shadow rounded-lg border border-gray-200 p-6 relative">
+                                    <div x-show="project.status === 'PROCESSING' || project.status === 'QUEUED'" class="absolute inset-0 z-10 bg-white/80 flex items-center justify-center rounded-lg backdrop-blur-sm">
+                                        <div class="text-center">
+                                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                                            <p class="mt-4 text-gray-700 font-medium">Analizando datos, por favor espera...</p>
+                                        </div>
+                                    </div>
+
                                     <div class="mb-4 flex justify-between items-center">
                                         <div>
                                             <h2 class="text-xl font-bold text-gray-900">Constructor de Reporte PDF</h2>
                                             <p class="text-sm text-gray-500 mt-1">Diseña el documento final agregando bloques de texto, mapas y tablas.</p>
                                         </div>
-                                        <button @click="savePdfDraft" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                                        <button @click="savePdfDraft" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors">
                                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                            Guardar Borrador
+                                            Guardar Diseño PDF
                                         </button>
                                     </div>
                                     <div class="border-b border-gray-200 mb-6"></div>
 
-                                    <div class="flex gap-4 mb-8">
-                                        <button @click="addBlock('TEXT')" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded hover:bg-indigo-100 flex items-center border border-indigo-200">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg> Texto Libre
+                                    <div class="flex flex-wrap gap-3 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-inner">
+                                        <p class="w-full text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Añadir Bloques</p>
+                                        <button @click="addBlock('CASE_METADATA')" class="px-4 py-2 bg-white text-indigo-700 font-semibold text-sm rounded-lg hover:bg-indigo-50 flex items-center border border-indigo-200 shadow-sm transition-colors">
+                                            <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Ficha Técnica
                                         </button>
-                                        <button @click="addBlock('MAP')" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded hover:bg-indigo-100 flex items-center border border-indigo-200">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg> Mapa Geo
+                                        <button @click="addBlock('TEXT')" class="px-4 py-2 bg-white text-indigo-700 font-semibold text-sm rounded-lg hover:bg-indigo-50 flex items-center border border-indigo-200 shadow-sm transition-colors">
+                                            <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg> Párrafo
                                         </button>
-                                        <button @click="addBlock('TABLE')" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded hover:bg-indigo-100 flex items-center border border-indigo-200">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Tabla Frecuencias
+                                        <button @click="addBlock('MAP')" class="px-4 py-2 bg-white text-indigo-700 font-semibold text-sm rounded-lg hover:bg-indigo-50 flex items-center border border-indigo-200 shadow-sm transition-colors">
+                                            <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg> Mapa Geográfico
+                                        </button>
+                                        <button @click="addBlock('TABLE')" class="px-4 py-2 bg-white text-indigo-700 font-semibold text-sm rounded-lg hover:bg-indigo-50 flex items-center border border-indigo-200 shadow-sm transition-colors">
+                                            <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Tabla
                                         </button>
                                     </div>
 
                                     <template x-if="pdfDraft && pdfDraft.length === 0">
-                                        <div class="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                                            <p class="text-gray-500">Agrega bloques usando los botones superiores para armar el documento.</p>
+                                        <div class="text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            <p class="text-gray-500 font-medium">El PDF está vacío.</p>
+                                            <p class="text-gray-400 text-sm mt-1">Añade bloques usando los botones superiores para armar el documento.</p>
                                         </div>
                                     </template>
 
-                                    <div class="space-y-4">
+                                    <!-- Drag and Drop List using standard Alpine/HTML5 logic is complex for this prompt size, will stick to UI refresh with arrows but styled nicely -->
+                                    <div class="space-y-6">
                                         <template x-for="(block, index) in pdfDraft" :key="index">
-                                            <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex flex-col relative group">
-                                                <div class="flex justify-between items-center mb-3">
-                                                    <div class="flex items-center">
-                                                        <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded mr-3" x-text="'#' + (index + 1) + ' ' + block.type"></span>
-                                                        <input type="text" x-model="block.title" class="border-none font-bold text-gray-900 focus:ring-0 p-0 text-lg" placeholder="Título del bloque">
+                                            <div class="border border-gray-200 rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col relative group">
+
+                                                <!-- Block Header -->
+                                                <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                                                    <div class="flex items-center flex-1">
+                                                        <div class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-md mr-3 flex items-center shrink-0">
+                                                            <span x-text="'#' + (index + 1)"></span>
+                                                        </div>
+                                                        <div class="bg-gray-100 text-gray-600 text-xs font-semibold px-2.5 py-1 rounded-md mr-3 uppercase shrink-0" x-text="block.type"></div>
+                                                        <input type="text" x-model="block.title" class="flex-1 border-0 border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:ring-0 font-bold text-gray-900 text-lg px-1 py-1 transition-colors bg-transparent" placeholder="Título del bloque (Opcional)">
                                                     </div>
-                                                    <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button @click="moveBlock(index, -1)" :disabled="index === 0" class="text-gray-400 hover:text-indigo-600 disabled:opacity-30"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
-                                                        <button @click="moveBlock(index, 1)" :disabled="index === pdfDraft.length - 1" class="text-gray-400 hover:text-indigo-600 disabled:opacity-30"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
-                                                        <button @click="removeBlock(index)" class="text-red-400 hover:text-red-600 ml-2" aria-label="Eliminar bloque"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                                                    <div class="flex space-x-1 shrink-0 bg-gray-50 rounded-lg p-1 ml-4">
+                                                        <button @click="moveBlock(index, -1)" :disabled="index === 0" class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md disabled:opacity-30 disabled:hover:bg-transparent transition-colors" title="Mover arriba"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                                                        <button @click="moveBlock(index, 1)" :disabled="index === pdfDraft.length - 1" class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md disabled:opacity-30 disabled:hover:bg-transparent transition-colors" title="Mover abajo"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                                                        <div class="w-px h-5 bg-gray-300 my-auto mx-1"></div>
+                                                        <button @click="removeBlock(index)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Eliminar bloque" title="Eliminar bloque"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                                                     </div>
                                                 </div>
 
-                                                <template x-if="block.type === 'TEXT'">
-                                                    <textarea x-model="block.content" rows="4" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Escribe el contenido del párrafo (soporta Markdown)..."></textarea>
-                                                </template>
+                                                <!-- Block Content -->
+                                                <div class="px-2">
+                                                    <template x-if="block.type === 'CASE_METADATA'">
+                                                        <p class="text-sm text-gray-500 italic">Este bloque mostrará la tabla con la ficha técnica del caso definida en la configuración general.</p>
+                                                    </template>
 
-                                                <template x-if="block.type === 'TABLE'">
-                                                    <div class="mb-4">
-                                                        <label class="block text-xs font-medium text-gray-500 mb-1">Tipo de Tabla</label>
-                                                        <select x-model="block.table_type" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                                            <option value="FREQUENCIES">Top Frecuencias (Números más contactados)</option>
-                                                            <option value="RAW_LOGS">Registros Crudos (Listado de llamadas)</option>
-                                                        </select>
-                                                    </div>
-                                                </template>
+                                                    <template x-if="block.type === 'TEXT'">
+                                                        <textarea x-model="block.content" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors resize-y" placeholder="Escribe el contenido del párrafo (soporta formato Markdown básico)..."></textarea>
+                                                    </template>
 
-                                                <template x-if="block.type === 'MAP' || block.type === 'TABLE'">
-                                                    <div class="flex space-x-4">
-                                                        <div class="flex-1">
-                                                            <label class="block text-xs font-medium text-gray-500">Fecha Inicio (Opcional)</label>
-                                                            <input type="datetime-local" x-model="block.filter_start" class="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm">
+                                                    <template x-if="block.type === 'TABLE'">
+                                                        <div class="space-y-4">
+                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <label class="block text-xs font-bold text-gray-700 mb-1">Tipo de Tabla / Reporte</label>
+                                                                    <select x-model="block.table_type" class="block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg shadow-sm">
+                                                                        <option value="TOP_FREQUENT">Top Números Más Frecuentes</option>
+                                                                        <option value="TOP_LEAST_FREQUENT">Top Números Menos Frecuentes</option>
+                                                                        <option value="HOURLY_GENERAL">Frecuencia por Hora (General)</option>
+                                                                        <option value="HOURLY_TARGET">Frecuencia por Hora (Específico)</option>
+                                                                        <option value="RAW_LOGS">Sábana de Registros</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <div x-show="block.table_type === 'TOP_FREQUENT' || block.table_type === 'TOP_LEAST_FREQUENT' || block.table_type === 'RAW_LOGS'">
+                                                                    <label class="block text-xs font-bold text-gray-700 mb-1">Límite de Registros (Top N)</label>
+                                                                    <input type="number" min="1" max="500" x-model="block.top_n" class="block w-full pl-3 pr-3 py-2 text-sm border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 rounded-lg shadow-sm" placeholder="Ej: 10">
+                                                                </div>
+
+                                                                <div x-show="block.table_type === 'HOURLY_TARGET' || block.table_type === 'RAW_LOGS'">
+                                                                    <label class="block text-xs font-bold text-gray-700 mb-1">Filtrar por Número Objetivo (Opcional)</label>
+                                                                    <select x-model="block.target_number" class="block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg shadow-sm">
+                                                                        <option value="">Todos los números</option>
+                                                                        <template x-for="num in uniqueNumbers" :key="num">
+                                                                            <option :value="num" x-text="aliases[num] ? `${num} (${aliases[num]})` : num"></option>
+                                                                        </template>
+                                                                    </select>
+                                                                </div>
+
+                                                                <div x-show="block.table_type !== 'HOURLY_GENERAL'">
+                                                                    <label class="block text-xs font-bold text-gray-700 mb-1">Dirección de la Llamada</label>
+                                                                    <select x-model="block.filter_direction" class="block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg shadow-sm">
+                                                                        <option value="ALL">Todas (Entrantes y Salientes)</option>
+                                                                        <option value="INCOMING">Solo Entrantes (Recibidas)</option>
+                                                                        <option value="OUTGOING">Solo Salientes (Realizadas)</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div class="flex-1">
-                                                            <label class="block text-xs font-medium text-gray-500">Fecha Fin (Opcional)</label>
-                                                            <input type="datetime-local" x-model="block.filter_end" class="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm">
+                                                    </template>
+
+                                                    <!-- Date Filters for Map and Table -->
+                                                    <template x-if="block.type === 'MAP' || block.type === 'TABLE'">
+                                                        <div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                                            <p class="text-xs font-bold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Filtro de Fechas (Opcional)</p>
+                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <label class="block text-xs font-medium text-gray-600 mb-1">Desde</label>
+                                                                    <input type="datetime-local" :min="project.min_date" :max="project.max_date" x-model="block.filter_start" class="block w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                                                </div>
+                                                                <div>
+                                                                    <label class="block text-xs font-medium text-gray-600 mb-1">Hasta</label>
+                                                                    <input type="datetime-local" :min="project.min_date" :max="project.max_date" x-model="block.filter_end" class="block w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                                                </div>
+                                                            </div>
+                                                            <p class="text-[10px] text-gray-500 mt-2 italic" x-show="project.min_date && project.max_date" x-text="`Rango disponible en informe: ${project.min_date.replace('T', ' ')} al ${project.max_date.replace('T', ' ')}`"></p>
                                                         </div>
-                                                    </div>
-                                                </template>
+                                                    </template>
+                                                </div>
                                             </div>
                                         </template>
                                     </div>
@@ -614,9 +703,17 @@
                 pdfDraft: [],
 
                 addBlock(type) {
-                    const block = { type: type, title: `Nuevo Bloque ${type}`, content: '', filter_start: '', filter_end: '' };
+                    const block = {
+                        type: type,
+                        title: '',
+                        content: '',
+                        filter_start: this.project.min_date ? this.project.min_date : '',
+                        filter_end: this.project.max_date ? this.project.max_date : ''
+                    };
                     if (type === 'TABLE') {
-                        block.table_type = 'FREQUENCIES';
+                        block.table_type = 'TOP_FREQUENT';
+                        block.filter_direction = 'ALL';
+                        block.top_n = 10;
                     }
                     this.pdfDraft.push(block);
                 },
@@ -646,9 +743,51 @@
                         });
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.detail);
-                        Swal.fire('Guardado', 'El borrador del PDF se guardó correctamente.', 'success');
+                        Swal.fire({title: 'Borrador Guardado', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false});
                     } catch (e) {
                         Swal.fire('Error', e.message, 'error');
+                    }
+                },
+
+                async generateCustomPdf() {
+                    if (this.pdfDraft.length === 0) {
+                        Swal.fire('Atención', 'Debes añadir al menos un bloque a tu diseño antes de exportar el PDF.', 'warning');
+                        return;
+                    }
+                    const result = await Swal.fire({
+                        title: 'Exportar Informe PDF',
+                        text: "Esta acción generará el informe según los bloques de tu diseño y descontará 2 Tokens. ¿Estás seguro?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'Sí, generar (-2 Tokens)',
+                        cancelButtonText: 'Cancelar'
+                    });
+
+                    if (result.isConfirmed) {
+                        try {
+                            Swal.fire({ title: 'Generando PDF (Puede tardar)...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                            // Ensure the latest draft is saved first
+                            await fetch(`/api/projects/${this.projectId}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')}` },
+                                body: JSON.stringify({ pdf_draft: this.pdfDraft })
+                            });
+
+                            const res = await fetch(`/api/projects/${this.projectId}/generate-pdf`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+                            });
+
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.detail || 'Error iniciando generación');
+
+                            Swal.fire('En proceso', 'El informe se está generando. Verás el enlace en los detalles del proyecto una vez finalice.', 'success');
+                            this.fetchProject();
+                        } catch (e) {
+                            Swal.fire('Error', e.message, 'error');
+                        }
                     }
                 },
 
@@ -704,6 +843,9 @@
                         target_phone: this.project.target_phone,
                         target_name: this.project.target_name || ''
                     };
+                    if (this.project.extra_metadata && this.project.extra_metadata.fields) {
+                        this.formMetadata = { ...this.project.extra_metadata.fields };
+                    }
                     this.isEditModalOpen = true;
                 },
 
@@ -714,13 +856,17 @@
                 async updateProjectData() {
                     this.savingProjectData = true;
                     try {
+                        const payload = {
+                            ...this.formProject,
+                            custom_metadata: this.formMetadata
+                        };
                         const res = await fetch(`/api/projects/${this.projectId}`, {
                             method: 'PATCH',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                             },
-                            body: JSON.stringify(this.formProject)
+                            body: JSON.stringify(payload)
                         });
 
                         if (!res.ok) {
@@ -1250,28 +1396,20 @@
                 },
 
                 async generatePdf() {
-                    const result = await Swal.fire({
-                        title: 'Generar PDF',
-                        text: "Este proceso construirá los mapas estáticos y el informe forense. Puede tomar varios minutos dependiendo del volumen de datos.",
-                        icon: 'info',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc2626',
-                        confirmButtonText: 'Sí, Generar'
-                    });
-
-                    if (result.isConfirmed) {
-                        try {
-                            const res = await fetch(`/api/projects/${this.projectId}/generate-pdf`, {
-                                method: 'POST',
-                                headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-                            });
-                            if (!res.ok) throw new Error((await res.json()).detail);
-                            Swal.fire('En Progreso', 'La generación del PDF está en la cola.', 'success');
-                            this.fetchProject();
-                        } catch(e) {
-                            Swal.fire('Error', e.message, 'error');
-                        }
+                    if (this.pdfDraft.length === 0) {
+                        Swal.fire({
+                            title: 'Atención',
+                            text: 'Aún no has diseñado tu PDF. Ve a la pestaña "4. Builder PDF" para agregar mapas, tablas y textos a tu reporte antes de generarlo.',
+                            icon: 'warning',
+                            confirmButtonText: 'Ir al Constructor',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                this.mainTab = 'pdf_builder';
+                            }
+                        });
+                        return;
                     }
+                    this.generateCustomPdf();
                 },
 
                 async startAnalysis() {

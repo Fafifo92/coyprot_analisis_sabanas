@@ -67,7 +67,7 @@ async def update_project(
     current_user: User = Depends(get_current_user)
 ):
     project_repo = ProjectRepository(db)
-    project = await project_repo.get_by_id(project_id)
+    project = await project_repo.get_by_id_with_files(project_id)
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -183,4 +183,34 @@ async def get_project(
     if not current_user.is_admin and project.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to view this project")
 
-    return project
+    # Si el proyecto ya está mapeado, calcular las fechas min/max para el PDF builder
+    min_date = None
+    max_date = None
+    if project.status not in ["PENDING_FILES", "PENDING_MAPPING"]:
+        from services.data_processing_service import DataProcessingService
+        data_svc = DataProcessingService()
+        import pandas as pd
+        for file in project.files:
+            if file.status == "MAPPED" and file.sheet_configs:
+                sheets, _ = data_svc.load_sheets_raw(Path(file.file_path))
+                if sheets:
+                    try:
+                        df = data_svc.process_sheets(sheets, file.sheet_configs)
+                        if "fecha_hora" in df.columns:
+                            valid_dates = pd.to_datetime(df["fecha_hora"], errors="coerce").dropna()
+                            if not valid_dates.empty:
+                                file_min = valid_dates.min()
+                                file_max = valid_dates.max()
+                                if min_date is None or file_min < min_date:
+                                    min_date = file_min
+                                if max_date is None or file_max > max_date:
+                                    max_date = file_max
+                    except Exception:
+                        pass
+
+    response = project.to_dict()
+    if min_date and max_date:
+        response["min_date"] = min_date.strftime("%Y-%m-%dT%H:%M")
+        response["max_date"] = max_date.strftime("%Y-%m-%dT%H:%M")
+
+    return response
