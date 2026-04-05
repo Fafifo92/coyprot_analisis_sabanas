@@ -566,43 +566,6 @@
                                     </div>
                                 </div>
                             </div>
-                                    <div class="flex-1">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Categoría del Documento</label>
-                                        <select x-model="newAttachment.category" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                            <option value="Judicial">Documento Judicial / Interceptación</option>
-                                            <option value="Financiero">Soporte Financiero / Bancario</option>
-                                            <option value="Propiedades">Propiedades / Vehículos</option>
-                                            <option value="Antecedentes">Antecedentes Penales</option>
-                                            <option value="Otros">Otro Tipo de Documento</option>
-                                        </select>
-                                    </div>
-                                    <div class="flex-1">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Archivo PDF</label>
-                                        <input type="file" id="pdf-upload-input" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                                    </div>
-                                    <div>
-                                        <button @click="uploadAttachment" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 shadow-sm font-medium">Subir PDF</button>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <template x-for="att in attachments" :key="att.id">
-                                        <div class="bg-white border border-gray-200 rounded-lg p-4 flex justify-between items-center shadow-sm">
-                                            <div class="flex items-center truncate">
-                                                <svg class="w-8 h-8 text-red-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                                <div class="truncate">
-                                                    <p class="text-sm font-bold text-gray-900 truncate" x-text="att.filename"></p>
-                                                    <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wide" x-text="att.category"></p>
-                                                </div>
-                                            </div>
-                                            <button @click="deleteAttachment(att.id)" class="text-gray-400 hover:text-red-600 ml-4 shrink-0" aria-label="Eliminar documento adjunto">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
-                                        </div>
-                                    </template>
-                                    <p x-show="attachments.length === 0" class="col-span-full text-center py-6 text-gray-400 text-sm">Aún no has adjuntado documentos para este informe.</p>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
