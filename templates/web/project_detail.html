@@ -219,6 +219,10 @@
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                                     3. Documentación (PDFs)
                                 </button>
+                                <button @click="mainTab = 'pdf_builder'" :class="mainTab === 'pdf_builder' ? 'border-indigo-500 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-4 px-1 border-b-2 text-sm font-medium flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    4. Builder PDF
+                                </button>
                                 <button @click="mainTab = 'config'" :class="mainTab === 'config' ? 'border-indigo-500 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-4 px-1 border-b-2 text-sm font-medium flex items-center">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                     4. Configuración
@@ -440,6 +444,129 @@
                             <div x-show="mainTab === 'docs'">
                                 <div class="mb-4">
                                     <h2 class="text-lg font-bold text-gray-900">Documentación Adjunta al Reporte</h2>
+                                    <p class="text-sm text-gray-500 mt-1">Añade PDFs (Judiciales, Financieros, etc.) para que se incluyan y referencien en el Informe interactivo final.</p>
+                                </div>
+
+                                <div class="bg-gray-50 rounded-lg p-5 border border-gray-200 mb-6 flex items-end space-x-4">
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-bold text-gray-700 mb-1">Archivo PDF</label>
+                                        <input type="file" id="pdfUploadInput" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                                    </div>
+                                    <div class="w-48">
+                                        <label class="block text-sm font-bold text-gray-700 mb-1">Categoría</label>
+                                        <select x-model="newAttachment.category" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="Judicial">Resolución Judicial</option>
+                                            <option value="Formatos">Formatos Fiscales</option>
+                                            <option value="Investigacion">Docs Investigación</option>
+                                            <option value="Otro">Otro Anexo</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <button @click="uploadAttachment" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                            Adjuntar PDF
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <ul class="divide-y divide-gray-200">
+                                    <template x-for="att in attachments" :key="att.id">
+                                        <li class="py-4 flex justify-between items-center">
+                                            <div class="flex items-center">
+                                                <svg class="w-8 h-8 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                                                <div>
+                                                    <p class="text-sm font-medium text-gray-900" x-text="att.filename"></p>
+                                                    <p class="text-xs text-gray-500" x-text="'Categoría: ' + att.category"></p>
+                                                </div>
+                                            </div>
+                                            <button @click="deleteAttachment(att.id)" class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Eliminar documento">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+
+                            <!-- TAB 4: PDF BUILDER -->
+                            <div x-show="mainTab === 'pdf_builder'" style="display: none;">
+                                <div class="bg-white shadow rounded-lg border border-gray-200 p-6">
+                                    <div class="mb-4 flex justify-between items-center">
+                                        <div>
+                                            <h2 class="text-xl font-bold text-gray-900">Constructor de Reporte PDF</h2>
+                                            <p class="text-sm text-gray-500 mt-1">Diseña el documento final agregando bloques de texto, mapas y tablas.</p>
+                                        </div>
+                                        <button @click="savePdfDraft" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                            Guardar Borrador
+                                        </button>
+                                    </div>
+                                    <div class="border-b border-gray-200 mb-6"></div>
+
+                                    <div class="flex gap-4 mb-8">
+                                        <button @click="addBlock('TEXT')" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded hover:bg-indigo-100 flex items-center border border-indigo-200">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg> Texto Libre
+                                        </button>
+                                        <button @click="addBlock('MAP')" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded hover:bg-indigo-100 flex items-center border border-indigo-200">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg> Mapa Geo
+                                        </button>
+                                        <button @click="addBlock('TABLE')" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded hover:bg-indigo-100 flex items-center border border-indigo-200">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Tabla Frecuencias
+                                        </button>
+                                    </div>
+
+                                    <template x-if="pdfDraft.length === 0">
+                                        <div class="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                            <p class="text-gray-500">Agrega bloques usando los botones superiores para armar el documento.</p>
+                                        </div>
+                                    </template>
+
+                                    <div class="space-y-4">
+                                        <template x-for="(block, index) in pdfDraft" :key="index">
+                                            <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex flex-col relative group">
+                                                <div class="flex justify-between items-center mb-3">
+                                                    <div class="flex items-center">
+                                                        <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded mr-3" x-text="'#' + (index + 1) + ' ' + block.type"></span>
+                                                        <input type="text" x-model="block.title" class="border-none font-bold text-gray-900 focus:ring-0 p-0 text-lg" placeholder="Título del bloque">
+                                                    </div>
+                                                    <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button @click="moveBlock(index, -1)" :disabled="index === 0" class="text-gray-400 hover:text-indigo-600 disabled:opacity-30"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></button>
+                                                        <button @click="moveBlock(index, 1)" :disabled="index === pdfDraft.length - 1" class="text-gray-400 hover:text-indigo-600 disabled:opacity-30"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                                                        <button @click="removeBlock(index)" class="text-red-400 hover:text-red-600 ml-2" aria-label="Eliminar bloque"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                                                    </div>
+                                                </div>
+
+                                                <template x-if="block.type === 'TEXT'">
+                                                    <textarea x-model="block.content" rows="4" class="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Escribe el contenido del párrafo (soporta Markdown)..."></textarea>
+                                                </template>
+
+                                                <template x-if="block.type === 'TABLE'">
+                                                    <div class="mb-4">
+                                                        <label class="block text-xs font-medium text-gray-500 mb-1">Tipo de Tabla</label>
+                                                        <select x-model="block.table_type" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                            <option value="FREQUENCIES">Top Frecuencias (Números más contactados)</option>
+                                                            <option value="RAW_LOGS">Registros Crudos (Listado de llamadas)</option>
+                                                        </select>
+                                                    </div>
+                                                </template>
+
+                                                <template x-if="block.type === 'MAP' || block.type === 'TABLE'">
+                                                    <div class="flex space-x-4">
+                                                        <div class="flex-1">
+                                                            <label class="block text-xs font-medium text-gray-500">Fecha Inicio (Opcional)</label>
+                                                            <input type="datetime-local" x-model="block.filter_start" class="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm">
+                                                        </div>
+                                                        <div class="flex-1">
+                                                            <label class="block text-xs font-medium text-gray-500">Fecha Fin (Opcional)</label>
+                                                            <input type="datetime-local" x-model="block.filter_end" class="mt-1 block w-full text-sm border-gray-300 rounded-md shadow-sm">
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+<<<<<<<
                                     <p class="text-sm text-gray-500 mt-1">Añade PDFs (Judiciales, Financieros, etc.) para que se incluyan y referencien en el Informe interactivo final.</p>
                                 </div>
 
@@ -741,7 +868,7 @@
                             body: JSON.stringify(payload)
                         });
                         if (!res.ok) throw new Error('Error al guardar borrador del PDF');
-                        Swal.toast({title: 'Borrador Guardado', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false});
+                        Swal.fire({title: 'Borrador Guardado', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false});
                     } catch (e) {
                         Swal.fire('Error', e.message, 'error');
                     }
@@ -824,7 +951,7 @@
                             });
                         }
 
-                        Swal.toast({title: 'Guardado correctamente', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false});
+                        Swal.fire({title: 'Guardado correctamente', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false});
 
                     } catch (e) {
                         Swal.fire('Error', e.message, 'error');
