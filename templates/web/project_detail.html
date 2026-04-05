@@ -514,7 +514,7 @@
                                         </button>
                                     </div>
 
-                                    <template x-if="pdfDraft.length === 0">
+                                    <template x-if="pdfDraft && pdfDraft.length === 0">
                                         <div class="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                                             <p class="text-gray-500">Agrega bloques usando los botones superiores para armar el documento.</p>
                                         </div>
@@ -566,11 +566,6 @@
                                     </div>
                                 </div>
                             </div>
-<<<<<<<
-                                    <p class="text-sm text-gray-500 mt-1">Añade PDFs (Judiciales, Financieros, etc.) para que se incluyan y referencien en el Informe interactivo final.</p>
-                                </div>
-
-                                <div class="bg-gray-50 rounded-xl border border-gray-200 p-6 flex items-end gap-4 mb-6">
                                     <div class="flex-1">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Categoría del Documento</label>
                                         <select x-model="newAttachment.category" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
@@ -651,6 +646,48 @@
                 // Adjuntos (PDFs)
                 attachments: [],
                 newAttachment: { category: 'Judicial' },
+
+                // PDF Builder Draft
+                pdfDraft: [],
+
+                addBlock(type) {
+                    const block = { type: type, title: `Nuevo Bloque ${type}`, content: '', filter_start: '', filter_end: '' };
+                    if (type === 'TABLE') {
+                        block.table_type = 'FREQUENCIES';
+                    }
+                    this.pdfDraft.push(block);
+                },
+
+                removeBlock(index) {
+                    this.pdfDraft.splice(index, 1);
+                },
+
+                moveBlock(index, direction) {
+                    const target = index + direction;
+                    if (target >= 0 && target < this.pdfDraft.length) {
+                        const temp = this.pdfDraft[index];
+                        this.pdfDraft[index] = this.pdfDraft[target];
+                        this.pdfDraft[target] = temp;
+                    }
+                },
+
+                async savePdfDraft() {
+                    try {
+                        const res = await fetch(`/api/projects/${this.projectId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                            },
+                            body: JSON.stringify({ pdf_draft: this.pdfDraft })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.detail);
+                        Swal.fire('Guardado', 'El borrador del PDF se guardó correctamente.', 'success');
+                    } catch (e) {
+                        Swal.fire('Error', e.message, 'error');
+                    }
+                },
 
                 username: '',
                 isAdmin: localStorage.getItem('is_admin') === 'true',
